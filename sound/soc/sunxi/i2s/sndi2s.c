@@ -35,11 +35,23 @@ struct sndi2s_priv {
 };
 
 static int i2s_used = 0;
-#define sndi2s_RATES  (SNDRV_PCM_RATE_8000_192000|SNDRV_PCM_RATE_KNOT)
-#define sndi2s_FORMATS (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE | \
-		                     SNDRV_PCM_FMTBIT_S18_3LE | SNDRV_PCM_FMTBIT_S20_3LE)
+static int sunxi_i2s_slave = 0;
 
+#define sndi2s_RATES_MASTER  (SNDRV_PCM_RATE_8000_192000|SNDRV_PCM_RATE_KNOT)
+#define sndi2s_RATES_SLAVE (SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |\
+				SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000 |\
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_192000)
+
+#if defined CONFIG_ARCH_SUN7I
+#define sndi2s_FORMATS (SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE)
+#else
+#define sndi2s_FORMATS (SNDRV_PCM_FMTBIT_S8 | SNDRV_PCM_FMTBIT_S16_LE | \
+		                     SNDRV_PCM_FMTBIT_S18_3LE | SNDRV_PCM_FMTBIT_S20_LE)
+#endif
+
+/* cleaning code
 hdmi_audio_t hdmi_parameter;
+*/
 
 static int sndi2s_mute(struct snd_soc_dai *dai, int mute)
 {
@@ -62,8 +74,26 @@ static int sndi2s_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_hw_params *params,
 	struct snd_soc_dai *dai)
 {
+/*
+	switch (params_format(params)) 
+	{
+	case SNDRV_PCM_FORMAT_S16_LE:
+		printk("[IIS-0] sndi2s_hw_params: format 16 bit\n");
+		break;
+	case SNDRV_PCM_FORMAT_S20_3LE:
+		printk("[IIS-0] sndi2s_hw_params: format 20 bit in 3 bytes\n");
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		printk("[IIS-0] sndi2s_hw_params: format 24 bit in 4 bytes\n");
+		break;
+	default:
+		printk("[IIS-0] sndi2s_hw_params: Unsupported format (%d)\n", (int)params_format(params));
+		//return -EINVAL;
+	}
+*/	
+/* cleaning code
 	hdmi_parameter.sample_rate = params_rate(params);
-
+*/
 	return 0;
 }
 
@@ -75,15 +105,18 @@ static int sndi2s_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 
 static int sndi2s_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
 {
-
+/* cleaning code
 	hdmi_parameter.fs_between = div;
-
+*/
 	return 0;
 }
 
 static int sndi2s_set_dai_fmt(struct snd_soc_dai *codec_dai,
 			       unsigned int fmt)
 {
+/*
+	printk("[IIS-0] sndi2s_set_dai_fmt: format (%u)\n", fmt);
+*/	
 	return 0;
 }
 
@@ -104,7 +137,7 @@ struct snd_soc_dai_driver sndi2s_dai = {
 		.stream_name = "Playback",
 		.channels_min = 1,
 		.channels_max = 2,
-		.rates = sndi2s_RATES,
+		.rates = sndi2s_RATES_MASTER,
 		.formats = sndi2s_FORMATS,
 	},
 	/* pcm operations */
@@ -129,10 +162,8 @@ static int sndi2s_soc_probe(struct snd_soc_codec *codec)
 /* power down chip */
 static int sndi2s_soc_remove(struct snd_soc_codec *codec)
 {
-	struct sndhdmi_priv *sndi2s = snd_soc_codec_get_drvdata(codec);
-
+	struct sndi2s_priv *sndi2s = snd_soc_codec_get_drvdata(codec);
 	kfree(sndi2s);
-
 	return 0;
 }
 
@@ -143,6 +174,12 @@ static struct snd_soc_codec_driver soc_codec_dev_sndi2s = {
 
 static int __devinit sndi2s_codec_probe(struct platform_device *pdev)
 {
+	if(sunxi_i2s_slave) {
+		sndi2s_dai.playback.rates = sndi2s_RATES_SLAVE;
+		printk("[I2S-0] sndi2s_codec_probe I2S used in slave mode\n");
+	}
+	else 
+		printk("[I2S-0] sndi2s_codec_probe I2S used in master mode\n");
 	return snd_soc_register_codec(&pdev->dev, &soc_codec_dev_sndi2s, &sndi2s_dai, 1);
 }
 
@@ -169,7 +206,7 @@ static struct platform_driver sndi2s_codec_driver = {
 static int __init sndi2s_codec_init(void)
 {
 	int err = 0;
-	int ret = 0;
+	int ret = 0, i2s_slave = 0;
 
 	ret = script_parser_fetch("i2s_para","i2s_used", &i2s_used, sizeof(int));
 	if (ret) {
@@ -177,6 +214,16 @@ static int __init sndi2s_codec_init(void)
     }
 
 	if (i2s_used) {
+		ret = script_parser_fetch("i2s_para","i2s_slave", &i2s_slave, sizeof(int));
+		if(ret == 0 && i2s_slave == 1) {
+			sunxi_i2s_slave = 1;
+			printk("[I2S-0] sndi2s_codec_init I2S used in slave mode\n");
+		}
+		else {
+			sunxi_i2s_slave = 0;
+			printk("[I2S-0] sndi2s_codec_init I2S used in master mode\n");
+		}
+	
 		if((err = platform_device_register(&sndi2s_codec_device)) < 0)
 			return err;
 
@@ -204,3 +251,4 @@ MODULE_DESCRIPTION("SNDI2S ALSA soc codec driver");
 MODULE_AUTHOR("Zoltan Devai, Christian Pellegrin <chripell@evolware.org>");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:sunxi-i2s-codec");
+

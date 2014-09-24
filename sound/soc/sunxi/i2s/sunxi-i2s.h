@@ -259,8 +259,9 @@
 
 /*------------------------------------------------------------*/
 /* Clock dividers */
-#define SUNXI_DIV_MCLK	0
-#define SUNXI_DIV_BCLK	1
+#define SUNXI_DIV_MCLK		0
+#define SUNXI_DIV_BCLK		1
+#define SUNXI_DIV_EXTCLK	2
 
 #define SUNXI_IISCLKD_MCLK_MASK   0x0f
 #define SUNXI_IISCLKD_MCLK_OFFS   0
@@ -269,7 +270,7 @@
 #define SUNXI_IISCLKD_MCLKEN_OFFS 7
 
 unsigned int sunxi_i2s_get_clockrate(void);
-extern struct sunxi_i2s_info sunxi_i2s;
+//extern struct sunxi_i2s_info sunxi_iis;
 //extern struct snd_soc_dai sunxi_iis_dai;
 
 extern void sunxi_snd_txctrl_i2s(struct snd_pcm_substream *substream, int on);
@@ -300,5 +301,5 @@ struct sunxi_i2s_info {
 
 };
 
-extern struct sunxi_i2s_info sunxi_i2s;
+//extern struct sunxi_i2s_info sunxi_iis;
 #endif

@@ -35,11 +35,15 @@
 static volatile unsigned int dmasrc = 0;
 static volatile unsigned int dmadst = 0;
 
+//DMA data width
+static unsigned int dma_width = 16;
+
+
 static const struct snd_pcm_hardware sunxi_pcm_hardware = {
 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
-	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S20_3LE | SNDRV_PCM_FMTBIT_S24_LE,
+	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
 	.rate_min		= 8000,
 	.rate_max		= 192000,
@@ -125,6 +129,20 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
 	if (!dma)
 		return 0;
 
+	/* set DMA width for using in sunxi_pcm_prepare*/
+	switch(params_format(params)) {
+		case SNDRV_PCM_FORMAT_S16_LE:
+		dma_width = 16;
+		break;
+		case SNDRV_PCM_FORMAT_S20_3LE:
+		dma_width = 32;
+		break;
+		case SNDRV_PCM_FORMAT_S24_LE:
+		dma_width = 32;
+		break;
+	}
+	/*printk("[IIS-0] sunxi_pcm_hw_params: dma width %d bit\n", dma_width);*/
+
 	if (prtd->params == NULL) {
 		prtd->params = dma;
 		ret = sunxi_dma_request(prtd->params, 0);
@@ -196,10 +214,22 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 #else
 		dma_config_t codec_dma_conf;
 		memset(&codec_dma_conf, 0, sizeof(codec_dma_conf));
-		codec_dma_conf.xfer_type.src_data_width	= DATA_WIDTH_16BIT;
+
+		/*printk("[IIS-0] sunxi_pcm_prepare: DMA data width=(%d)\n", dma_width);*/
+		if(dma_width > 16)
+		{
+			codec_dma_conf.xfer_type.src_data_width	= DATA_WIDTH_32BIT;
+			codec_dma_conf.xfer_type.dst_data_width	= DATA_WIDTH_32BIT;
+		}
+		else
+		{
+			codec_dma_conf.xfer_type.src_data_width	= DATA_WIDTH_16BIT;
+			codec_dma_conf.xfer_type.dst_data_width	= DATA_WIDTH_16BIT;
+		}
 		codec_dma_conf.xfer_type.src_bst_len	= DATA_BRST_1;	
-		codec_dma_conf.xfer_type.dst_data_width	= DATA_WIDTH_16BIT;
+//		codec_dma_conf.xfer_type.src_bst_len	= DATA_BRST_4;	/*like SPDIF module?*/
 		codec_dma_conf.xfer_type.dst_bst_len	= DATA_BRST_1;
+//		codec_dma_conf.xfer_type.src_bst_len	= DATA_BRST_4;	/*like SPDIF module?*/
 		codec_dma_conf.address_type.src_addr_mode = NDMA_ADDR_INCREMENT;
 		codec_dma_conf.address_type.dst_addr_mode = NDMA_ADDR_NOCHANGE;
 		codec_dma_conf.src_drq_type		= N_SRC_SDRAM;

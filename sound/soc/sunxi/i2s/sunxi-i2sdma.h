@@ -29,7 +29,7 @@ enum sunxi_dma_buffresult {
 };
 
 /* platform data */
-extern struct snd_soc_platform sunxi_soc_platform_i2s;
-extern struct sunxi_i2s_info sunxi_iis;
+//extern struct snd_soc_platform sunxi_soc_platform_i2s;
+//extern struct sunxi_i2s_info sunxi_iis;
 
 #endif //SUNXI_PCM_H_

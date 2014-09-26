@@ -16,7 +16,7 @@
  * option) any later version.
  */
 
-
+#include <linux/platform_device.h>
 #include <linux/module.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
@@ -150,89 +150,89 @@ static __mclk_set_inf  MCLK_INF[] =
 */
 void mod_duo_set_impedance(int channel, int type)
 {
-	switch(channel)
-	{
-		case CHANNEL_A:	// Channel A
-		{
-			switch(type)
-			{
-				case INSTRUMENT:			// Instrument impedance
-				{
-					gpio_set_value(GPIO_SW1_A, 1);	// 1: Switch is OFF
-					gpio_set_value(GPIO_SW2_A, 1);	// 0: Switch is ON
-					gpio_set_value(GPIO_SW3_A, 0);
-					gpio_set_value(GPIO_SW4_A, 1);
-					break;
-				}
-				case LINE:					// Line impedance
-				{
-					gpio_set_value(GPIO_SW1_A, 0);
-					gpio_set_value(GPIO_SW2_A, 1);
-					gpio_set_value(GPIO_SW3_A, 0);
-					gpio_set_value(GPIO_SW4_A, 1);
-					break;
-				}
-				case MICROPHONE:			// Microphone impedance
-				{
-					gpio_set_value(GPIO_SW1_A, 1);
-					gpio_set_value(GPIO_SW2_A, 0);
-					gpio_set_value(GPIO_SW3_A, 0);
-					gpio_set_value(GPIO_SW4_A, 1);
-					break;
-				}
-				case MICROPHONE_GAIN:		// Microphone impedance with gain stage
-				{
-					gpio_set_value(GPIO_SW1_A, 1);
-					gpio_set_value(GPIO_SW2_A, 0);
-					gpio_set_value(GPIO_SW3_A, 1);
-					gpio_set_value(GPIO_SW4_A, 0);
-					break;
-				}
-			}
-			break;
-		}
+	// switch(channel)
+	// {
+	// 	case CHANNEL_A:	// Channel A
+	// 	{
+	// 		switch(type)
+	// 		{
+	// 			case INSTRUMENT:			// Instrument impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_A, 1);	// 1: Switch is OFF
+	// 				gpio_set_value(GPIO_SW2_A, 1);	// 0: Switch is ON
+	// 				gpio_set_value(GPIO_SW3_A, 0);
+	// 				gpio_set_value(GPIO_SW4_A, 1);
+	// 				break;
+	// 			}
+	// 			case LINE:					// Line impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_A, 0);
+	// 				gpio_set_value(GPIO_SW2_A, 1);
+	// 				gpio_set_value(GPIO_SW3_A, 0);
+	// 				gpio_set_value(GPIO_SW4_A, 1);
+	// 				break;
+	// 			}
+	// 			case MICROPHONE:			// Microphone impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_A, 1);
+	// 				gpio_set_value(GPIO_SW2_A, 0);
+	// 				gpio_set_value(GPIO_SW3_A, 0);
+	// 				gpio_set_value(GPIO_SW4_A, 1);
+	// 				break;
+	// 			}
+	// 			case MICROPHONE_GAIN:		// Microphone impedance with gain stage
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_A, 1);
+	// 				gpio_set_value(GPIO_SW2_A, 0);
+	// 				gpio_set_value(GPIO_SW3_A, 1);
+	// 				gpio_set_value(GPIO_SW4_A, 0);
+	// 				break;
+	// 			}
+	// 		}
+	// 		break;
+	// 	}
 
-		case CHANNEL_B:	// Channel B
-		{
-			switch(type)
-			{
-				case INSTRUMENT:			// Instrument impedance
-				{
-					gpio_set_value(GPIO_SW1_B, 1);
-					gpio_set_value(GPIO_SW2_B, 1);
-					gpio_set_value(GPIO_SW3_B, 0);
-					gpio_set_value(GPIO_SW4_B, 1);
-					break;
-				}
-				case LINE:					// Line impedance
-				{
-					gpio_set_value(GPIO_SW1_B, 0);
-					gpio_set_value(GPIO_SW2_B, 1);
-					gpio_set_value(GPIO_SW3_B, 0);
-					gpio_set_value(GPIO_SW4_B, 1);
-					break;
-				}
-				case MICROPHONE:			// Microphone impedance
-				{
-					gpio_set_value(GPIO_SW1_B, 1);
-					gpio_set_value(GPIO_SW2_B, 0);
-					gpio_set_value(GPIO_SW3_B, 0);
-					gpio_set_value(GPIO_SW4_B, 1);
-					break;
-				}
-				case MICROPHONE_GAIN:		// Microphone impedance with gain stage
-				{
-					gpio_set_value(GPIO_SW1_B, 1);
-					gpio_set_value(GPIO_SW2_B, 0);
-					gpio_set_value(GPIO_SW3_B, 1);
-					gpio_set_value(GPIO_SW4_B, 0);
-					break;
-				}
-			}
-			break;
-		}
+	// 	case CHANNEL_B:	// Channel B
+	// 	{
+	// 		switch(type)
+	// 		{
+	// 			case INSTRUMENT:			// Instrument impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_B, 1);
+	// 				gpio_set_value(GPIO_SW2_B, 1);
+	// 				gpio_set_value(GPIO_SW3_B, 0);
+	// 				gpio_set_value(GPIO_SW4_B, 1);
+	// 				break;
+	// 			}
+	// 			case LINE:					// Line impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_B, 0);
+	// 				gpio_set_value(GPIO_SW2_B, 1);
+	// 				gpio_set_value(GPIO_SW3_B, 0);
+	// 				gpio_set_value(GPIO_SW4_B, 1);
+	// 				break;
+	// 			}
+	// 			case MICROPHONE:			// Microphone impedance
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_B, 1);
+	// 				gpio_set_value(GPIO_SW2_B, 0);
+	// 				gpio_set_value(GPIO_SW3_B, 0);
+	// 				gpio_set_value(GPIO_SW4_B, 1);
+	// 				break;
+	// 			}
+	// 			case MICROPHONE_GAIN:		// Microphone impedance with gain stage
+	// 			{
+	// 				gpio_set_value(GPIO_SW1_B, 1);
+	// 				gpio_set_value(GPIO_SW2_B, 0);
+	// 				gpio_set_value(GPIO_SW3_B, 1);
+	// 				gpio_set_value(GPIO_SW4_B, 0);
+	// 				break;
+	// 			}
+	// 		}
+	// 		break;
+	// 	}
 
-	}
+	// }
 	return;
 }
 
@@ -241,38 +241,39 @@ void mod_duo_set_impedance(int channel, int type)
 */
 void mod_duo_set_bypass(int channel, bool en)
 {
-	switch(channel)
-	{
-		case CHANNEL_A:	// Channel A
-		{
-			if(en)
-				gpio_set_value(GPIO_BYPASS_A, 1);	// Bypass ON: Pin = HIGH
-			else
-				gpio_set_value(GPIO_BYPASS_A, 0);	// Bypass OFF: PIN = LOW
-			break;
-		}
-		case CHANNEL_B:	// Channel B
-		{
-			if(en)
-				gpio_set_value(GPIO_BYPASS_B, 1);
-			else
-				gpio_set_value(GPIO_BYPASS_B, 0);
-			break;
-		}
-	}
+	// switch(channel)
+	// {
+	// 	case CHANNEL_A:	// Channel A
+	// 	{
+	// 		if(en)
+	// 			gpio_set_value(GPIO_BYPASS_A, 1);	// Bypass ON: Pin = HIGH
+	// 		else
+	// 			gpio_set_value(GPIO_BYPASS_A, 0);	// Bypass OFF: PIN = LOW
+	// 		break;
+	// 	}
+	// 	case CHANNEL_B:	// Channel B
+	// 	{
+	// 		if(en)
+	// 			gpio_set_value(GPIO_BYPASS_B, 1);
+	// 		else
+	// 			gpio_set_value(GPIO_BYPASS_B, 0);
+	// 		break;
+	// 	}
+	// }
 	return;
 }
 
 static void mod_duo_enable_audio(bool en)
 {
-	if (en) 
-	{
-		gpio_set_value(GPIO_CODEC_RESET, 1);
-	} 
-	else 
-	{
-		gpio_set_value(GPIO_CODEC_RESET, 0);
-	}
+	// if (en) 
+	// {
+	// 	gpio_set_value(GPIO_CODEC_RESET, 1);
+	// } 
+	// else 
+	// {
+	// 	gpio_set_value(GPIO_CODEC_RESET, 0);
+	// }
+	return;
 }
 
 /* 

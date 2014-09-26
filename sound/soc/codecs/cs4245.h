@@ -4,6 +4,9 @@
  * However, to support BE and LE I2S devices, we specify both here.  That
  * way, ALSA will always match the bit patterns.
  */
+
+// CODEC I2C ADRESS - 0x48
+
 #define CS4245_FORMATS (SNDRV_PCM_FMTBIT_S8      | \
 			SNDRV_PCM_FMTBIT_S16_LE  | SNDRV_PCM_FMTBIT_S16_BE  | \
 			SNDRV_PCM_FMTBIT_S18_3LE | SNDRV_PCM_FMTBIT_S18_3BE | \

@@ -22,7 +22,6 @@
 #include <sound/initval.h>
 #include <linux/i2c.h>
 #include <linux/delay.h>
-#include <linux/regulator/consumer.h>
 
  #include "cs4245.h"
 
@@ -58,11 +57,11 @@ static const u8 cs4245_default_reg_cache[CS4245_LASTREG + 1] = {
 };
 
 struct cs4245_private {
+	enum snd_soc_control_type control_type;
 	int mclk;
-	int mode;
 	int dai_fmt;
 	int slave_mode;
-	enum snd_soc_control_type control_type;
+
 };
 
 /**
@@ -92,7 +91,7 @@ struct cs4245_private {
  *
  */
 
-/*struct cs4245_mode_ratios {
+struct cs4245_mode_ratios {
 	unsigned int ratio;
 	u8 speed_mode;
 	u8 mclk;
@@ -112,7 +111,7 @@ static struct cs4245_mode_ratios cs4245_mode_ratios[] = {
 
 // The number of MCLK/LRCK ratios supported by the CS4245
 #define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
-*/
+
 
 /**
  *
@@ -123,7 +122,6 @@ static struct cs4245_mode_ratios cs4245_mode_ratios[] = {
  * Definition at line 534 of file include/sound/soc.h
  *
 */
-
 static int cs4245_reg_is_readable(struct snd_soc_codec *codec, unsigned int reg)
 {
 	return (reg >= CS4245_FIRSTREG) && (reg <= CS4245_LASTREG);
@@ -185,11 +183,11 @@ static int cs4245_reg_is_volatile(struct snd_soc_codec *codec, unsigned int reg)
  */
 
  /*
- * The CS4245 has tho master clocks, MCLK1 and MCLK2, one for each serial interface, for asynchronous operation.
+ * The CS4245 has two master clocks, MCLK1 and MCLK2, one for each serial interface, for asynchronous operation.
  * This driver implements only synchronous operation, where the MCLK1 is used and the second serial interface uses it for clock reference.
  */
-static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
-				 int clk_id, unsigned int freq, int dir)
+static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai, 
+								int clk_id, unsigned int freq, int dir)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
@@ -211,8 +209,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
  * The CS4245 enables different formats for each of the two serial interfaces.
  * This driver implements only equal formats for both serial interfaces.
  */
-static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai,
-			      unsigned int format)
+static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
@@ -222,7 +219,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai,
 	case SND_SOC_DAIFMT_I2S:
 	case SND_SOC_DAIFMT_RIGHT_J:
 	case SND_SOC_DAIFMT_LEFT_J:
-		cs4245->mode = format & SND_SOC_DAIFMT_FORMAT_MASK;
+		cs4245->dai_fmt = format & SND_SOC_DAIFMT_FORMAT_MASK;
 		break;
 	default:
 		dev_err(codec->dev, "invalid dai format\n");
@@ -262,7 +259,10 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai,
  * combines it with the hardware parameters provided, and programs the
  * hardware accordingly.
  */
-static int cs4245_hw_params(struct snd_pcm_substream *substream,
+
+// HARD CODED
+
+static int cs4245_hw_params(struct snd_pcm_substream *substream, 
 			    struct snd_pcm_hw_params *params,
 			    struct snd_soc_dai *dai)
 {
@@ -274,13 +274,17 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 
 	/* Configure the CODEC registers */
 	/* DAC Control */
-	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_MASTER;
-	if(cs4245->dai_fmt == SND_SOC_DAIFMT_I2S)			/* I2S, up to 24-bit data */
-		reg |= CS4245_DAC_DIF_I2S;
-	else if(cs4245->dai_fmt == SND_SOC_DAIFMT_RIGHT_J)	/* Right-Justified, 24-bit Data */
-		reg |= CS4245_DAC_DIF_RJUST_24;
-	else if(cs4245->dai_fmt == SND_SOC_DAIFMT_LEFT_J)	/* Left Justified, up to 24-bit data */
-		reg |= CS4245_DAC_DIF_LJUST;
+
+	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_MASTER | CS4245_DAC_DIF_I2S;
+
+//	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_MASTER;
+//	if(cs4245->dai_fmt == SND_SOC_DAIFMT_I2S)			/* I2S, up to 24-bit data */
+//		reg |= CS4245_DAC_DIF_I2S;
+//	else if(cs4245->dai_fmt == SND_SOC_DAIFMT_RIGHT_J)	/* Right-Justified, 24-bit Data */
+//		reg |= CS4245_DAC_DIF_RJUST_24;
+//	else if(cs4245->dai_fmt == SND_SOC_DAIFMT_LEFT_J)	/* Left Justified, up to 24-bit data */
+//		reg |= CS4245_DAC_DIF_LJUST;
+
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
 	if (ret < 0) {
 		dev_err(codec->dev, "i2c write failed\n");
@@ -356,7 +360,7 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 {
 	struct snd_soc_codec *codec = dai->codec;
 	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
-	int reg3;
+	int reg;
 
 	reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
 
@@ -372,38 +376,6 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 // 	SOC_DOUBLE_R("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1),
 // 	SOC_DOUBLE_R("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0xFF, 1),
 // };
-
-static const struct snd_soc_dai_ops cs4245_dai_ops = {
-	.hw_params = cs4245_hw_params,
-	.set_sysclk	= cs4245_set_dai_sysclk,
-	.set_fmt = cs4245_set_dai_fmt,
-	.digital_mute = cs4245_dai_mute,
-};
-
-static struct snd_soc_dai_driver cs4245_dai = {
-	.name = "cs4245",
-	.playback = {
-		.stream_name = "Playback",
-		.channels_min = 2,
-		.channels_max = 2,
-		.rates = SNDRV_PCM_RATE_CONTINUOUS,
-		.rate_min = 4000,
-		.rate_max = 192000,
-		.formats = CS4245_FORMATS,
-	},
-	.capture = {
-		.stream_name = "Capture",
-		.channels_min = 2,
-		.channels_max = 2,
-		.rates = SNDRV_PCM_RATE_CONTINUOUS,
-		.rate_min = 4000,
-		.rate_max = 192000,
-		.formats = CS4245_FORMATS,
-	},
-	.ops = &cs4245_dai_ops,
-	.symmetric_rates = 1,	// TODO - In a generic driver for CS4245 is possible to work assynchronous with MCLK1 and MCLK2 with different frequencies
-};
-//EXPORT_SYMBOL(cs4245_dai);
 
 /**
  * cs4245_probe - ASoC probe function
@@ -451,6 +423,38 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 #define cs4245_soc_suspend	NULL
 #define cs4245_soc_resume	NULL
 
+static const struct snd_soc_dai_ops cs4245_dai_ops = {
+	.hw_params = cs4245_hw_params,
+	.set_sysclk	= cs4245_set_dai_sysclk,
+	.set_fmt = cs4245_set_dai_fmt,
+	.digital_mute = cs4245_dai_mute,
+};
+
+static struct snd_soc_dai_driver cs4245_dai = {
+	.name = "cs4245",
+	.playback = {
+		.stream_name = "Playback",
+		.channels_min = 1,
+		.channels_max = 2,
+		.rates = SNDRV_PCM_RATE_CONTINUOUS,
+		.rate_min = 4000,
+		.rate_max = 192000,
+		.formats = CS4245_FORMATS,
+	},
+	.capture = {
+		.stream_name = "Capture",
+		.channels_min = 1,
+		.channels_max = 2,
+		.rates = SNDRV_PCM_RATE_CONTINUOUS,
+		.rate_min = 4000,
+		.rate_max = 192000,
+		.formats = CS4245_FORMATS,
+	},
+	.ops = &cs4245_dai_ops,
+	.symmetric_rates = 1,	// TODO - In a generic driver for CS4245 is possible to work assynchronous with MCLK1 and MCLK2 with different frequencies
+};
+//EXPORT_SYMBOL(cs4245_dai);
+
 
 /*
  * ASoC codec driver structure
@@ -466,6 +470,15 @@ static const struct snd_soc_codec_driver soc_codec_device_cs4245 = {
 	.reg_word_size = sizeof(u8),
 	.reg_cache_default = cs4245_default_reg_cache,
 };
+
+/*
+ * cs4245_id - I2C device IDs supported by this driver
+ */
+static const struct i2c_device_id cs4245_id[] = {
+	{"cs4245", 0},
+	{}
+};
+MODULE_DEVICE_TABLE(i2c, cs4245_id);
 
 /**
  * cs4245_i2c_probe - initialize the I2C interface of the CS4245
@@ -496,19 +509,19 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client,
 		return -ENODEV;
 	}
 
-	dev_info(&i2c_client->dev, "found device at i2c address %X\n",
-		i2c_client->addr);
+	dev_info(&i2c_client->dev, "found device at i2c address %X\n", i2c_client->addr);
 	dev_info(&i2c_client->dev, "hardware revision %X\n", ret & 0xF);
 
-	cs4245 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs4245_private),
-			      GFP_KERNEL);
+	cs4245 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs4245_private), GFP_KERNEL);
 	if (!cs4245) {
 		dev_err(&i2c_client->dev, "could not allocate codec\n");
 		return -ENOMEM;
 	}
 
-	i2c_set_clientdata(i2c_client, cs4245);
 	cs4245->control_type = SND_SOC_I2C;
+
+	i2c_set_clientdata(i2c_client, cs4245);
+
 
 	ret = snd_soc_register_codec(&i2c_client->dev,
 			&soc_codec_device_cs4245, &cs4245_dai, 1);
@@ -528,15 +541,6 @@ static int cs4245_i2c_remove(struct i2c_client *i2c_client)
 }
 
 /*
- * cs4245_id - I2C device IDs supported by this driver
- */
-static const struct i2c_device_id cs4245_id[] = {
-	{"cs4245", 0},
-	{}
-};
-MODULE_DEVICE_TABLE(i2c, cs4245_id);
-
-/*
  * cs4245_i2c_driver - I2C device identification
  *
  * This structure tells the I2C subsystem how to identify and support a
@@ -544,7 +548,7 @@ MODULE_DEVICE_TABLE(i2c, cs4245_id);
  */
 static struct i2c_driver cs4245_i2c_driver = {
 	.driver = {
-		.name = "cs4245",
+		.name = "cs4245-codec",
 		.owner = THIS_MODULE,
 	},
 	.id_table = cs4245_id,
@@ -554,7 +558,13 @@ static struct i2c_driver cs4245_i2c_driver = {
 
 static int __init cs4245_init(void)
 {
-	return i2c_add_driver(&cs4245_i2c_driver);
+	int ret = 0;
+	ret = i2c_add_driver(&cs4245_i2c_driver);
+	if (ret != 0) {
+		printk(KERN_ERR "Failed to register CS4245 I2C driver: %d\n",
+		       ret);
+	}
+	return ret;
 }
 module_init(cs4245_init);
 

@@ -232,10 +232,31 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	u32 reg_val1;
 
 	//SDO ON
-	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-	if (sunxi_is_sun4i() || sunxi_is_sun7i()) {
-		reg_val |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN |
-			    SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN);
+	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);	// Register Name in User Manual V1.2: DA_CTL - Digital Audio Control Register
+	if (sunxi_is_sun4i() || sunxi_is_sun7i()) {	// Sets only the enabled outputs and resets the disabled ones.
+		if(fmt & (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN))	// At least one of the outputs is enabled.
+		{
+			if(fmt & SUNXI_IISCTL_SDO0EN)
+				reg_val |= (SUNXI_IISCTL_SDO0EN);
+			else
+				reg_val &= ~(SUNXI_IISCTL_SDO0EN);
+			if(fmt & SUNXI_IISCTL_SDO1EN)
+				reg_val |= (SUNXI_IISCTL_SDO1EN);
+			else
+				reg_val &= ~(SUNXI_IISCTL_SDO1EN);
+			if(fmt & SUNXI_IISCTL_SDO2EN)
+				reg_val |= (SUNXI_IISCTL_SDO2EN);
+			else
+				reg_val &= ~(SUNXI_IISCTL_SDO2EN);
+			if(fmt & SUNXI_IISCTL_SDO3EN)
+				reg_val |= (SUNXI_IISCTL_SDO3EN);
+			else
+				reg_val &= ~(SUNXI_IISCTL_SDO3EN);	
+		}
+		else	// No output enabled. Default: Output 1 enabled - SUNXI_IISCTL_SDO0EN.
+			reg_val |= SUNXI_IISCTL_SDO0EN;
+		// reg_val |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN |
+		// 	    SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN);
 	} else {
 		reg_val |= SUNXI_IISCTL_SDO0EN;
 	}
@@ -272,33 +293,33 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 
 	/* pcm or i2s mode selection */
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-	reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-	reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;
+	reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);	// Register Name in User Manual V1.2: DA_FAT0 - Digital Audio Format Register 0
+	reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 	switch(fmt & SND_SOC_DAIFMT_FORMAT_MASK){
 		case SND_SOC_DAIFMT_I2S:        /* I2S mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 |= SUNXI_IISFAT0_FMT_I2S;
-			/*printk("[IIS-0] sunxi_i2s_set_fmt: set I2S mode\n");*/
+			printk("[IIS-0] sunxi_i2s_set_fmt: set I2S mode\n");
 			break;
 		case SND_SOC_DAIFMT_RIGHT_J:    /* Right Justified mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 |= SUNXI_IISFAT0_FMT_RGT;
-			/*printk("[IIS-0] sunxi_i2s_set_fmt: set Right Justified mode\n");*/
+			printk("[IIS-0] sunxi_i2s_set_fmt: set Right Justified mode\n");
 			break;
 		case SND_SOC_DAIFMT_LEFT_J:     /* Left Justified mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 |= SUNXI_IISFAT0_FMT_LFT;
-			/*printk("[IIS-0] sunxi_i2s_set_fmt: set Left Justified mode\n");*/
+			printk("[IIS-0] sunxi_i2s_set_fmt: set Left Justified mode\n");
 			break;
 		case SND_SOC_DAIFMT_DSP_A:      /* L data msb after FRM LRC */
 			reg_val |= SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_LRCP;
-			/*printk("[IIS-0] sunxi_i2s_set_fmt: set L data msb after FRM LRC mode\n");*/
+			printk("[IIS-0] sunxi_i2s_set_fmt: set L data msb after FRM LRC mode\n");
 			break;
 		case SND_SOC_DAIFMT_DSP_B:      /* L data msb during FRM LRC */
 			reg_val |= SUNXI_IISCTL_PCM;
 			reg_val1 |= SUNXI_IISFAT0_LRCP;
-			/*printk("[IIS-0] sunxi_i2s_set_fmt: set L data msb during FRM LRC mode\n");*/
+			printk("[IIS-0] sunxi_i2s_set_fmt: set L data msb during FRM LRC mode\n");
 			break;
 		default:
 			printk("[IIS-0] sunxi_i2s_set_fmt: unknown mode\n");

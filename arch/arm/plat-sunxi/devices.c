@@ -137,12 +137,12 @@ static struct platform_device sunxi_device_mali_drm = {
 };
 #endif
 
-// Plataform device for the CS4245 codec.
-struct platform_device cs4245 =
-{
-    .name = "cs4245-codec",
-    .id = -1,
-};
+// // Plataform device for the CS4245 codec.
+// struct platform_device cs4245 =
+// {
+//     .name = "cs4245-codec",
+//     .id = -1,
+// };
 
 //static struct i2c_board_info __initdata cs4245_i2c_board_info[] = {
 static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
@@ -158,7 +158,7 @@ static struct platform_device *sw_pdevs[] __initdata = {
 #endif
 	&sw_pdev_dmac,
 	&sw_pdev_nand,
-	&cs4245,		// Plataform device for the CS4245 codec.
+//	&cs4245,		// Plataform device for the CS4245 codec.
 #ifndef CONFIG_ARCH_SUN7I
 	&sunxi_pmu_device,
 #endif

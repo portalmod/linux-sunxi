@@ -195,6 +195,17 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	return 0;
 }
 
+/*
+* TODO: Function description.
+*/
+static int sndi2s_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
+{
+/* cleaning code
+	hdmi_parameter.fs_between = div;
+*/
+	return 0;
+}
+
 /**
  * cs4245_set_dai_fmt - configure the codec for the selected audio format
  * @codec_dai: the codec DAI
@@ -209,6 +220,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
  * The CS4245 enables different formats for each of the two serial interfaces.
  * This driver implements only equal formats for both serial interfaces.
  */
+ // TODO - Set format on CODEC.
 static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
@@ -235,7 +247,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 	// 	cs4245->slave_mode = 1;
 	// 	break;
 	case SND_SOC_DAIFMT_CBM_CFM:	/* codec clk & FRM master */
-		cs4245->slave_mode = 0;
+		cs4245->slave_mode = 0;		// TODO - Make it generic. In MOD Duo Sound Card it should allways be master.
 		break;
 	default:
 		/* all other modes are unsupported by the hardware */
@@ -426,12 +438,13 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 static const struct snd_soc_dai_ops cs4245_dai_ops = {
 	.hw_params = cs4245_hw_params,
 	.set_sysclk	= cs4245_set_dai_sysclk,
+	.set_clkdiv = cs4245_set_dai_clkdiv,
 	.set_fmt = cs4245_set_dai_fmt,
 	.digital_mute = cs4245_dai_mute,
 };
 
 static struct snd_soc_dai_driver cs4245_dai = {
-	.name = "cs4245",
+	.name = "cs4245-dai",
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
@@ -492,6 +505,7 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client,
 	const struct i2c_device_id *id)
 {
 	struct cs4245_private *cs4245;
+
 	int ret;
 
 	/* Verify that we have a CS4245 */

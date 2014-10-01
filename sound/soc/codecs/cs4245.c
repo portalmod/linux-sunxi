@@ -91,26 +91,26 @@ struct cs4245_private {
  *
  */
 
-struct cs4245_mode_ratios {
-	unsigned int ratio;
-	u8 speed_mode;
-	u8 mclk;
-};
+// struct cs4245_mode_ratios {
+// 	unsigned int ratio;
+// 	u8 speed_mode;
+// 	u8 mclk;
+// };
 
-static struct cs4245_mode_ratios cs4245_mode_ratios[] = {
-	{64, CS4245_DAC_FM_QUAD, CS4245_MCLK_1},
-	{96, CS4245_DAC_FM_QUAD, CS4245_MCLK_1_5},
-	{128, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1},
-	{192, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1_5},
-	{256, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1},
-	{384, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1_5},
-	{512, CS4245_DAC_FM_SINGLE, CS4245_MCLK_2},
-	{768, CS4245_DAC_FM_SINGLE, CS4245_MCLK_3},
-	{1024, CS4245_DAC_FM_SINGLE, CS4245_MCLK_4}
-};
+// static struct cs4245_mode_ratios cs4245_mode_ratios[] = {
+// 	{64, CS4245_DAC_FM_QUAD, CS4245_MCLK_1},
+// 	{96, CS4245_DAC_FM_QUAD, CS4245_MCLK_1_5},
+// 	{128, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1},
+// 	{192, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1_5},
+// 	{256, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1},
+// 	{384, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1_5},
+// 	{512, CS4245_DAC_FM_SINGLE, CS4245_MCLK_2},
+// 	{768, CS4245_DAC_FM_SINGLE, CS4245_MCLK_3},
+// 	{1024, CS4245_DAC_FM_SINGLE, CS4245_MCLK_4}
+// };
 
-// The number of MCLK/LRCK ratios supported by the CS4245
-#define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
+// // The number of MCLK/LRCK ratios supported by the CS4245
+// #define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
 
 
 /**
@@ -198,7 +198,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 /*
 * TODO: Function description.
 */
-static int sndi2s_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
+static int cs4245_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
 {
 /* cleaning code
 	hdmi_parameter.fs_between = div;
@@ -280,7 +280,7 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec *codec = rtd->codec;
-	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
+//	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret;
 	int reg;
 
@@ -372,7 +372,7 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 {
 	struct snd_soc_codec *codec = dai->codec;
 	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
-	int reg;
+	int reg3;
 
 	reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
 

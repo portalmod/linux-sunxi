@@ -43,18 +43,19 @@ static const struct snd_pcm_hardware sunxi_pcm_hardware = {
 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
+	// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE.
 	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
 	.rate_min		= 8000,
 	.rate_max		= 192000,
 	.channels_min		= 1,
 	.channels_max		= 2,
-	.buffer_bytes_max	= 128*1024,    /* value must be (2^n)Kbyte size */
-	.period_bytes_min	= 1024*4,//1024*4,
-	.period_bytes_max	= 1024*32,//1024*32,
-	.periods_min		= 4,//4,
-	.periods_max		= 8,//8,
-	.fifo_size		= 128,//32,
+	.buffer_bytes_max	= 128*1024,    	// value must be (2^n)Kbyte size
+	.period_bytes_min	= 1024*4,		//1024*4,
+	.period_bytes_max	= 1024*32,		//1024*32,
+	.periods_min		= 4,			//4,
+	.periods_max		= 8,			//8,
+	.fifo_size		= 128,				//32,
 };
 
 struct sunxi_runtime_data {

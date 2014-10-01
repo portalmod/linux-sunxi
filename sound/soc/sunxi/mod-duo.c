@@ -76,99 +76,6 @@
 
 #define I2C_ADRESS	0b10011000	// 10011xx + R/!W
 
-typedef struct __MCLK_SET_INF
-{
-    __u32       samp_rate;      // sample rate
-    __u16       mult_fs;        // multiply of smaple rate
-
-    __u8        clk_div;        // mpll division
-    __u8        mpll;           // select mpll, 0 - 24.576 Mhz, 1 - 22.5792 Mhz
-
-} __mclk_set_inf;
-
-
-typedef struct __BCLK_SET_INF
-{
-    __u8        bitpersamp;     // bits per sample
-    __u8        clk_div;        // clock division
-    __u16       mult_fs;        // multiplay of sample rate
-
-} __bclk_set_inf;
-
-
-static __bclk_set_inf BCLK_INF[] =
-{
-    // 16bits per sample
-    {16,  4, 128}, {16,  6, 192}, {16,  8, 256},
-    {16, 12, 384}, {16, 16, 512},
-
-    //24 bits per sample
-    {24,  4, 192}, {24,  8, 384}, {24, 16, 768},
-
-    //32 bits per sample
-    {32,  2, 128}, {32,  4, 256}, {32,  6, 384},
-    {32,  8, 512}, {32, 12, 768},
-
-    //end flag
-    {0xff, 0, 0},
-};
-
-static __mclk_set_inf  MCLK_INF[] =
-{
-    // 8k bitrate
-    {  8000, 128, 24, 0}, {  8000, 192, 16, 0}, {  8000, 256, 12, 0},
-    {  8000, 384,  8, 0}, {  8000, 512,  6, 0}, {  8000, 768,  4, 0},
-
-    // 16k bitrate
-    { 16000, 128, 12, 0}, { 16000, 192,  8, 0}, { 16000, 256,  6, 0},
-    { 16000, 384,  4, 0}, { 16000, 768,  2, 0},
-
-    // 32k bitrate
-    { 32000, 128,  6, 0}, { 32000, 192,  4, 0}, { 32000, 384,  2, 0},
-    { 32000, 768,  1, 0},
-
-    // 64k bitrate
-    { 64000, 192,  2, 0}, { 64000, 384,  1, 0},
-
-    //128k bitrate
-    {128000, 192,  1, 0},
-
-    // 12k bitrate
-    { 12000, 128, 16, 0}, { 12000, 256, 8, 0}, { 12000, 512, 4, 0},
-
-    // 24k bitrate
-    { 24000, 128,  8, 0}, { 24000, 256, 4, 0}, { 24000, 512, 2, 0},
-
-    // 48K bitrate
-    { 48000, 128,  4, 0}, { 48000, 256,  2, 0}, { 48000, 512, 1, 0},
-
-    // 96k bitrate
-    { 96000, 128 , 2, 0}, { 96000, 256,  1, 0},
-
-    //192k bitrate
-    {192000, 128,  1, 0},
-
-    //11.025k bitrate
-    { 11025, 128, 16, 1}, { 11205, 256,  8, 1}, { 11205, 512,  4, 1},
-
-    //22.05k bitrate
-    { 22050, 128,  8, 1}, { 22050, 256,  4, 1},
-    { 22050, 512,  2, 1},
-
-    //44.1k bitrate
-    { 44100, 128,  4, 1}, { 44100, 256,  2, 1}, { 44100, 512,  1, 1},
-
-    //88.2k bitrate
-    { 88200, 128,  2, 1}, { 88200, 256,  1, 1},
-
-    //176.4k bitrate
-    {176400, 128, 1, 1},
-
-    //end flag 0xffffffff
-    {0xffffffff, 0, 0, 0},
-};
-
-
 // GPIO Handlers
 static unsigned * jfet_swa_gpio_handler[4];
 static unsigned * jfet_swb_gpio_handler[4];
@@ -176,6 +83,25 @@ static unsigned * led_ovfl_gpio_handler[4];
 static unsigned * codec_rst_gpio_handler;
 static unsigned * hp_gpio_handler[2];
 static unsigned * bypass_gpio_handler[2];
+
+// Pin Names
+// jfet_sw_a1_pin
+// jfet_sw_a2_pin
+// jfet_sw_a3_pin
+// jfet_sw_b4_pin
+// jfet_sw_b1_pin
+// jfet_sw_b2_pin
+// jfet_sw_b3_pin
+// jfet_sw_b4_pin
+// led_ovfl1_pin
+// led_ovfl2_pin
+// led_ovfl3_pin
+// led_ovfl4_pin
+// codec_rst_pin
+// hp_vol_pin
+// hp_clk_pin
+// bypass_a_pin
+// bypass_b_pin
 
 /*
 * TODO: Function description.
@@ -192,32 +118,32 @@ void mod_duo_set_impedance(int channel, int type)
 				{
 					// gpio_set_value(GPIO_SW1_A, 1);	
 					// gpio_set_value(GPIO_SW2_A, 1);	
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 1, NULL); // 1: Switch is OFF
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 1, NULL); // 0: Switch is ON
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 1, "jfet_sw_a1_pin"); // 1: Switch is OFF
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 1, "jfet_sw_a2_pin"); // 0: Switch is ON
 					break;
 				}
 				case LINE:			// Line impedance
 				{
 					// gpio_set_value(GPIO_SW1_A, 0);
 					// gpio_set_value(GPIO_SW2_A, 1);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 0, NULL);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 1, NULL);
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 0, "jfet_sw_a1_pin");
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 1, "jfet_sw_a2_pin");
 					break;
 				}
 				case MICROPHONE:	// Microphone impedance
 				{
 					// gpio_set_value(GPIO_SW1_A, 1);
 					// gpio_set_value(GPIO_SW2_A, 0);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 1, NULL);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 0, NULL);
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[0], 1, "jfet_sw_a1_pin");
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[1], 0, "jfet_sw_a2_pin");
 					break;
 				}
 				case PAD_OFF		// Gain Stage OFF
 				{
 					// gpio_set_value(GPIO_SW3_A, 1);
 					// gpio_set_value(GPIO_SW4_A, 0);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[2], 0, NULL);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[3], 1, NULL);
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[2], 0, "jfet_sw_a3_pin");
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[3], 1, "jfet_sw_a4_pin");
 					break;
 				}
 
@@ -225,8 +151,8 @@ void mod_duo_set_impedance(int channel, int type)
 				{
 					// gpio_set_value(GPIO_SW3_A, 0);
 					// gpio_set_value(GPIO_SW4_A, 1);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[2], 1, NULL);
-					gpio_write_one_pin_value(jfet_swa_gpio_handler[3], 0, NULL);
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[2], 1, "jfet_sw_a3_pin");
+					gpio_write_one_pin_value(jfet_swa_gpio_handler[3], 0, "jfet_sw_a4_pin");
 					break;
 				}
 
@@ -242,32 +168,32 @@ void mod_duo_set_impedance(int channel, int type)
 			{
 				// gpio_set_value(GPIO_SW1_B, 1);	
 				// gpio_set_value(GPIO_SW2_B, 1);	
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 1, NULL); // 1: Switch is OFF
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 1, NULL); // 0: Switch is ON
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 1, "jfet_sw_b1_pin"); // 1: Switch is OFF
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 1, "jfet_sw_b2_pin"); // 0: Switch is ON
 				break;
 			}
 			case LINE:			// Line impedance
 			{
 				// gpio_set_value(GPIO_SW1_B, 0);
 				// gpio_set_value(GPIO_SW2_B, 1);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 0, NULL);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 1, NULL);
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 0, "jfet_sw_b1_pin");
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 1, "jfet_sw_b2_pin");
 				break;
 			}
 			case MICROPHONE:	// Microphone impedance
 			{
 				// gpio_set_value(GPIO_SW1_B, 1);
 				// gpio_set_value(GPIO_SW2_B, 0);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 1, NULL);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 0, NULL);
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[0], 1, "jfet_sw_b1_pin");
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[1], 0, "jfet_sw_b2_pin");
 				break;
 			}
 			case PAD_OFF		// Gain Stage OFF
 			{
 				// gpio_set_value(GPIO_SW3_B, 1);
 				// gpio_set_value(GPIO_SW4_B, 0);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[2], 0, NULL);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[3], 1, NULL);
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[2], 0, "jfet_sw_b3_pin");
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[3], 1, "jfet_sw_b4_pin");
 				break;
 			}
 
@@ -275,8 +201,8 @@ void mod_duo_set_impedance(int channel, int type)
 			{
 				// gpio_set_value(GPIO_SW3_B, 0);
 				// gpio_set_value(GPIO_SW4_B, 1);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[2], 1, NULL);
-				gpio_write_one_pin_value(jfet_swb_gpio_handler[3], 0, NULL);
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[2], 1, "jfet_sw_b3_pin");
+				gpio_write_one_pin_value(jfet_swb_gpio_handler[3], 0, "jfet_sw_b4_pin");
 				break;
 			}
 		}
@@ -295,17 +221,17 @@ void mod_duo_set_bypass(int channel, bool en)
 		case CHANNEL_A:	// Channel A
 		{
 			if(en == PROCESS)	// Bypass OFF: Pin = HIGH - Processing. Input jack connected to Ccodec.
-				gpio_write_one_pin_value(bypass_gpio_handler[0], PROCESS, NULL);
+				gpio_write_one_pin_value(bypass_gpio_handler[0], PROCESS, "bypass_a_pin");
 			else	// Bypass ON: Pin = LOW - Not processing. Input jack connected to output jack.
-				gpio_write_one_pin_value(bypass_gpio_handler[0], BYPASS, NULL);
+				gpio_write_one_pin_value(bypass_gpio_handler[0], BYPASS, "bypass_a_pin");
 			break;
 		}
 		case CHANNEL_B:	// Channel B
 		{
 			if(en == PROCESS)	// Bypass OFF: Pin = HIGH - Processing. Input jack connected to Ccodec.
-				gpio_write_one_pin_value(bypass_gpio_handler[1], PROCESS, NULL);
+				gpio_write_one_pin_value(bypass_gpio_handler[1], PROCESS, "bypass_b_pin");
 			else	// Bypass ON: Pin = LOW - Not processing. Input jack connected to output jack.
-				gpio_write_one_pin_value(bypass_gpio_handler[1], BYPASS, NULL);
+				gpio_write_one_pin_value(bypass_gpio_handler[1], BYPASS, "bypass_b_pin");
 			break;
 		}
 	}
@@ -318,9 +244,9 @@ void mod_duo_set_bypass(int channel, bool en)
 static void mod_duo_enable_audio(bool en)
 {
 	if (en) 
-		gpio_write_one_pin_value(codec_rst_gpio_handler, 1, NULL);
+		gpio_write_one_pin_value(codec_rst_gpio_handler, 1, "codec_rst_pin");
 	else 
-		gpio_write_one_pin_value(codec_rst_gpio_handler, 0, NULL);
+		gpio_write_one_pin_value(codec_rst_gpio_handler, 0, "codec_rst_pin");
 	return;
 }
 
@@ -373,77 +299,6 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 	mod_duo_enable_audio(true);		// CS4245 operational.
 	return 0;
 }
-
-/* 
-* TODO: Function description.
-*/
-static s32 get_clock_divder_slave(u32 sample_rate, u32 sample_width, u32* bclk_div, u32* mpll, u32* mult_fs)
-{
-	u32 ret = -EINVAL;
-	switch(sample_rate) {
-		case 44100:
-			*mpll = 1;
-			*bclk_div = 512;
-			ret = 0;
-			break;
-		case 48000:
-			*mpll = 0;
-			*bclk_div = 512;
-			ret = 0;
-			break;
-		case 88200:
-			*mpll = 1;
-			*bclk_div = 256;
-			ret = 0;
-			break;
-		case 96000:
-			*mpll = 0;
-			*bclk_div = 256;
-			ret = 0;
-			break;
-		case 176400:
-			*mpll = 1;
-			*bclk_div = 128;
-			ret = 0;
-			break;
-		case 192000:
-			*mpll = 0;
-			*bclk_div = 128;
-			ret = 0;
-			break;
-	}
-	return ret;
-}
-
-// /* 
-// * 
-// */
-// static s32 get_clock_divder_master(u32 sample_rate, u32 sample_width, u32 * mclk_div, u32* mpll, u32* bclk_div, u32* mult_fs)
-// {
-// 	u32 i, j, ret = -EINVAL;
-
-// 	for(i=0; i< 100; i++) {
-// 		 if((MCLK_INF[i].samp_rate == sample_rate) &&
-// 		 	((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
-// 			  for(j=0; j<ARRAY_SIZE(BCLK_INF); j++) {
-// 					if((BCLK_INF[j].bitpersamp == sample_width) &&
-// 						(BCLK_INF[j].mult_fs == MCLK_INF[i].mult_fs)) {
-// 						 //set mclk and bclk division
-// 						 *mclk_div = MCLK_INF[i].clk_div;
-// 						 *mpll = MCLK_INF[i].mpll;
-// 						 *bclk_div = BCLK_INF[j].clk_div;
-// 						 *mult_fs = MCLK_INF[i].mult_fs;
-// 						 ret = 0;
-// 						 break;
-// 					}
-// 			  }
-// 		 }
-// 		 else if(MCLK_INF[i].samp_rate == 0xffffffff)
-// 		 	break;
-// 	}
-
-// 	return ret;
-// }
 
 /*
 * GPIO Initialization - TODO: Function description.
@@ -642,31 +497,31 @@ static int mod_duo_cs4245_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	int ret = 0;
 	unsigned int clk = 24576000;	// MOD Duo Soun Card has an 2457600Hz external clock.
-	unsigned long rate = 48000;		// MOD Duo Soun Card works allways with 48000Hz.
-//	unsigned long rate = params_rate(params);
+//	unsigned long sample_rate = 48000;		// MOD Duo Soun Card works allways with 48000Hz.
+	unsigned long sample_rate = params_rate(params);
 
 	unsigned int fmt = 0;
 	u32 mclk_div=0, mpll=0, bclk_div=0, mult_fs=0;
 
 	// if(!sunxi_i2s_slave) 
 	// {
-	// 	get_clock_divder_master(rate, 32, &mclk_div, &mpll, &bclk_div, &mult_fs);	// TODO - Clean this function, to many parameters.
-	// 	printk("[IIS-0] get_clock_divder_master: rate=(%lu), mclk_div=(%d), mpll=(%d), bclk_div=(%d), mult_fs=(%d)\n", rate, mclk_div, mpll, bclk_div, mult_fs);
+	// 	get_clock_divder_master(sample_rate, 32, &mclk_div, &mpll, &bclk_div, &mult_fs);	// TODO - Clean this function, to many parameters.
+	// 	printk("[IIS-0] get_clock_divder_master: sample_rate=(%lu), mclk_div=(%d), mpll=(%d), bclk_div=(%d), mult_fs=(%d)\n", sample_rate, mclk_div, mpll, bclk_div, mult_fs);
 	// 	fmt = SND_SOC_DAIFMT_I2S |		/* I2S mode */
 	//     	 SND_SOC_DAIFMT_NB_NF;		/* normal bit clock + frame */
 	//     	 // SND_SOC_DAIFMT_CBS_CFS;	/* codec clk & FRM slave */
 	// } 
 	// else 
 	// {
-	// 	get_clock_divder_slave(rate, 32, &bclk_div, &mpll, &mult_fs); 	// TODO - Clean this function, to many parameters.
-	// 	printk("[IIS-0] get_clock_divder_slave: rate=(%lu), bclk_div=(%d), mpll=(%d), mult_fs=(%d)\n", rate, bclk_div, mpll, mult_fs);
+	// 	get_clock_divder_slave(sample_rate, 32, &bclk_div, &mpll, &mult_fs); 	// TODO - Clean this function, to many parameters.
+	// 	printk("[IIS-0] get_clock_divder_slave: sample_rate=(%lu), bclk_div=(%d), mpll=(%d), mult_fs=(%d)\n", sample_rate, bclk_div, mpll, mult_fs);
 	// 	fmt = SND_SOC_DAIFMT_I2S |		/* I2S mode */
 	//     	 SND_SOC_DAIFMT_NB_NF;		/* normal bit clock + frame */
 	//     	 // SND_SOC_DAIFMT_CBM_CFM;	/* codec clk & FRM master */
 	// }
 
 	// I2S allways as slave.
-	get_clock_divder_slave(rate, 32, &bclk_div, &mpll, &mult_fs); 	// TODO - Clean this function, to many parameters.
+	get_clock_divder_slave(sample_rate, 32, &bclk_div, &mpll, &mult_fs); 	// TODO - Clean this function, to many parameters.
 	printk("[IIS-0] get_clock_divder_slave: rate=(%lu), bclk_div=(%d), mpll=(%d), mult_fs=(%d)\n", rate, bclk_div, mpll, mult_fs);
 	fmt = SND_SOC_DAIFMT_I2S |		/* I2S mode */
     	 SND_SOC_DAIFMT_NB_NF;		/* normal bit clock + frame */

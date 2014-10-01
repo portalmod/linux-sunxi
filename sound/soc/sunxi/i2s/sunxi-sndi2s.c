@@ -29,11 +29,6 @@
 
 #include "sndi2s.h"
 
-/* cleaning code
-static struct clk *xtal;
-static int clk_users;
-static DEFINE_MUTEX(clk_lock);
-*/
 
 /* slave mode flag*/
 static int sunxi_i2s_slave = 0;
@@ -46,38 +41,6 @@ static struct snd_pcm_hw_constraint_list hw_constraints_rates = {
 };
 #endif
 
-static int sunxi_sndi2s_startup(struct snd_pcm_substream *substream)
-{
-	int ret = 0;
-	#ifdef ENFORCE_RATES
-		struct snd_pcm_runtime *runtime = substream->runtime;;
-	#endif
-
-	if (!ret) {
-	#ifdef ENFORCE_RATES
-		ret = snd_pcm_hw_constraint_list(runtime, 0,
-						 SNDRV_PCM_HW_PARAM_RATE,
-						 &hw_constraints_rates);
-		if (ret < 0)
-			return ret;
-	#endif
-	}
-	return ret;
-}
-
-static void sunxi_sndi2s_shutdown(struct snd_pcm_substream *substream)
-{
-/* cleaning code
-	mutex_lock(&clk_lock);
-	clk_users -= 1;
-	if (clk_users == 0) {
-		clk_put(xtal);
-		xtal = NULL;
-
-	}
-	mutex_unlock(&clk_lock);
-*/
-}
 
 typedef struct __MCLK_SET_INF
 {
@@ -198,6 +161,35 @@ static __extclk_set_inf  EXTCLK_INF[] =
     {0xffffffff, 0, 0}
 };
 
+/*
+* TODO: Function description.
+*/
+static int sunxi_sndi2s_startup(struct snd_pcm_substream *substream)
+{
+	int ret = 0;
+	#ifdef ENFORCE_RATES
+		struct snd_pcm_runtime *runtime = substream->runtime;;
+	#endif
+
+	if (!ret) {
+	#ifdef ENFORCE_RATES
+		ret = snd_pcm_hw_constraint_list(runtime, 0,
+						 SNDRV_PCM_HW_PARAM_RATE,
+						 &hw_constraints_rates);
+		if (ret < 0)
+			return ret;
+	#endif
+	}
+	return ret;
+}
+
+/*
+* TODO: Function description.
+*/
+static void sunxi_sndi2s_shutdown(struct snd_pcm_substream *substream)
+{
+	return;
+}
 
 static s32 get_clock_divder_slave(u32 sample_rate, u32 sample_width, u32* bclk_div, u32* mpll, u32* mult_fs)
 {

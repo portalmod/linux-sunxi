@@ -240,7 +240,6 @@
 
 #define SUNXI_NDMACNT(v)			((v)*0x20 + 0x100 + 0xC)
 
-
 /* CCM REGISTER */
 #define SUNXI_CCMBASE    (0x01C20000)
 
@@ -258,6 +257,9 @@
 /*------------------------------------------------------------*/
 
 /*------------------------------------------------------------*/
+// /* Default DAI Format */
+// #define SND_SOC_DAIFMT_SUNXI_IIS_DEFAULT	((SND_SOC_DAIFMT_CBS_CFS) | (SND_SOC_DAIFMT_I2S) | (SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_16BCLK) | (SND_SOC_DAIFMT_NB_NF))
+
 /* Clock set cases*/
 #define SUNXI_SET_MCLK	0
 #define SUNXI_MCLKO_EN	1
@@ -265,10 +267,7 @@
 /* Clock divider cases*/
 #define SUNXI_DIV_MCLK			0
 #define SUNXI_DIV_BCLK			1
-#define SUNXI_MCLK_RATE			2
-#define SUNXI_SAMPLING_FREQ		3
-
-
+#define SUNXI_SAMPLING_FREQ		2
 
 #define SUNXI_IISCLKD_MCLK_MASK   0x0f
 #define SUNXI_IISCLKD_MCLK_OFFS   0
@@ -329,7 +328,6 @@ struct sunxi_i2s_info {
 	void __iomem   *ioregs;   //IO BASE
 
 	u32 slave;			//0: master, 1: slave
-	u32 mono;			//0: stereo, 1: mono
 	u32 samp_fs;		//audio sample rate (unit in Hz)
 	u32 samp_res;		//16 bits, 20 bits , 24 bits, 32 bits)
 	u32 samp_format;	//audio sample format (0: standard I2S, 1: left-justified, 2: right-justified, 3: pcm - MSB on 2nd BCLK, 4: pcm - MSB on 1st BCLK)

@@ -58,8 +58,8 @@ static const u8 cs4245_default_reg_cache[CS4245_LASTREG + 1] = {
 
 struct cs4245_private {
 	enum snd_soc_control_type control_type;
-	int mclk;
-	int dai_fmt;
+	unsigned int mclk;
+	unsigned int dai_fmt;
 	int slave_mode;
 
 };
@@ -124,11 +124,15 @@ struct cs4245_private {
 */
 static int cs4245_reg_is_readable(struct snd_soc_codec *codec, unsigned int reg)
 {
+	printk("[CS4245]Entered %s\n", __func__);
+
 	return (reg >= CS4245_FIRSTREG) && (reg <= CS4245_LASTREG);
 }
 
 static int cs4245_reg_is_volatile(struct snd_soc_codec *codec, unsigned int reg)
 {
+	printk("[CS4245]Entered %s\n", __func__);
+
 	/* Unreadable registers are considered volatile */
 	if ((reg < CS4245_FIRSTREG) || (reg > CS4245_LASTREG))
 		return 1;
@@ -191,6 +195,9 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
+
+	printk("[CS4245]Entered %s\n", __func__);
+
 	cs4245->mclk = freq;
 	return 0;
 }
@@ -200,6 +207,8 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 */
 static int cs4245_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
 {
+	printk("[CS4245]Entered %s\n", __func__);
+
 /* cleaning code
 	hdmi_parameter.fs_between = div;
 */
@@ -226,12 +235,14 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 
+	printk("[CS4245]Entered %s\n", __func__);
+
 	/* set DAI format */
 	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 	case SND_SOC_DAIFMT_RIGHT_J:
 	case SND_SOC_DAIFMT_LEFT_J:
-		cs4245->dai_fmt = format & SND_SOC_DAIFMT_FORMAT_MASK;
+		cs4245->dai_fmt = format;
 		break;
 	default:
 		dev_err(codec->dev, "invalid dai format\n");
@@ -243,9 +254,9 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 	 * This driver implements the I2S2 interface allways as slave, with the LRCK2 signal connected do LRCK1 and SCLK2 signal connected to SCLK1.
 	 */
 	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
-	// case SND_SOC_DAIFMT_CBS_CFS:	/* codec clk & FRM slave  */
-	// 	cs4245->slave_mode = 1;
-	// 	break;
+	case SND_SOC_DAIFMT_CBS_CFS:	/* codec clk & FRM slave  */
+		cs4245->slave_mode = 1;
+		break;
 	case SND_SOC_DAIFMT_CBM_CFM:	/* codec clk & FRM master */
 		cs4245->slave_mode = 0;		// TODO - Make it generic. In MOD Duo Sound Card it should allways be master.
 		break;
@@ -283,6 +294,8 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 //	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret;
 	int reg;
+
+	printk("[CS4245]Entered %s\n", __func__);
 
 	/* Configure the CODEC registers */
 	/* DAC Control */
@@ -374,6 +387,8 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int reg3;
 
+	printk("[CS4245]Entered %s\n", __func__);
+
 	reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
 
 	if (mute)
@@ -400,6 +415,8 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 {
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret;
+
+	printk("[CS4245]Entered %s\n", __func__);
 
 	/* Tell ASoC what kind of I/O to use to read the registers.  ASoC will
 	 * then do the I2C transactions itself.
@@ -508,6 +525,8 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client,
 
 	int ret;
 
+	printk("[CS4245]Entered %s\n", __func__);
+
 	/* Verify that we have a CS4245 */
 
 	ret = i2c_smbus_read_byte_data(i2c_client, CS4245_CHIP_ID);
@@ -550,6 +569,9 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client,
  */
 static int cs4245_i2c_remove(struct i2c_client *i2c_client)
 {
+
+	printk("[CS4245]Entered %s\n", __func__);
+
 	snd_soc_unregister_codec(&i2c_client->dev);
 	return 0;
 }
@@ -573,6 +595,9 @@ static struct i2c_driver cs4245_i2c_driver = {
 static int __init cs4245_init(void)
 {
 	int ret = 0;
+
+	printk("[CS4245]Entered %s\n", __func__);
+
 	ret = i2c_add_driver(&cs4245_i2c_driver);
 	if (ret != 0) {
 		printk(KERN_ERR "Failed to register CS4245 I2C driver: %d\n",
@@ -584,6 +609,8 @@ module_init(cs4245_init);
 
 static void __exit cs4245_exit(void)
 {
+	printk("[CS4245]Entered %s\n", __func__);
+
 	i2c_del_driver(&cs4245_i2c_driver);
 }
 module_exit(cs4245_exit);

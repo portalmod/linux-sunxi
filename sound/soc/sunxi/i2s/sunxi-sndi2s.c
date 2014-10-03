@@ -309,10 +309,11 @@ static int sunxi_sndi2s_hw_params(struct snd_pcm_substream *substream,
 		if (ret < 0)
 			return ret;
 	} else {
-		//call sunxi_iis_set_clkdiv	
-		ret = snd_soc_dai_set_clkdiv(cpu_dai, SUNXI_DIV_EXTCLK, bclk_div);
-		if (ret < 0)
-			return ret;
+		// TODO: Changed cpu_dai set_clkdiv function utilization.
+		// //call sunxi_iis_set_clkdiv	
+		// ret = snd_soc_dai_set_clkdiv(cpu_dai, SUNXI_DIV_EXTCLK, bclk_div);
+		// if (ret < 0)
+		// 	return ret;
 	}
 
 	//call sndi2s_set_dai_clkdiv

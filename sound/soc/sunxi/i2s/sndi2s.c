@@ -208,13 +208,13 @@ static int __init sndi2s_codec_init(void)
 	int err = 0;
 	int ret = 0, i2s_slave = 0;
 
-	ret = script_parser_fetch("i2s_para","i2s_used", &i2s_used, sizeof(int));
+	ret = script_parser_fetch("i2s_para","i2s_used\n", &i2s_used, sizeof(int));
 	if (ret) {
         printk("[I2S]sndi2s_init fetch i2s using configuration failed\n");
     }
 
 	if (i2s_used) {
-		ret = script_parser_fetch("i2s_para","i2s_slave", &i2s_slave, sizeof(int));
+		ret = script_parser_fetch("i2s_para","i2s_slave\n", &i2s_slave, sizeof(int));
 		if(ret == 0 && i2s_slave == 1) {
 			sunxi_i2s_slave = 1;
 			printk("[I2S-0] sndi2s_codec_init I2S used in slave mode\n");

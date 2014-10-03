@@ -1,3 +1,9 @@
 config SND_SUNXI_SOC_CODEC
 	tristate "APB On-Chip sun4i and sun5i Codec"
 	default y
+	
+config SND_MOD_DUO_SUNXI
+	tristate "Sound Card for MOD Duo"
+	default m
+	help
+	  Say Y or M if you want to add support for the MOD Duo Sound Card.

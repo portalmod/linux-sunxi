@@ -144,13 +144,22 @@ static struct platform_device sunxi_device_mali_drm = {
 //     .id = -1,
 // };
 
+
+
+
+
 //static struct i2c_board_info __initdata cs4245_i2c_board_info[] = {
 static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
     {
         .type = "cs4245",
-        .addr = 0x48,
+//        .addr = 0x48,
+		.addr = 0x4C,
     },
 };
+
+
+
+
 
 static struct platform_device *sw_pdevs[] __initdata = {
 #if 0

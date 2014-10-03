@@ -55,25 +55,29 @@ hdmi_audio_t hdmi_parameter;
 
 static int sndi2s_mute(struct snd_soc_dai *dai, int mute)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 	return 0;
 }
 
 static int sndi2s_startup(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *dai)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 	return 0;
 }
 
 static void sndi2s_shutdown(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *dai)
 {
-
+	printk("[sndi2s]Entered %s\n", __func__);
+	return;
 }
 
 static int sndi2s_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_hw_params *params,
 	struct snd_soc_dai *dai)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 /*
 	switch (params_format(params)) 
 	{
@@ -94,12 +98,14 @@ static int sndi2s_hw_params(struct snd_pcm_substream *substream,
 /* cleaning code
 	hdmi_parameter.sample_rate = params_rate(params);
 */
+
 	return 0;
 }
 
 static int sndi2s_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 				  int clk_id, unsigned int freq, int dir)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 	return 0;
 }
 
@@ -108,6 +114,7 @@ static int sndi2s_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int 
 /* cleaning code
 	hdmi_parameter.fs_between = div;
 */
+	printk("[sndi2s]Entered %s\n", __func__);
 	return 0;
 }
 
@@ -117,6 +124,7 @@ static int sndi2s_set_dai_fmt(struct snd_soc_dai *codec_dai,
 /*
 	printk("[IIS-0] sndi2s_set_dai_fmt: format (%u)\n", fmt);
 */	
+	printk("[sndi2s]Entered %s\n", __func__);
 	return 0;
 }
 
@@ -150,6 +158,8 @@ static int sndi2s_soc_probe(struct snd_soc_codec *codec)
 {
 	struct sndi2s_priv *sndi2s;
 
+	printk("[sndi2s]Entered %s\n", __func__);
+
 	sndi2s = kzalloc(sizeof(struct sndi2s_priv), GFP_KERNEL);
 	if(sndi2s == NULL){
 		return -ENOMEM;
@@ -163,7 +173,11 @@ static int sndi2s_soc_probe(struct snd_soc_codec *codec)
 static int sndi2s_soc_remove(struct snd_soc_codec *codec)
 {
 	struct sndi2s_priv *sndi2s = snd_soc_codec_get_drvdata(codec);
+	
+	printk("[sndi2s]Entered %s\n", __func__);
+	
 	kfree(sndi2s);
+
 	return 0;
 }
 
@@ -174,6 +188,7 @@ static struct snd_soc_codec_driver soc_codec_dev_sndi2s = {
 
 static int __devinit sndi2s_codec_probe(struct platform_device *pdev)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 	if(sunxi_i2s_slave) {
 		sndi2s_dai.playback.rates = sndi2s_RATES_SLAVE;
 		printk("[I2S-0] sndi2s_codec_probe I2S used in slave mode\n");
@@ -185,6 +200,7 @@ static int __devinit sndi2s_codec_probe(struct platform_device *pdev)
 
 static int __devexit sndi2s_codec_remove(struct platform_device *pdev)
 {
+	printk("[sndi2s]Entered %s\n", __func__);
 	snd_soc_unregister_codec(&pdev->dev);
 	return 0;
 }
@@ -208,13 +224,15 @@ static int __init sndi2s_codec_init(void)
 	int err = 0;
 	int ret = 0, i2s_slave = 0;
 
-	ret = script_parser_fetch("i2s_para","i2s_used\n", &i2s_used, sizeof(int));
+	printk("[sndi2s]Entered %s\n", __func__);
+
+	ret = script_parser_fetch("i2s_para","i2s_used", &i2s_used, 1);
 	if (ret) {
         printk("[I2S]sndi2s_init fetch i2s using configuration failed\n");
     }
 
 	if (i2s_used) {
-		ret = script_parser_fetch("i2s_para","i2s_slave\n", &i2s_slave, sizeof(int));
+		ret = script_parser_fetch("i2s_para","i2s_slave", &i2s_slave, sizeof(int));
 		if(ret == 0 && i2s_slave == 1) {
 			sunxi_i2s_slave = 1;
 			printk("[I2S-0] sndi2s_codec_init I2S used in slave mode\n");
@@ -240,6 +258,9 @@ module_init(sndi2s_codec_init);
 
 static void __exit sndi2s_codec_exit(void)
 {
+
+	printk("[sndi2s]Entered %s\n", __func__);
+
 	if (i2s_used) {
 		i2s_used = 0;
 		platform_driver_unregister(&sndi2s_codec_driver);

@@ -1183,7 +1183,7 @@ static int __init sunxi_i2s_init(void)
 
 	ret = script_parser_fetch("i2s_para","i2s_used", &i2s_used, sizeof(int));
 	if (ret) {
-        	printk("[I2S]sunxi_i2s_init fetch i2s using configuration failed\n");
+        printk("[I2S]sunxi_i2s_init fetch i2s using configuration failed\n");
 	}
 
  	if (i2s_used) {

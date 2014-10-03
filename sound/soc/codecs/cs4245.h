@@ -146,3 +146,7 @@ Gain[5:0] 	|	Setting
 #define CS4245_DAC_CLK_ERR	0x04 	/* DAC Clock Error (Bit 2) */
 #define CS4245_ADC_OVFL		0x02 	/* ADC Overflow (Bit 1) */
 #define CS4245_ADC_UNDRFL	0x01 	/* ADC Underflow (Bit 0) */
+
+/* Codec Reset Pin Defines */
+#define CODEC_ENABLE	1
+#define CODEC_DISABLE	(!CODEC_ENABLE)

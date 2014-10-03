@@ -531,21 +531,21 @@ static void mod_duo_set_bypass(int channel, bool en)
 	return;
 }
 
-/*
-* TODO: Function description.
-*/
-static void mod_duo_enable_audio(bool en)
-{
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+// /*
+// * TODO: Function description.
+// */
+// static void mod_duo_enable_audio(bool en)
+// {
+// 	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
 
-	if (en) 
-		// gpio_write_one_pin_value(codec_rst_gpio_handler, 1, "codec_rst_pin");
-		gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "codec_rst_pin");
-	else 
-		// gpio_write_one_pin_value(codec_rst_gpio_handler, 0, "codec_rst_pin");
-		gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "codec_rst_pin");
-	return;
-}
+// 	if (en) 
+// 		// gpio_write_one_pin_value(codec_rst_gpio_handler, 1, "codec_rst_pin");
+// 		gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "codec_rst_pin");
+// 	else 
+// 		// gpio_write_one_pin_value(codec_rst_gpio_handler, 0, "codec_rst_pin");
+// 		gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "codec_rst_pin");
+// 	return;
+// }
 
 /* 
 * TODO: Function description.
@@ -590,7 +590,7 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 	mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
 	mod_duo_set_bypass(CHANNEL_A, 0);
 	mod_duo_set_bypass(CHANNEL_B, 0);
-	mod_duo_enable_audio(true);
+//	mod_duo_enable_audio(true);
 
 	return ret;
 }
@@ -602,7 +602,7 @@ static void mod_duo_shutdown(struct snd_pcm_substream *substream)
 {
 	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
 
-	mod_duo_enable_audio(false);	// CS4245 in reset.
+//	mod_duo_enable_audio(false);	// CS4245 in reset.
 }
 
 /* 
@@ -612,7 +612,7 @@ static int mod_duo_analog_suspend(struct snd_soc_card *card)
 {
 	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
 
-	mod_duo_enable_audio(false);	// CS4245 in reset.
+//	mod_duo_enable_audio(false);	// CS4245 in reset.
 	return 0;
 }
 
@@ -623,7 +623,7 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 {
 	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
 
-	mod_duo_enable_audio(true);		// CS4245 operational.
+//	mod_duo_enable_audio(true);		// CS4245 operational.
 	return 0;
 }
 
@@ -680,7 +680,7 @@ static struct snd_soc_dai_link snd_soc_mod_duo_dai =
 	.cpu_dai_name = "sunxi-i2s.0",
 	.codec_dai_name = "cs4245-dai",
 	.platform_name = "sunxi-i2s-pcm-audio.0",
-	.codec_name	= "cs4245-codec.1-0048",
+	.codec_name	= "cs4245-codec.1-004c",
 	.ops = &mod_duo_ops,
 };
 
@@ -738,7 +738,7 @@ static int __init mod_duo_audio_init(void)
 		mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
 		mod_duo_set_bypass(CHANNEL_A, 0);
 		mod_duo_set_bypass(CHANNEL_B, 0);
-		mod_duo_enable_audio(true);
+		// mod_duo_enable_audio(true);
 	}
 	return 0;
 }
@@ -749,7 +749,7 @@ static void __exit mod_duo_audio_exit(void)
 
 	if(mod_duo_used)
 	{
-		mod_duo_enable_audio(false);
+//		mod_duo_enable_audio(false);
 		mod_duo_gpio_release();
 	}
 	platform_device_unregister(mod_duo_audio_device);

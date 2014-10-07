@@ -125,13 +125,13 @@ static int mod_duo_gpio_init(void)
 	int err;
 	script_gpio_set_t info;
 
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	mod_duo_gpio_handler = gpio_request_ex("mod_duo_souncard_para", NULL);
 // JFET Switch A Pin Configuration
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_a1_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a1_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a1_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // jfet_swa_gpio_handler[0] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_a1_pin");
@@ -141,7 +141,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_a2_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a2_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a2_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // jfet_swa_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_a2_pin");
@@ -151,7 +151,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_a3_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a3_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a3_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
 	// jfet_swa_gpio_handler[2] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_a3_pin");
@@ -161,7 +161,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_a4_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a4_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_a4_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
 	// jfet_swa_gpio_handler[3] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_a4_pin");
@@ -172,7 +172,7 @@ static int mod_duo_gpio_init(void)
 // JFET Switch B Pin Configuration
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_b1_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b1_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b1_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // jfet_swb_gpio_handler[0] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_b1_pin");
@@ -182,7 +182,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_b2_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b2_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b2_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // jfet_swb_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_b2_pin");
@@ -192,7 +192,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_b3_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b3_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b3_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
 	// jfet_swb_gpio_handler[2] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_b3_pin");
@@ -202,7 +202,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "jfet_sw_b4_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b4_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"jfet_sw_b4_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
 	// jfet_swb_gpio_handler[3] = gpio_request_ex("mod_duo_souncard_para", "jfet_sw_b4_pin");
@@ -213,7 +213,7 @@ static int mod_duo_gpio_init(void)
 // Overflow Leds Pin Configuration
     err = script_parser_fetch("mod_duo_souncard_para", "led_ovfl1_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl1_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl1_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // led_ovfl_gpio_handler[0] = gpio_request_ex("mod_duo_souncard_para", "led_ovfl1_pin");
@@ -223,7 +223,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "led_ovfl2_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl2_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl2_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // led_ovfl_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "led_ovfl2_pin");
@@ -233,7 +233,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "led_ovfl3_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl3_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl3_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // led_ovfl_gpio_handler[2] = gpio_request_ex("mod_duo_souncard_para", "led_ovfl3_pin");
@@ -243,7 +243,7 @@ static int mod_duo_gpio_init(void)
 
 	err = script_parser_fetch("mod_duo_souncard_para", "led_ovfl4_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl4_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"led_ovfl4_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // led_ovfl_gpio_handler[3] = gpio_request_ex("mod_duo_souncard_para", "led_ovfl4_pin");
@@ -254,7 +254,7 @@ static int mod_duo_gpio_init(void)
 // Headphone Volume Control Pin Configuration - TODO: Create a separate driver for Headphone Aomplifier (LM4811).
     err = script_parser_fetch("mod_duo_souncard_para", "hp_vol_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"hp_vol_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"hp_vol_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // hp_gpio_handler[0] = gpio_request_ex("mod_duo_souncard_para", "hp_vol_pin");
@@ -264,7 +264,7 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "hp_clk_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"hp_clk_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"hp_clk_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // hp_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "hp_clk_pin");
@@ -275,7 +275,7 @@ static int mod_duo_gpio_init(void)
 // True Bypass Control Pin Configuration
     err = script_parser_fetch("mod_duo_souncard_para", "bypass_a_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"bypass_a_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"bypass_a_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // bypass_gpio_handler[0] = gpio_request_ex("mod_duo_souncard_para", "bypass_a_pin");
@@ -285,24 +285,13 @@ static int mod_duo_gpio_init(void)
 
     err = script_parser_fetch("mod_duo_souncard_para", "bypass_b_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"bypass_b_pin\" gpio handler, already used by others?", __FUNCTION__);
+        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"bypass_b_pin\" gpio handler, already used by others?.", __FUNCTION__);
         return -EBUSY;
     }
     // bypass_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "bypass_b_pin");
 	// gpio_set_one_pin_io_status(bypass_gpio_handler[1], PIN_DIR_OUT, NULL);
 
 	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "bypass_b_pin");
-
-// Codec Reset Pin Configuration
-	err = script_parser_fetch("mod_duo_souncard_para", "codec_rst_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_souncard_para\" \"codec_rst_pin\" gpio handler, already used by others?", __FUNCTION__);
-        return -EBUSY;
-    }
-    // codec_rst_gpio_handler[1] = gpio_request_ex("mod_duo_souncard_para", "codec_rst_pin");
-	// gpio_set_one_pin_io_status(codec_rst_gpio_handler, PIN_DIR_OUT, NULL);
-
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "codec_rst_pin");
 
 	printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
 
@@ -314,7 +303,7 @@ static int mod_duo_gpio_init(void)
 */
 static void mod_duo_gpio_release(void)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	// gpio_free(GPIO_CODEC_RESET); - TODO: Device Tree implementation for mainline Kernel.
 	//gpio_release(jfet_swa_gpio_handler[0], 0);
@@ -352,7 +341,7 @@ static void mod_duo_gpio_release(void)
 */
 static void mod_duo_set_impedance(int channel, int type)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	switch(channel)
 	{
@@ -495,6 +484,7 @@ static void mod_duo_set_impedance(int channel, int type)
 			break;
 		}
 	}
+
 	return;
 }
 
@@ -503,7 +493,7 @@ static void mod_duo_set_impedance(int channel, int type)
 */
 static void mod_duo_set_bypass(int channel, bool en)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	switch(channel)
 	{
@@ -549,6 +539,13 @@ static void mod_duo_set_bypass(int channel, bool en)
 
 /* 
 * TODO: Function description.
+* TODO: Check if the _set_fmt and _setsysclk of cpu_dai and codec_dai should really be called here. 
+* TODO: I think the functions should be called on mod_duo_audio_init. 
+* TODO: This function is beeing called by aplay every time.
+* TODO: I think set_fmt and set_sysclk should be called once only on the initialization of the driver.
+* TODO: Compare with other machine drivers startup functions. Seems like it is used to update the DAPM external controllers (ALSA Mixer).
+* TODO: Could be on snd_soc_dai_link.init? Just asked on #alsa-soc.
+* TODO: Following #alsa-soc, try late_probe() (snd_soc_card) or init() (snd_soc_dai_link).
 */
 static int mod_duo_startup(struct snd_pcm_substream *substream)
 {
@@ -559,10 +556,10 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 	unsigned int fmt = 0;
 	unsigned int mclk = 24576000;	// MOD Duo Soun Card has an 2457600Hz external clock
 
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	// Initialize the CS4245 Codec Driver
-	fmt = 	SND_SOC_DAIFMT_I2S |		/* I2S mode */
+	fmt = 	SND_SOC_DAIFMT_I2S |	/* I2S mode */
     	 	SND_SOC_DAIFMT_CBS_CFS;	/* codec clk & FRM slave  */
 
 	//call cs4245_set_dai_fmt (CS4245 Codec Driver) - CODEC DAI.
@@ -576,23 +573,24 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 		return ret;
 
 	// Initialize the I2S Plataform Driver
-	fmt = 	SUNXI_IISCTL_MS |		// codec clk & frm slave.
-			SND_SOC_DAIFMT_I2S |	// I2S mode
-			SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_32BCLK |	// Word Size = 32.
-			SND_SOC_DAIFMT_NB_NF;	// normal bit clock + frame.
+	fmt = 	SND_SOC_DAIFMT_CBS_CFS |					// codec clk & frm slave.
+			SND_SOC_DAIFMT_I2S |						// I2S mode
+			SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_24BCLK |	// Word Size = 32.
+			SND_SOC_DAIFMT_NB_NF;						// normal bit clock + frame.
 
 	//call sunxi_i2s_set_fmt (I2S Plataform Driver)- CPU DAI.
 	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
 	if (ret < 0)
 		return ret;
 
-	mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
-	mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
-	mod_duo_set_bypass(CHANNEL_A, 0);
-	mod_duo_set_bypass(CHANNEL_B, 0);
+	// mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
+	// mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
+	// mod_duo_set_bypass(CHANNEL_A, 0);
+	// mod_duo_set_bypass(CHANNEL_B, 0);
 //	mod_duo_enable_audio(true);
 
-	return ret;
+//	return ret;
+	return 0;
 }
 
 /* 
@@ -600,7 +598,7 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 */
 static void mod_duo_shutdown(struct snd_pcm_substream *substream)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 //	mod_duo_enable_audio(false);	// CS4245 in reset.
 }
@@ -610,7 +608,7 @@ static void mod_duo_shutdown(struct snd_pcm_substream *substream)
 */
 static int mod_duo_analog_suspend(struct snd_soc_card *card)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 //	mod_duo_enable_audio(false);	// CS4245 in reset.
 	return 0;
@@ -621,7 +619,7 @@ static int mod_duo_analog_suspend(struct snd_soc_card *card)
 */
 static int mod_duo_analog_resume(struct snd_soc_card *card)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 //	mod_duo_enable_audio(true);		// CS4245 operational.
 	return 0;
@@ -637,25 +635,25 @@ static int mod_duo_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
-	printk("[IIS-0] mod_duo_cs4245_hw_params: codec_dai=(%s), cpu_dai=(%s)\n", codec_dai->name, cpu_dai->name);
-	printk("[IIS-0] mod_duo_cs4245_hw_params: channel num=(%d)\n", params_channels(params));
-	printk("[IIS-0] mod_duo_cs4245_hw_params: sample rate=(%u)\n", params_rate(params));
+	printk("[IIS-0] mod_duo_cs4245_hw_params: codec_dai=(%s), cpu_dai=(%s).\n", codec_dai->name, cpu_dai->name);
+	printk("[IIS-0] mod_duo_cs4245_hw_params: channel num=(%d).\n", params_channels(params));
+	printk("[IIS-0] mod_duo_cs4245_hw_params: sample rate=(%u).\n", params_rate(params));
 
 	switch (params_format(params)) 
 	{
 	case SNDRV_PCM_FORMAT_S16_LE:
-		printk("[IIS-0] mod_duo_cs4245_hw_params: format 16 bit\n");
+		printk("[IIS-0] mod_duo_cs4245_hw_params: format 16 bit.\n");
 		break;
 	case SNDRV_PCM_FORMAT_S20_3LE:
-		printk("[IIS-0] mod_duo_cs4245_hw_params: format 20 bit in 3 bytes\n");
+		printk("[IIS-0] mod_duo_cs4245_hw_params: format 20 bit in 3 bytes.\n");
 		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
-		printk("[IIS-0] mod_duo_cs4245_hw_params: format 24 bit in 4 bytes\n");
+		printk("[IIS-0] mod_duo_cs4245_hw_params: format 24 bit in 4 bytes.\n");
 		break;
 	default:
-		printk("[IIS-0] mod_duo_cs4245_hw_params: Unsupported format (%d)\n", (int)params_format(params));
+		printk("[IIS-0] mod_duo_cs4245_hw_params: Unsupported format (%d).\n", (int)params_format(params));
 	}
 
 	return 0;
@@ -696,24 +694,67 @@ static struct snd_soc_card snd_soc_mod_duo_soundcard = {
 	.resume_pre	= mod_duo_analog_resume,
 };
 
-static struct platform_device *mod_duo_audio_device;
+// /*
+// * TODO: Function description.
+// */
+// static int __devinit mod_duo_probe(struct platform_device *pdev)
+// {
+// 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
+// 	snd_soc_mod_duo_soundcard.dev = &pdev->dev;
+// 	return snd_soc_register_card(&snd_soc_mod_duo_soundcard);
+// }
+
+// /*
+// * TODO: Function description.
+// */
+// static int __devexit mod_duo_remove(struct platform_device *pdev)
+// {
+// 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+
+// 	snd_soc_unregister_card(&snd_soc_sunxi_sndi2s);
+// 	return 0;
+// }
+
+// /*
+// *
+// */
+static struct platform_device *mod_duo_audio_device;
+// static struct platform_device mod_duo_audio_device = {
+// 	.name = "MOD-Duo-Sound-Card",
+// };
+
+// /*
+// *
+// */
+// static struct platform_driver mod_duo_audio_driver = {
+// 	.probe = mod_duo_probe,
+// 	.remove = __devexit_p(mod_duo_remove),
+// 	.driver = {
+// 		.name = "MOD-Duo-Sound-Card",
+// 		.owner = THIS_MODULE,
+// 	},
+// };
+
+/*
+*
+*/
 static int __init mod_duo_audio_init(void)
 {
 	int ret, i2s_used;
 
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	ret = script_parser_fetch("i2s_para", "i2s_used", &i2s_used, 1);
 	if (ret != 0 || !i2s_used)
 		return -ENODEV;
 
 	/* Register analog device */
-	mod_duo_audio_device = platform_device_alloc("soc-audio", 0);
+	mod_duo_audio_device = platform_device_alloc("soc-audio", 0);	// TODO: Check memory integrity with variable "mod_duo_audio_device".
 	if (!mod_duo_audio_device)
 		return -ENOMEM;
 	else
-		printk("[MOD Duo Machine Driver] Plataform Device Allocated\n");
+		printk("[MOD Duo Machine Driver] Plataform Device Allocated.\n");
 
 //	platform_set_drvdata(mod_duo_audio_device, &snd_soc_mod_duo_dai);
 	platform_set_drvdata(mod_duo_audio_device, &snd_soc_mod_duo_soundcard);
@@ -736,16 +777,23 @@ static int __init mod_duo_audio_init(void)
 		mod_duo_set_impedance(CHANNEL_B, PAD_OFF);
 		mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
 		mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
-		mod_duo_set_bypass(CHANNEL_A, 0);
-		mod_duo_set_bypass(CHANNEL_B, 0);
+		mod_duo_set_bypass(CHANNEL_A, PROCESS);
+		mod_duo_set_bypass(CHANNEL_B, PROCESS);
+
+		// mod_duo_set_bypass(CHANNEL_A, BYPASS);
+		// mod_duo_set_bypass(CHANNEL_B, BYPASS);
+
 		// mod_duo_enable_audio(true);
 	}
 	return 0;
 }
 
+/*
+*
+*/
 static void __exit mod_duo_audio_exit(void)
 {
-	printk("[MOD Duo Machine Driver]Entered %s\n", __func__);
+	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	if(mod_duo_used)
 	{

@@ -33,7 +33,7 @@
 /* slave mode flag*/
 static int sunxi_i2s_slave = 0;
 
-#ifdef ENFORCE_RATES
+#ifdef ENFORCE_RATES	// TODO: Code cleaning. Seems that this define is neve used.
 static struct snd_pcm_hw_constraint_list hw_constraints_rates = {
 	.count	= ARRAY_SIZE(rates),
 	.list	= rates,
@@ -167,12 +167,12 @@ static __extclk_set_inf  EXTCLK_INF[] =
 static int sunxi_sndi2s_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
-	#ifdef ENFORCE_RATES
+	#ifdef ENFORCE_RATES	// TODO: Code cleaning. Seems that this define is never used.
 		struct snd_pcm_runtime *runtime = substream->runtime;;
 	#endif
 
 	if (!ret) {
-	#ifdef ENFORCE_RATES
+	#ifdef ENFORCE_RATES	// TODO: Code cleaning. Seems that this define is never used.
 		ret = snd_pcm_hw_constraint_list(runtime, 0,
 						 SNDRV_PCM_HW_PARAM_RATE,
 						 &hw_constraints_rates);

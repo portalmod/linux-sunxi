@@ -63,6 +63,60 @@ struct cs4245_private {
 
 };
 
+/**
+ * struct cs4270_mode_ratios - clock ratio tables
+ * @ratio: the ratio of MCLK to the sample rate
+ * @speed_mode: the Speed Mode bits to set in the Mode Control register for
+ *              this ratio
+ * @mclk: the Ratio Select bits to set in the Mode Control register for this
+ *        ratio
+ *
+ * The data for this chart is taken from Table 5 of the CS4270 reference
+ * manual.
+ *
+ * This table is used to determine how to program the Mode Control register.
+ * It is also used by cs4270_set_dai_sysclk() to tell ALSA which sampling
+ * rates the CS4270 currently supports.
+ *
+ * @speed_mode is the corresponding bit pattern to be written to the
+ * MODE bits of the Mode Control Register
+ *
+ * @mclk is the corresponding bit pattern to be wirten to the MCLK bits of
+ * the Mode Control Register.
+ *
+ * In situations where a single ratio is represented by multiple speed
+ * modes, we favor the slowest speed.  E.g, for a ratio of 128, we pick
+ * double-speed instead of quad-speed.  However, the CS4270 errata states
+ * that divide-By-1.5 can cause failures, so we avoid that mode where
+ * possible.
+ *
+ * Errata: There is an errata for the CS4270 where divide-by-1.5 does not
+ * work if Vd is 3.3V.  If this effects you, select the
+ * CONFIG_SND_SOC_CS4270_VD33_ERRATA Kconfig option, and the driver will
+ * never select any sample rates that require divide-by-1.5.
+ */
+struct cs4245_mode_ratios {
+	unsigned int ratio;
+	u8 speed_mode;
+	u8 mclk;
+};
+
+static struct cs4245_mode_ratios cs4270_mode_ratios[] = {
+	{64, CS4270_MODE_4X, CS4270_MODE_DIV1},
+#ifndef CONFIG_SND_SOC_CS4270_VD33_ERRATA
+	{96, CS4270_MODE_4X, CS4270_MODE_DIV15},
+#endif
+	{128, CS4270_MODE_2X, CS4270_MODE_DIV1},
+	{192, CS4270_MODE_4X, CS4270_MODE_DIV3},
+	{256, CS4270_MODE_1X, CS4270_MODE_DIV1},
+	{384, CS4270_MODE_2X, CS4270_MODE_DIV3},
+	{512, CS4270_MODE_1X, CS4270_MODE_DIV2},
+	{768, CS4270_MODE_1X, CS4270_MODE_DIV3},
+	{1024, CS4270_MODE_1X, CS4270_MODE_DIV4}
+};
+
+#define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
+
 static u32 cs4245_gpio_handler = 0;
 
 /**
@@ -118,18 +172,18 @@ static u32 cs4245_gpio_handler = 0;
 */
 static void cs4245_reset(bool en)
 {
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	if (CODEC_ENABLE)
 	{
 		// gpio_write_one_pin_value(codec_rst_gpio_handler, 1, "codec_rst_pin");
 		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_ENABLE, "codec_rst_pin");
-		printk("[CS4245]Codec Enabled - Reset = %u\n", CODEC_ENABLE);
+		printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_ENABLE);
 	}
 	else {
 		// gpio_write_one_pin_value(codec_rst_gpio_handler, 0, "codec_rst_pin");
 		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_DISABLE, "codec_rst_pin");
-		printk("[CS4245]Codec Enabled - Reset = %u\n", CODEC_DISABLE);
+		printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_DISABLE);
 	}
 	return;
 }
@@ -145,14 +199,14 @@ static void cs4245_reset(bool en)
 */
 static int cs4245_reg_is_readable(struct snd_soc_codec *codec, unsigned int reg)
 {
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	return (reg >= CS4245_FIRSTREG) && (reg <= CS4245_LASTREG);
 }
 
 static int cs4245_reg_is_volatile(struct snd_soc_codec *codec, unsigned int reg)
 {
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	/* Unreadable registers are considered volatile */
 	if ((reg < CS4245_FIRSTREG) || (reg > CS4245_LASTREG))
@@ -217,7 +271,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	cs4245->mclk = freq;
 	return 0;
@@ -228,7 +282,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 */
 static int cs4245_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
 {
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 /* cleaning code
 	hdmi_parameter.fs_between = div;
@@ -256,9 +310,9 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
-	/* set DAI format */
+	/* set DAI format */ // TODO: Implement format configuration.
 	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
 	case SND_SOC_DAIFMT_I2S:
 	case SND_SOC_DAIFMT_RIGHT_J:
@@ -266,7 +320,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 		cs4245->dai_fmt = format;
 		break;
 	default:
-		dev_err(codec->dev, "invalid dai format\n");
+		dev_err(codec->dev, "[CS4245]Invalid dai format.\n");
 		return -EINVAL;
 	}
 
@@ -283,7 +337,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 		break;
 	default:
 		/* all other modes are unsupported by the hardware */
-		dev_err(codec->dev, "Unknown master/slave configuration\n");
+		dev_err(codec->dev, "[CS4245]Unknown master/slave configuration.\n");
 		return -EINVAL;
 	}
 	return 0;
@@ -298,19 +352,23 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
  */
 static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 {
-	struct snd_soc_codec *codec = dai->codec;
-	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
-	int reg3;
+	// struct snd_soc_codec *codec = dai->codec;
+	// // struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
+	// int reg3;
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
-	reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+	printk("[CS4245]Digital Mute Set to %d.\n", mute);
 
-	if (mute)
-		reg3 |= CS4245_MUTE_DAC;
-	else 
-		reg3 &= ~(CS4245_MUTE_DAC);
-	return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg3);
+	// reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+
+	// if (mute)
+	// 	reg3 |= CS4245_MUTE_DAC;
+	// else 
+	// 	reg3 &= ~(CS4245_MUTE_DAC);
+	// return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg3);
+
+	return 0;
 }
 
 /**
@@ -342,7 +400,7 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 
 	// TODO: Implement configuration of salmple rate, bit resolution and channel selection.
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	// params_format(params);
 	// params_rate(params);
@@ -364,13 +422,14 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
  *
  * This function is called when ASoC has all the pieces it needs to
  * instantiate a sound driver.
+ * Called after loading Machine Driver driver/module. Called after/in machine driver *_init (mod_duo_audio_init).
  */
 static int cs4245_probe(struct snd_soc_codec *codec)
 {
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret, reg;
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	/* Tell ASoC what kind of I/O to use to read the registers.  ASoC will
 	 * then do the I2C transactions itself.
@@ -378,44 +437,47 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	ret = snd_soc_codec_set_cache_io(codec, 8, 8, cs4245->control_type);
 	if (ret < 0) {
 		//dev_err(codec->dev, "failed to set cache I/O (ret=%i)\n", ret);
-		printk("[CS4245]Failed to set cache I/O (ret=%i)\n", ret);
+		printk("[CS4245]Failed to set cache I/O (ret=%i).\n", ret);
 		return ret;
 	}
 	else
-		printk("[CS4245]Sucess to set cache I/O (ret=%i)\n", ret);
+		printk("[CS4245]Sucess to set cache I/O (ret=%i).\n", ret);
 
 	/* 
 	 * Disable Power Down.
 	 */
-	ret = snd_soc_update_bits(codec, CS4245_POWER_CTRL, 0x01, 0x00);
+
+//	ret = snd_soc_update_bits(codec, CS4245_POWER_CTRL, 0xff, 0x00);	// Parameters: (snd_soc_codec * codec, unsigned short reg, unsigned int mask, unsigned int value)
+
+	ret = snd_soc_write(codec, CS4245_POWER_CTRL, 0);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Fail to disable power down failed.\n");
 		return ret;
 	}
 	else
-		printk("[CS4245]i2c write sucess\n");
+		printk("[CS4245]Power down disabled.\n");
 
 	/* Configure the CODEC registers */
 	/* DAC Control */
 
-	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_MASTER | CS4245_DAC_DIF_I2S;
+	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_DIF_I2S | CS4245_DAC_MASTER;
 
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
 	if (ret < 0) {
 		//dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure DAC Control 1 register.\n");
 		return ret;
 	}
 	else
-		printk("[CS4245]CS4245 DAC Control 1 register configured\n");
+		printk("[CS4245]CS4245 DAC Control 1 register configured.\n");
 
 	/* ADC Control */
 	reg = CS4245_ADC_FM_SINGLE | CS4245_ADC_DIF_I2S | CS4245_HPF_FREEZE;
 	ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure ADC Control register.\n");
 		return ret;
 	}
 	else
@@ -426,30 +488,29 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	ret = snd_soc_write(codec, CS4245_MCLK_FREQ, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure Master Clock Frequency register.\n");
 		return ret;
 	}
 	else
-		printk("[CS4245]CS4245 Master Clock Frequency register configured\n");
+		printk("[CS4245]CS4245 Master Clock Frequency register configured.\n");
 
 	/* Signal Selection */
-	reg = CS4245_A_OUT_SEL_DAC;
+	reg = CS4245_A_OUT_SEL_HIZ;
 	ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure Signal Selection register.\n");
 		return ret;
 	}
 	else
-		printk("[I2S]CS4245 Signal Selection register configured\n");
-
+		printk("[I2S]CS4245 Signal Selection register configured.\n");
 
 	/* ADC Input Control */
 	reg = CS4245_PGA_SOFT | CS4245_PGA_ZERO | CS4245_SEL_INPUT_4;
 	ret = snd_soc_write(codec, CS4245_ANALOG_IN, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure ADC Input Control register.\n");
 		return ret;
 	}
 	else
@@ -461,11 +522,33 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_2, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]i2c write failed\n");
+		printk("[CS4245]Failed to configure DAC Control 2 register.\n");
 		return ret;
 	}
 	else
-		printk("[I2S]CS4245 DAC COntrol 2 register configured\n");
+		printk("[I2S]CS4245 DAC COntrol 2 register configured.\n");
+
+
+	// /* Digital Mute */
+	// reg = CS4245_DAC_SOFT | CS4245_DAC_ZERO;
+	// ret = snd_soc_write(codec, CS4245_DAC_CTRL_2, reg);
+	// if (ret < 0) {
+	// 	// dev_err(codec->dev, "i2c write failed\n");
+	// 	printk("[CS4245]Failed to configure DAC Control 2 register.\n");
+	// 	return ret;
+	// }
+	// else
+	// 	printk("[I2S]CS4245 DAC COntrol 2 register configured.\n");
+
+
+	// reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+
+	// if (mute)
+	// 	reg3 |= CS4245_MUTE_DAC;
+	// else 
+	// 	reg3 &= ~(CS4245_MUTE_DAC);
+	// return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg3);
+
 
 	return ret;
 }
@@ -546,45 +629,51 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
 
 	int ret;
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	/* Verify that we have a CS4245 */
 	ret = i2c_smbus_read_byte_data(i2c_client, CS4245_CHIP_ID);
 	if (ret < 0) {
 		//dev_err(&i2c_client->dev, "failed to read i2c at addr %X\n", i2c_client->addr);
-		printk("[CS4245]Failed to read i2c at addr 0x%X\n", i2c_client->addr);
+		printk("[CS4245]Failed to read i2c at addr 0x%X.\n", i2c_client->addr);
 		return ret;
 	}
 	else
-		printk("[CS4245]Sucess to read i2c at addr %X\n", i2c_client->addr);
+		printk("[CS4245]Sucess to read i2c at addr %X.\n", i2c_client->addr);
 
 	/* The top four bits of the chip ID should be 1100. */
 	if ((ret & 0xF0) != 0xC0) {
 		//dev_err(&i2c_client->dev, "device at addr %X is not a CS4245\n", i2c_client->addr);
-		printk("[CS4245]Device at addr %X is not a CS4245\n", i2c_client->addr);
+		printk("[CS4245]Device at addr %X is not a CS4245.\n", i2c_client->addr);
 		return -ENODEV;
 	}
 	else
-		printk("[CS4245]Device at addr %X is a CS4245\n", i2c_client->addr);
+		printk("[CS4245]Device at addr %X is a CS4245.\n", i2c_client->addr);
 
 	// dev_info(&i2c_client->dev, "found device at i2c address %X\n", i2c_client->addr);
 	// dev_info(&i2c_client->dev, "hardware revision %X\n", ret & 0xF);
 
-	printk("[CS4245]Found device at i2c address %X\n", i2c_client->addr);
-	printk("[CS4245]Hardware revision %X\n", ret & 0xF);
+	printk("[CS4245]Found device at i2c address %X.\n", i2c_client->addr);
+	printk("[CS4245]Hardware revision %X.\n", ret & 0xF);
 
 	cs4245 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs4245_private), GFP_KERNEL);
 	if (!cs4245) {
 		//dev_err(&i2c_client->dev, "could not allocate codec\n");
-		printk("[CS4245]Could not allocate codec\n");
+		printk("[CS4245]Could not allocate codec (devm_kzalloc).\n");
 		return -ENOMEM;
 	}
+	else
+		printk("[CS4245]CODEC allocated (devm_kzalloc).\n");
 
 	cs4245->control_type = SND_SOC_I2C;
 
 	i2c_set_clientdata(i2c_client, cs4245);
 
 	ret = snd_soc_register_codec(&i2c_client->dev, &soc_codec_device_cs4245, &cs4245_dai, 1);
+	if(ret != 0)
+		printk("[CS4245]Could not register snd codec (snd_soc_register_codec).\n");
+	else
+		printk("[CS4245]CODEC registered (snd_soc_register_codec).\n");
 	return ret;
 }
 
@@ -597,7 +686,7 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
 static int cs4245_i2c_remove(struct i2c_client *i2c_client)
 {
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	snd_soc_unregister_codec(&i2c_client->dev);
 	return 0;
@@ -619,13 +708,17 @@ static struct i2c_driver cs4245_i2c_driver = {
 	.remove = cs4245_i2c_remove,
 };
 
+/*
+* TODO: Function description.
+* Initial function called when loading the module.
+*/
 static int __init cs4245_init(void)
 {
 	int ret = 0;
 	int codec_used = 0;
 	script_gpio_set_t info;
 
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	ret = script_parser_fetch("codec_para", "codec_used", &codec_used, 1);
 	if(ret != 0 || !codec_used)
@@ -648,9 +741,9 @@ static int __init cs4245_init(void)
 	gpio_set_one_pin_io_status(cs4245_gpio_handler, 1, "codec_rst_pin");
 	cs4245_reset(CODEC_DISABLE);
 
-	ret = i2c_add_driver(&cs4245_i2c_driver);
+	ret = i2c_add_driver(&cs4245_i2c_driver);	// This call also cs4245_i2c_probe
 	if (ret != 0) {
-		printk(KERN_ERR "Failed to register CS4245 I2C driver: %d\n", ret);
+		printk(KERN_ERR "Failed to register CS4245 I2C driver: %d.\n", ret);
 	}
 	else
 		printk("Succes to register CS4245 I2C driver");
@@ -663,7 +756,7 @@ module_init(cs4245_init);
 */
 static void __exit cs4245_exit(void)
 {
-	printk("[CS4245]Entered %s\n", __func__);
+	printk("[CS4245]Entered %s.\n", __func__);
 
 	cs4245_reset(CODEC_DISABLE);
 

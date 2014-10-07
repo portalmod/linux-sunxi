@@ -51,11 +51,13 @@ static const struct snd_pcm_hardware sunxi_pcm_hardware = {
 	.channels_min		= 1,
 	.channels_max		= 2,
 	.buffer_bytes_max	= 128*1024,    	// value must be (2^n)Kbyte size
-	.period_bytes_min	= 1024*4,		//1024*4,
+//	.period_bytes_min	= 1024*4,		// 1024*4,
+	.period_bytes_min	= 16*2,			// Value following the sunxi-codec.diff patch.
 	.period_bytes_max	= 1024*32,		//1024*32,
-	.periods_min		= 4,			//4,
+	// .periods_min		= 4,			// 4,
+	.periods_min		= 2,			// Value following the sunxi-codec.diff patch.
 	.periods_max		= 8,			//8,
-	.fifo_size		= 128,				//32,
+	.fifo_size		= 128,				// 32,
 };
 
 struct sunxi_runtime_data {
@@ -76,8 +78,10 @@ static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
 	dma_addr_t pos = prtd->dma_pos;
 	unsigned int limit;
 	int ret;
-
 	unsigned long len = prtd->dma_period;
+
+//	printk("[I2S-DMA]Entered %s.\n", __func__);
+
   	limit = prtd->dma_limit;
   	while(prtd->dma_loaded < limit) {
 		if((pos + len) > prtd->dma_end) {
@@ -103,6 +107,8 @@ static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
 	struct sunxi_runtime_data *prtd;
 	struct snd_pcm_substream *substream = dev_id;
 
+//	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	prtd = substream->runtime->private_data;
 	if (substream) {
 		snd_pcm_period_elapsed(substream);
@@ -123,10 +129,11 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
 	struct sunxi_runtime_data *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	unsigned long totbytes = params_buffer_bytes(params);
-	struct sunxi_dma_params *dma =
-			snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
-
+	struct sunxi_dma_params *dma = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
 	int ret = 0;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	if (!dma)
 		return 0;
 
@@ -142,7 +149,7 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
 		dma_width = 32;
 		break;
 	}
-	/*printk("[IIS-0] sunxi_pcm_hw_params: dma width %d bit\n", dma_width);*/
+	printk("[I2S-DMA] sunxi_pcm_hw_params: dma width %d bit.\n", dma_width);
 
 	if (prtd->params == NULL) {
 		prtd->params = dma;
@@ -178,6 +185,8 @@ static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
 {
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	if (prtd->params)
 		sunxi_dma_flush(prtd->params);
 
@@ -196,6 +205,8 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 {
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 	int ret = 0;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	if (!prtd->params)
 		return 0;
@@ -216,7 +227,7 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		dma_config_t codec_dma_conf;
 		memset(&codec_dma_conf, 0, sizeof(codec_dma_conf));
 
-		/*printk("[IIS-0] sunxi_pcm_prepare: DMA data width=(%d)\n", dma_width);*/
+		printk("[I2S-DMA] sunxi_pcm_prepare: DMA data width=(%d).\n", dma_width);
 		if(dma_width > 16)
 		{
 			codec_dma_conf.xfer_type.src_data_width	= DATA_WIDTH_32BIT;
@@ -258,19 +269,21 @@ static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	int ret ;
 	spin_lock(&prtd->lock);
 
+//	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		printk("[IIS] dma trigger start\n");
-		printk("[IIS] 0x01c22400+0x24 = %#x, line= %d\n", readl(0xf1c22400+0x24), __LINE__);
+		printk("[I2S] dma trigger start.\n");
+		printk("[I2S] 0x01c22400+0x24 = %#x, line= %d.\n", readl(0xf1c22400+0x24), __LINE__);
 		sunxi_dma_start(prtd->params);
 		break;
 
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-        printk("[IIS] dma trigger stop\n");
+        printk("[I2S] dma trigger stop.\n");
 		sunxi_dma_stop(prtd->params);
 		break;
 
@@ -289,6 +302,8 @@ static snd_pcm_uframes_t sunxi_pcm_pointer(struct snd_pcm_substream *substream)
 	struct sunxi_runtime_data *prtd = runtime->private_data;
 	unsigned long res = 0;
 	snd_pcm_uframes_t offset = 0;
+
+//	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	spin_lock(&prtd->lock);
 	sunxi_dma_getcurposition(prtd->params,
@@ -312,6 +327,8 @@ static int sunxi_pcm_open(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct sunxi_runtime_data *prtd;
 
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	snd_pcm_hw_constraint_integer(runtime, SNDRV_PCM_HW_PARAM_PERIODS);
 	snd_soc_set_runtime_hwparams(substream, &sunxi_pcm_hardware);
 
@@ -330,15 +347,18 @@ static int sunxi_pcm_close(struct snd_pcm_substream *substream)
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct sunxi_runtime_data *prtd = runtime->private_data;
 
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	kfree(prtd);
 
 	return 0;
 }
 
-static int sunxi_pcm_mmap(struct snd_pcm_substream *substream,
-	struct vm_area_struct *vma)
+static int sunxi_pcm_mmap(struct snd_pcm_substream *substream, struct vm_area_struct *vma)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	return dma_mmap_writecombine(substream->pcm->card->dev, vma,
 				     runtime->dma_area,
@@ -364,6 +384,8 @@ static int sunxi_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	struct snd_dma_buffer *buf = &substream->dma_buffer;
 	size_t size = sunxi_pcm_hardware.buffer_bytes_max;
 
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
 	buf->private_data = NULL;
@@ -380,6 +402,8 @@ static void sunxi_pcm_free_dma_buffers(struct snd_pcm *pcm)
 	struct snd_pcm_substream *substream;
 	struct snd_dma_buffer *buf;
 	int stream;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	for (stream = 0; stream < 2; stream++) {
 		substream = pcm->streams[stream].substream;
@@ -403,6 +427,9 @@ static int sunxi_pcm_new(struct snd_soc_pcm_runtime *rtd)
 	struct snd_card *card = rtd->card->snd_card;
 	struct snd_pcm *pcm = rtd->pcm;
 	int ret = 0;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	if (!card->dev->dma_mask)
 		card->dev->dma_mask = &sunxi_pcm_mask;
 	if (!card->dev->coherent_dma_mask)
@@ -433,11 +460,25 @@ static struct snd_soc_platform_driver sunxi_soc_platform = {
 
 static int __devinit sunxi_i2s_pcm_probe(struct platform_device *pdev)
 {
-	return snd_soc_register_platform(&pdev->dev, &sunxi_soc_platform);
+	int err = 0;
+
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
+	if((err = snd_soc_register_platform(&pdev->dev, &sunxi_soc_platform)) < 0)
+	{
+		printk("[I2S-DMA]SOC plataform device registering error (snd_soc_register_platform).\n");
+		return err;
+	}
+	else
+		printk("[I2S-DMA]SOC plataform device registered (snd_soc_register_platform).\n");
+
+	return err;
 }
 
 static int __devexit sunxi_i2s_pcm_remove(struct platform_device *pdev)
 {
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
 	snd_soc_unregister_platform(&pdev->dev);
 	return 0;
 }
@@ -460,18 +501,33 @@ static struct platform_driver sunxi_i2s_pcm_driver = {
 static int __init sunxi_soc_platform_i2s_init(void)
 {
 	int err = 0;
-	if((err = platform_device_register(&sunxi_i2s_pcm_device)) < 0)
-		return err;
 
-	if ((err = platform_driver_register(&sunxi_i2s_pcm_driver)) < 0)
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
+	if((err = platform_device_register(&sunxi_i2s_pcm_device)) < 0)
+	{
+		printk("[I2S-DMA]Plataform device registering error (platform_device_register).\n");
 		return err;
+	}
+	else
+		printk("[I2S-DMA]Plataform device registered (platform_device_register).");
+	if ((err = platform_driver_register(&sunxi_i2s_pcm_driver)) < 0)
+	{
+		printk("[I2S-DMA]Plataform driver registering error (platform_driver_register).\n");
+		return err;
+	}
+	else
+		printk("[I2S-DMA]Plataform driver registered (platform_driver_register).\n");
+
 	return 0;
 }
 module_init(sunxi_soc_platform_i2s_init);
 
 static void __exit sunxi_soc_platform_i2s_exit(void)
 {
-	return platform_driver_unregister(&sunxi_i2s_pcm_driver);
+	printk("[I2S-DMA]Entered %s.\n", __func__);
+
+	return  platform_driver_unregister(&sunxi_i2s_pcm_driver);
 }
 module_exit(sunxi_soc_platform_i2s_exit);
 

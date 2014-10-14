@@ -59,131 +59,68 @@ struct cs4245_private {
 	enum snd_soc_control_type control_type;
 	unsigned int mclk;
 	unsigned int dai_fmt;
-	int slave_mode;
-
+	unsigned int mclk1;
+	unsigned int mclk2;
+	unsigned int dac_dai_fmt;	// TODO: Variable still not used anywhere, but set on _set_fmt.
+	unsigned int adc_dai_fmt;	// TODO: Variable still not used anywhere, but set on _set_fmt.
+	int dac_slave_mode;			// TODO: Variable still not used anywhere, but set on _set_fmt.
+	int adc_slave_mode;			// TODO: Variable still not used anywhere, but set on _set_fmt.
+	int async;					// TODO: Variable still not used anywhere.
 };
 
-/**
- * struct cs4270_mode_ratios - clock ratio tables
- * @ratio: the ratio of MCLK to the sample rate
- * @speed_mode: the Speed Mode bits to set in the Mode Control register for
- *              this ratio
- * @mclk: the Ratio Select bits to set in the Mode Control register for this
- *        ratio
- *
- * The data for this chart is taken from Table 5 of the CS4270 reference
- * manual.
- *
- * This table is used to determine how to program the Mode Control register.
- * It is also used by cs4270_set_dai_sysclk() to tell ALSA which sampling
- * rates the CS4270 currently supports.
- *
- * @speed_mode is the corresponding bit pattern to be written to the
- * MODE bits of the Mode Control Register
- *
- * @mclk is the corresponding bit pattern to be wirten to the MCLK bits of
- * the Mode Control Register.
- *
- * In situations where a single ratio is represented by multiple speed
- * modes, we favor the slowest speed.  E.g, for a ratio of 128, we pick
- * double-speed instead of quad-speed.  However, the CS4270 errata states
- * that divide-By-1.5 can cause failures, so we avoid that mode where
- * possible.
- *
- * Errata: There is an errata for the CS4270 where divide-by-1.5 does not
- * work if Vd is 3.3V.  If this effects you, select the
- * CONFIG_SND_SOC_CS4270_VD33_ERRATA Kconfig option, and the driver will
- * never select any sample rates that require divide-by-1.5.
- */
-struct cs4245_mode_ratios {
-	unsigned int ratio;
-	u8 speed_mode;
-	u8 mclk;
-};
-
-static struct cs4245_mode_ratios cs4270_mode_ratios[] = {
-	{64, CS4270_MODE_4X, CS4270_MODE_DIV1},
-#ifndef CONFIG_SND_SOC_CS4270_VD33_ERRATA
-	{96, CS4270_MODE_4X, CS4270_MODE_DIV15},
-#endif
-	{128, CS4270_MODE_2X, CS4270_MODE_DIV1},
-	{192, CS4270_MODE_4X, CS4270_MODE_DIV3},
-	{256, CS4270_MODE_1X, CS4270_MODE_DIV1},
-	{384, CS4270_MODE_2X, CS4270_MODE_DIV3},
-	{512, CS4270_MODE_1X, CS4270_MODE_DIV2},
-	{768, CS4270_MODE_1X, CS4270_MODE_DIV3},
-	{1024, CS4270_MODE_1X, CS4270_MODE_DIV4}
-};
-
-#define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
-
+// CS4245 Driver GPIO Handler - Reset control.
 static u32 cs4245_gpio_handler = 0;
 
-/**
- * struct cs4245_mode_ratios - clock ratio tables
- * @ratio: the ratio of MCLK to the sample rate
- * @speed_mode: the Speed Mode bits to set in the Mode Control register for
- *              this ratio
- * @mclk: the Ratio Select bits to set in the Mode Control register for this
- *        ratio
- *
- * The data for this chart is taken from Table 2 of the CS4245 reference
- * manual.
- *
- * This table is used to determine how to program the Mode Control register.
- * It is also used by cs4245_set_dai_sysclk() to tell ALSA which sampling
- * rates the CS4245 currently supports.
- *
- * @speed_mode is the corresponding bit pattern to be written to the
- * MODE bits of the Mode Control Register
- *
- * @mclk is the corresponding bit pattern to be wirten to the MCLK bits of
- * the Mode Control Register.
- *
- * In situations where a single ratio is represented by multiple speed
- * modes, we favor the slowest speed.  E.g, for a ratio of 128, we pick
- * double-speed instead of quad-speed. 
- *
- */
-
-// struct cs4245_mode_ratios {
-// 	unsigned int ratio;
-// 	u8 speed_mode;
-// 	u8 mclk;
-// };
-
-// static struct cs4245_mode_ratios cs4245_mode_ratios[] = {
-// 	{64, CS4245_DAC_FM_QUAD, CS4245_MCLK_1},
-// 	{96, CS4245_DAC_FM_QUAD, CS4245_MCLK_1_5},
-// 	{128, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1},
-// 	{192, CS4245_DAC_FM_DOUBLE, CS4245_MCLK_1_5},
-// 	{256, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1},
-// 	{384, CS4245_DAC_FM_SINGLE, CS4245_MCLK_1_5},
-// 	{512, CS4245_DAC_FM_SINGLE, CS4245_MCLK_2},
-// 	{768, CS4245_DAC_FM_SINGLE, CS4245_MCLK_3},
-// 	{1024, CS4245_DAC_FM_SINGLE, CS4245_MCLK_4}
-// };
-
-// // The number of MCLK/LRCK ratios supported by the CS4245
-// #define NUM_MCLK_RATIOS		ARRAY_SIZE(cs4245_mode_ratios)
+/*
+*
+*/
+static void cs4245_printk_register_values(struct snd_soc_codec *codec)
+{
+	int reg_val[12];
+	reg_val[0] = snd_soc_read(codec, CS4245_CHIP_ID);
+	reg_val[1] = snd_soc_read(codec, CS4245_POWER_CTRL);
+	reg_val[2] = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+	reg_val[3] = snd_soc_read(codec, CS4245_ADC_CTRL);
+	reg_val[4] = snd_soc_read(codec, CS4245_MCLK_FREQ);
+	reg_val[5] = snd_soc_read(codec, CS4245_SIGNAL_SEL);
+	reg_val[6] = snd_soc_read(codec, CS4245_PGA_B_CTRL);
+	reg_val[7] = snd_soc_read(codec, CS4245_PGA_A_CTRL);
+	reg_val[8] = snd_soc_read(codec, CS4245_ANALOG_IN);
+	reg_val[9] = snd_soc_read(codec, CS4245_DAC_A_CTRL);
+	reg_val[10] = snd_soc_read(codec, CS4245_DAC_B_CTRL);
+	reg_val[11] = snd_soc_read(codec, CS4245_DAC_CTRL_2);
+	printk("[CS4245]Register Values:\n");
+	printk("[CS4245]CS4245_CHIP_ID: 0x%X.\n", reg_val[0]);
+	printk("[CS4245]CS4245_POWER_CTRL: 0x%X.\n", reg_val[1]);
+	printk("[CS4245]CS4245_DAC_CTRL_1: 0x%X.\n", reg_val[2]);
+	printk("[CS4245]CS4245_ADC_CTRL: 0x%X.\n", reg_val[3]);
+	printk("[CS4245]CS4245_MCLK_FREQ: 0x%X.\n", reg_val[4]);
+	printk("[CS4245]CS4245_SIGNAL_SEL: 0x%X.\n", reg_val[5]);
+	printk("[CS4245]CS4245_PGA_B_CTRL: 0x%X.\n", reg_val[6]);
+	printk("[CS4245]CS4245_PGA_A_CTRL: 0x%X.\n", reg_val[7]);
+	printk("[CS4245]CS4245_ANALOG_IN: 0x%X.\n", reg_val[8]);
+	printk("[CS4245]CS4245_DAC_A_CTRL: 0x%X.\n", reg_val[9]);
+	printk("[CS4245]CS4245_DAC_B_CTRL: 0x%X.\n", reg_val[10]);
+	printk("[CS4245]CS4245_DAC_CTRL_2: 0x%X.\n", reg_val[11]);
+	return;
+}
 
 /*
 * TODO: Function description.
 */
 static void cs4245_reset(bool en)
 {
-	printk("[CS4245]Entered %s.\n", __func__);
+	// printk("[CS4245]Entered %s.\n", __func__);
 
-	if (CODEC_ENABLE)
+	if(CODEC_ENABLE)
 	{
-		// gpio_write_one_pin_value(codec_rst_gpio_handler, 1, "codec_rst_pin");
 		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_ENABLE, "codec_rst_pin");
-		printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_ENABLE);
+		// printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_ENABLE);
 	}
-	else {
-		// gpio_write_one_pin_value(codec_rst_gpio_handler, 0, "codec_rst_pin");
+	else 
+	{
 		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_DISABLE, "codec_rst_pin");
-		printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_DISABLE);
+		// printk("[CS4245]Codec Disabled - Reset = %u.\n", CODEC_DISABLE);
 	}
 	return;
 }
@@ -199,14 +136,14 @@ static void cs4245_reset(bool en)
 */
 static int cs4245_reg_is_readable(struct snd_soc_codec *codec, unsigned int reg)
 {
-	printk("[CS4245]Entered %s.\n", __func__);
+//	printk("[CS4245]Entered %s.\n", __func__);
 
 	return (reg >= CS4245_FIRSTREG) && (reg <= CS4245_LASTREG);
 }
 
 static int cs4245_reg_is_volatile(struct snd_soc_codec *codec, unsigned int reg)
 {
-	printk("[CS4245]Entered %s.\n", __func__);
+//	printk("[CS4245]Entered %s.\n", __func__);
 
 	/* Unreadable registers are considered volatile */
 	if ((reg < CS4245_FIRSTREG) || (reg > CS4245_LASTREG))
@@ -271,22 +208,70 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 
-	printk("[CS4245]Entered %s.\n", __func__);
-
-	cs4245->mclk = freq;
+	int reg;
+	printk("[CS4245]Entered %s. ", __func__);
+ 	switch (clk_id)
+ 	{
+		case CS4245_MCLK1_SET:
+			printk("MCLK1 set.\n");
+			cs4245->mclk1 = freq;
+			break;
+		case CS4245_MCLK2_SET:
+			printk("MCLK2 set.\n");
+			cs4245->mclk2 = freq;
+			break;
+		case CS4245_MCLK_ASYNC_SET:
+			reg = snd_soc_read(codec, CS4245_SIGNAL_SEL);
+			if(dir == CS4245_ASYNCH)	// When this bit is set, the DAC and ADC may be operated at independent asynchronous sample rates derived from MCLK1 and MCLK2.
+			{
+				printk("Asynchronous mode set.\n");
+				reg |= CS4245_ASYNCH;
+			}
+			else 						// When this bit is cleared, the DAC and ADC must operate at synchronous sample rates derived from MCLK1.
+			{
+				printk("Synchronous mode set.\n");
+				reg &= ~(CS4245_ASYNCH);
+			}
+			return snd_soc_write(codec, CS4245_SIGNAL_SEL, reg);
+	}
 	return 0;
 }
 
 /*
 * TODO: Function description.
 */
-static int cs4245_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int div)
+static int cs4245_set_dai_clkdiv(struct snd_soc_dai *codec_dai, int div_id, int value)
 {
+	struct snd_soc_codec *codec = codec_dai->codec;
+	int reg;
+
 	printk("[CS4245]Entered %s.\n", __func__);
 
-/* cleaning code
-	hdmi_parameter.fs_between = div;
-*/
+ 	switch (div_id) {
+		case CS4245_MCLK1_DIV_SET:
+			reg = snd_soc_read(codec, CS4245_MCLK_FREQ);
+			reg &= ~(CS4245_MCLK1_MASK);
+			reg |= (value << CS4245_MCLK1_SHIFT);
+			return snd_soc_write(codec, CS4245_MCLK_FREQ, reg);
+		case CS4245_MCLK2_DIV_SET:
+			reg = snd_soc_read(codec, CS4245_MCLK_FREQ);
+			reg &= ~(CS4245_MCLK2_MASK);
+			reg |= (value << CS4245_MCLK2_SHIFT);
+			return snd_soc_write(codec, CS4245_MCLK_FREQ, reg);
+		case CS4245_DAC_FM_SET:
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_FM_MASK);
+			reg |= value;
+			return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+		case CS4245_ADC_FM_SET:
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg &= ~(CS4245_ADC_FM_MASK);
+			reg |= value;
+			return snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+		default:
+			printk("[CS4245]Invalid clock divisor id.\n");
+			return -EINVAL;
+	}
 	return 0;
 }
 
@@ -309,37 +294,181 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
+	int reg, ret;
 
 	printk("[CS4245]Entered %s.\n", __func__);
 
-	/* set DAI format */ // TODO: Implement format configuration.
-	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) {
-	case SND_SOC_DAIFMT_I2S:
-	case SND_SOC_DAIFMT_RIGHT_J:
-	case SND_SOC_DAIFMT_LEFT_J:
-		cs4245->dai_fmt = format;
-		break;
-	default:
-		dev_err(codec->dev, "[CS4245]Invalid dai format.\n");
-		return -EINVAL;
-	}
+	/* set DAI format */ 
+	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) 	// TODO: Implement CS4245_DAC_DIF_RJUST_16 DAC format configuration.
+	{
+		case SND_SOC_DAIFMT_LEFT_J:		// Sets both DAC and ADC formats.
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_DIF_MASK);
+			reg |= CS4245_DAC_DIF_LJUST;
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec dai format.\n");
+				return ret;
+			}
+			cs4245->dac_dai_fmt = SND_SOC_DAIFMT_LEFT_J;
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg &= ~(CS4245_ADC_DIF_MASK);
+			reg |= CS4245_ADC_DIF_LJUST;
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec dai format.\n");
+				return ret;
+			}
+			cs4245->adc_dai_fmt = SND_SOC_DAIFMT_LEFT_J;
+			break;
+		case SND_SOC_DAIFMT_I2S:		// Sets both DAC and ADC formats.
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_DIF_MASK);
+			reg |= CS4245_DAC_DIF_I2S;
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec dai format.\n");
+				return ret;
+			}
+			cs4245->dac_dai_fmt = SND_SOC_DAIFMT_I2S;
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg &= ~(CS4245_ADC_DIF_MASK);
+			reg |= CS4245_ADC_DIF_I2S;
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec dai format.\n");
+				return ret;
+			}
+			cs4245->adc_dai_fmt = SND_SOC_DAIFMT_I2S;
+			break;
+		case SND_SOC_DAIFMT_RIGHT_J:	// Only DAC supported.
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_DIF_MASK);
+			reg |= CS4245_DAC_DIF_RJUST_24;
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec dai format.\n");
+				return ret;
+			}
+			cs4245->dac_dai_fmt = SND_SOC_DAIFMT_RIGHT_J;
+			break;
+		default:
+			printk("[CS4245]Invalid dai format.\n");
+			return -EINVAL;
+ 	}
 
 	/* set master/slave audio interface */
 	/* The CS4245 has two serial interfaces, I2S1 and I2S2, which can both work as master or slave.
 	 * This driver implements the I2S2 interface allways as slave, with the LRCK2 signal connected do LRCK1 and SCLK2 signal connected to SCLK1.
-	 */
-	switch (format & SND_SOC_DAIFMT_MASTER_MASK) {
-	case SND_SOC_DAIFMT_CBS_CFS:	/* codec clk & FRM slave  */
-		cs4245->slave_mode = 1;
-		break;
-	case SND_SOC_DAIFMT_CBM_CFM:	/* codec clk & FRM master */
-		cs4245->slave_mode = 0;		// TODO - Make it generic. In MOD Duo Sound Card it should allways be master.
-		break;
-	default:
-		/* all other modes are unsupported by the hardware */
-		dev_err(codec->dev, "[CS4245]Unknown master/slave configuration.\n");
-		return -EINVAL;
-	}
+	 * ALSA defines (SND_SOC_DAIFMT_*) used in a different way, as the Codec DAC and ADC can be independently master o slave. And as the Codec is allways master clock slave (Needs an external clock.).
+ 	*/
+	switch (format & SND_SOC_DAIFMT_MASTER_MASK) 
+	{
+		case SND_SOC_DAIFMT_CBM_CFM:	// CS4245: DAC master ADC master (ALSA: codec clk & FRM master).
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg |= CS4245_DAC_MASTER;
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec DAC master/slave format.\n");
+				return ret;
+			}
+			cs4245->dac_slave_mode = 0;	
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg |= CS4245_ADC_MASTER;
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec ADC master/slave format.\n");
+				return ret;
+			}
+			cs4245->adc_slave_mode = 0;
+			break;
+		case SND_SOC_DAIFMT_CBS_CFM:	// CS4245: DAC slave ADC master (ALSA: codec clk slave & FRM master).
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_MASTER);
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec DAC master/slave format.\n");
+				return ret;
+			}
+			cs4245->dac_slave_mode = 1;	
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg |= CS4245_ADC_MASTER;
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec ADC master/slave format.\n");
+				return ret;
+			}
+			cs4245->adc_slave_mode = 0;
+			break;
+		case SND_SOC_DAIFMT_CBM_CFS:	// CS4245: DAC master ADC slave (ALSA: codec clk master & frame slave).
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg |= CS4245_DAC_MASTER;
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec DAC master/slave format.\n");
+				return ret;
+			}
+			cs4245->dac_slave_mode = 0;	
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg &= ~(CS4245_ADC_MASTER);
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec ADC master/slave format.\n");
+				return ret;
+			}
+			cs4245->adc_slave_mode = 1;
+			break;
+		case SND_SOC_DAIFMT_CBS_CFS:	// CS4245: DAC slave ADC slave (ALSA: codec clk & FRM slave).
+			// DAC
+			reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+			reg &= ~(CS4245_DAC_MASTER);
+			ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec DAC master/slave format.\n");
+				return ret;
+			}
+			cs4245->dac_slave_mode = 1;	
+			// ADC
+			reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+			reg &= ~(CS4245_ADC_MASTER);
+			ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+			if (ret < 0)
+			{
+				printk("[CS4245]Error setting the codec ADC master/slave format.\n");
+				return ret;
+			}
+			cs4245->adc_slave_mode = 1;
+			break;
+		default:
+			printk("[CS4245]Unknown master/slave configuration.\n");	/* all other modes are unsupported by the hardware */
+			return -EINVAL;
+ 	}
+
+	cs4245_printk_register_values(codec);
+
 	return 0;
 }
 
@@ -392,8 +521,8 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 			    struct snd_pcm_hw_params *params,
 			    struct snd_soc_dai *dai)
 {
-	// struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	// struct snd_soc_codec *codec = rtd->codec;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_codec *codec = rtd->codec;
 	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	// int ret;
 	// int reg;
@@ -401,6 +530,8 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 	// TODO: Implement configuration of salmple rate, bit resolution and channel selection.
 
 	printk("[CS4245]Entered %s.\n", __func__);
+
+	cs4245_printk_register_values(codec);
 
 	// params_format(params);
 	// params_rate(params);
@@ -428,7 +559,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 {
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret, reg;
-
+	
 	printk("[CS4245]Entered %s.\n", __func__);
 
 	/* Tell ASoC what kind of I/O to use to read the registers.  ASoC will
@@ -436,120 +567,94 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	 */
 	ret = snd_soc_codec_set_cache_io(codec, 8, 8, cs4245->control_type);
 	if (ret < 0) {
-		//dev_err(codec->dev, "failed to set cache I/O (ret=%i)\n", ret);
 		printk("[CS4245]Failed to set cache I/O (ret=%i).\n", ret);
 		return ret;
 	}
-	else
-		printk("[CS4245]Sucess to set cache I/O (ret=%i).\n", ret);
-
 	/* 
 	 * Disable Power Down.
 	 */
-
-//	ret = snd_soc_update_bits(codec, CS4245_POWER_CTRL, 0xff, 0x00);	// Parameters: (snd_soc_codec * codec, unsigned short reg, unsigned int mask, unsigned int value)
-
-	ret = snd_soc_write(codec, CS4245_POWER_CTRL, 0);
+	reg = CS4245_PDN_MIC;
+	ret = snd_soc_write(codec, CS4245_POWER_CTRL, reg);
 	if (ret < 0) {
-		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Fail to disable power down failed.\n");
+		printk("[CS4245]Power Control register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[CS4245]Power down disabled.\n");
-
-	/* Configure the CODEC registers */
-	/* DAC Control */
-
+	
+	/* Default configuration of the CODEC registers
+	 * - DAC and ADC formats = I2S, 24-bit data.
+	 * - DAC Master.
+	 * - ADC Slave.
+	 * - MCLK1 = 24.576MHz - synchronous operation.
+	 * - MCLK ratio = 512.
+	 * - Sampling frequency = 48kHz.
+	*/
+	cs4245->mclk1 = 24576;
+	cs4245->mclk2 = 0;
+	cs4245->dac_dai_fmt = SND_SOC_DAIFMT_I2S;
+	cs4245->adc_dai_fmt = SND_SOC_DAIFMT_I2S;
+	cs4245->dac_slave_mode = 0;
+	cs4245->adc_slave_mode = 1;
+	cs4245->async = 0;
+	/* DAC Control 1 */
 	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_DIF_I2S | CS4245_DAC_MASTER;
-
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
 	if (ret < 0) {
-		//dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure DAC Control 1 register.\n");
+		printk("[CS4245]DAC Control 1 register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[CS4245]CS4245 DAC Control 1 register configured.\n");
-
 	/* ADC Control */
 	reg = CS4245_ADC_FM_SINGLE | CS4245_ADC_DIF_I2S | CS4245_HPF_FREEZE;
 	ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure ADC Control register.\n");
+		printk("[CS4245]ADC Control register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[CS4245]CS4245 ADC Control register configured\n");
-
 	/* Master Clock Frequency */
 	reg = (CS4245_MCLK_2 << CS4245_MCLK1_SHIFT) | (CS4245_MCLK_2 << CS4245_MCLK2_SHIFT);
 	ret = snd_soc_write(codec, CS4245_MCLK_FREQ, reg);
 	if (ret < 0) {
-		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure Master Clock Frequency register.\n");
+		printk("[CS4245]Master Clock Frequency register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[CS4245]CS4245 Master Clock Frequency register configured.\n");
-
 	/* Signal Selection */
 	reg = CS4245_A_OUT_SEL_HIZ;
 	ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, reg);
 	if (ret < 0) {
-		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure Signal Selection register.\n");
+		printk("[CS4245]Master Signal Selection register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[I2S]CS4245 Signal Selection register configured.\n");
-
 	/* ADC Input Control */
 	reg = CS4245_PGA_SOFT | CS4245_PGA_ZERO | CS4245_SEL_INPUT_4;
 	ret = snd_soc_write(codec, CS4245_ANALOG_IN, reg);
 	if (ret < 0) {
-		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure ADC Input Control register.\n");
+		printk("[CS4245]ADC Input Control register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[I2S]CS4245 ADC Input Control register configured\n");
-
-
 	/* DAC Control 2 */
 	reg = CS4245_DAC_SOFT | CS4245_DAC_ZERO;
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_2, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
-		printk("[CS4245]Failed to configure DAC Control 2 register.\n");
+		printk("[CS4245]DAC Control 2 register configuration failed.\n");
 		return ret;
 	}
-	else
-		printk("[I2S]CS4245 DAC COntrol 2 register configured.\n");
-
-
-	// /* Digital Mute */
-	// reg = CS4245_DAC_SOFT | CS4245_DAC_ZERO;
-	// ret = snd_soc_write(codec, CS4245_DAC_CTRL_2, reg);
-	// if (ret < 0) {
-	// 	// dev_err(codec->dev, "i2c write failed\n");
-	// 	printk("[CS4245]Failed to configure DAC Control 2 register.\n");
-	// 	return ret;
-	// }
-	// else
-	// 	printk("[I2S]CS4245 DAC COntrol 2 register configured.\n");
-
-
-	// reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
-
-	// if (mute)
-	// 	reg3 |= CS4245_MUTE_DAC;
-	// else 
-	// 	reg3 &= ~(CS4245_MUTE_DAC);
-	// return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg3);
-
-
+	// Unmute DAC and ADC
+	reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+	reg &= ~(CS4245_MUTE_DAC);
+	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+	if (ret < 0) {
+		printk("[CS4245]DAC Control 1 register configuration failed.\n");
+		return ret;
+	}
+	reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+	reg &= ~(CS4245_MUTE_ADC);
+	ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+	if (ret < 0) {
+		printk("[CS4245]ADC Control register configuration failed.\n");
+		return ret;
+	}
+	printk("[CS4245]CODEC default register configuration complete.\n");
 	return ret;
 }
 
@@ -626,36 +731,27 @@ MODULE_DEVICE_TABLE(i2c, cs4245_id);
 static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_device_id *id)
 {
 	struct cs4245_private *cs4245;
-
 	int ret;
 
 	printk("[CS4245]Entered %s.\n", __func__);
-
+	
 	/* Verify that we have a CS4245 */
 	ret = i2c_smbus_read_byte_data(i2c_client, CS4245_CHIP_ID);
 	if (ret < 0) {
-		//dev_err(&i2c_client->dev, "failed to read i2c at addr %X\n", i2c_client->addr);
 		printk("[CS4245]Failed to read i2c at addr 0x%X.\n", i2c_client->addr);
 		return ret;
 	}
 	else
 		printk("[CS4245]Sucess to read i2c at addr %X.\n", i2c_client->addr);
-
 	/* The top four bits of the chip ID should be 1100. */
 	if ((ret & 0xF0) != 0xC0) {
-		//dev_err(&i2c_client->dev, "device at addr %X is not a CS4245\n", i2c_client->addr);
 		printk("[CS4245]Device at addr %X is not a CS4245.\n", i2c_client->addr);
 		return -ENODEV;
 	}
 	else
 		printk("[CS4245]Device at addr %X is a CS4245.\n", i2c_client->addr);
-
-	// dev_info(&i2c_client->dev, "found device at i2c address %X\n", i2c_client->addr);
-	// dev_info(&i2c_client->dev, "hardware revision %X\n", ret & 0xF);
-
 	printk("[CS4245]Found device at i2c address %X.\n", i2c_client->addr);
 	printk("[CS4245]Hardware revision %X.\n", ret & 0xF);
-
 	cs4245 = devm_kzalloc(&i2c_client->dev, sizeof(struct cs4245_private), GFP_KERNEL);
 	if (!cs4245) {
 		//dev_err(&i2c_client->dev, "could not allocate codec\n");
@@ -664,16 +760,14 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
 	}
 	else
 		printk("[CS4245]CODEC allocated (devm_kzalloc).\n");
-
 	cs4245->control_type = SND_SOC_I2C;
-
 	i2c_set_clientdata(i2c_client, cs4245);
-
 	ret = snd_soc_register_codec(&i2c_client->dev, &soc_codec_device_cs4245, &cs4245_dai, 1);
 	if(ret != 0)
 		printk("[CS4245]Could not register snd codec (snd_soc_register_codec).\n");
 	else
 		printk("[CS4245]CODEC registered (snd_soc_register_codec).\n");
+
 	return ret;
 }
 
@@ -685,7 +779,6 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
  */
 static int cs4245_i2c_remove(struct i2c_client *i2c_client)
 {
-
 	printk("[CS4245]Entered %s.\n", __func__);
 
 	snd_soc_unregister_codec(&i2c_client->dev);
@@ -726,9 +819,6 @@ static int __init cs4245_init(void)
 		printk(KERN_ERR "[CS4245]Codec CS4245 not used.");
 		return -ENODEV;
 	}
-	else
-		printk("[CS4245]Codec CS4245 used.\n");
-
 // Codec Reset Pin Configuration
 	cs4245_gpio_handler = gpio_request_ex("codec_para", NULL);
 	ret = script_parser_fetch("codec_para", "codec_rst_pin", (int *) &info, sizeof (script_gpio_set_t));
@@ -736,17 +826,12 @@ static int __init cs4245_init(void)
         printk(KERN_INFO "%s: can not get \"codec_para\" \"codec_rst_pin\" gpio handler, already used by others?", __FUNCTION__);
         return -EBUSY;
     }
-    else
-    	printk("[CS4245]Codec CS4245 reset pin configured.\n");
 	gpio_set_one_pin_io_status(cs4245_gpio_handler, 1, "codec_rst_pin");
-	cs4245_reset(CODEC_DISABLE);
-
+	cs4245_reset(CODEC_ENABLE);
 	ret = i2c_add_driver(&cs4245_i2c_driver);	// This call also cs4245_i2c_probe
 	if (ret != 0) {
-		printk(KERN_ERR "Failed to register CS4245 I2C driver: %d.\n", ret);
+		printk(KERN_ERR "[CS4245]Failed to register CS4245 I2C driver: %d.\n", ret);
 	}
-	else
-		printk("Succes to register CS4245 I2C driver");
 	return ret;
 }
 module_init(cs4245_init);

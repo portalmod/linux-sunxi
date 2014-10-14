@@ -150,3 +150,14 @@ Gain[5:0] 	|	Setting
 /* Codec Reset Pin Defines */
 #define CODEC_ENABLE	1
 #define CODEC_DISABLE	(!CODEC_ENABLE)
+
+/* Codec Master Clock Defines */
+#define CS4245_MCLK1_SET 		0 // Sets the Master Clock 1
+#define CS4245_MCLK2_SET 		1 // Sets the Master Clock 2
+#define CS4245_MCLK_ASYNC_SET 	2 // Sets the Synchronous mode.
+
+/* Codec Clock Divisors Defines */
+#define CS4245_MCLK1_DIV_SET			0
+#define CS4245_MCLK2_DIV_SET			1
+#define CS4245_DAC_FM_SET 				2
+#define CS4245_ADC_FM_SET 				3

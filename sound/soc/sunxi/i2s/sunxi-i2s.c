@@ -49,6 +49,8 @@ static int regsave[8];
 // Variables parsed from *.fex script file.
 static int i2s_used = 1;	
 
+// TODO: Initialize structure on probe, after register default configuration
+//static struct sunxi_i2s_info sunxi_iis;
 static struct sunxi_i2s_info sunxi_iis = {
 	.slave = 0,
 	.samp_fs = 48000,
@@ -205,6 +207,35 @@ static s32 sunxi_i2s_divisor_values(u32 * mclk_div, u32* bclk_div, u32* mclk)
 	return ret;
 }
 
+/*
+*
+*/
+static void sunxi_i2s_printk_register_values(void)
+{
+	int reg_val[8];
+
+	reg_val[0] = readl(sunxi_iis.regs + SUNXI_IISCTL);
+	reg_val[1] = readl(sunxi_iis.regs + SUNXI_IISFAT0);
+	reg_val[2] = readl(sunxi_iis.regs + SUNXI_IISFAT1);
+	reg_val[3] = readl(sunxi_iis.regs + SUNXI_IISFCTL);
+	reg_val[4] = readl(sunxi_iis.regs + SUNXI_IISINT);
+	reg_val[5] = readl(sunxi_iis.regs + SUNXI_IISCLKD);
+	reg_val[6] = readl(sunxi_iis.regs + SUNXI_TXCHSEL);
+	reg_val[7] = readl(sunxi_iis.regs + SUNXI_TXCHMAP);
+
+	printk("[I2S]Register Values:\n");
+	printk("[I2S]SUNXI_IISCTL: 0x%X.\n", reg_val[0]);
+	printk("[I2S]SUNXI_IISFAT0: 0x%X.\n", reg_val[1]);
+	printk("[I2S]SUNXI_IISFAT1: 0x%X.\n", reg_val[2]);
+	printk("[I2S]SUNXI_IISFCTL: 0x%X.\n", reg_val[3]);
+	printk("[I2S]SUNXI_IISINT: 0x%X.\n", reg_val[4]);
+	printk("[I2S]SUNXI_IISCLKD: 0x%X.\n", reg_val[5]);
+	printk("[I2S]SUNXI_TXCHSEL: 0x%X.\n", reg_val[6]);
+	printk("[I2S]SUNXI_TXCHMAP: 0x%X.\n", reg_val[7]);
+
+	return;
+}
+
 /* 
 * TODO: Function description.
 */
@@ -290,12 +321,12 @@ void sunxi_snd_txctrl_i2s(struct snd_pcm_substream *substream, int on)
 		reg_val |= SUNXI_IISINT_TXDRQEN;
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISINT);
 
-		//Global Enable Digital Audio Interface
-		reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-		if(sunxi_iis.slave)
-			reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
-		reg_val |= SUNXI_IISCTL_GEN;
-		writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+		// //Global Enable Digital Audio Interface
+		// reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
+		// if(sunxi_iis.slave)
+		// 	reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
+		// reg_val |= SUNXI_IISCTL_GEN;
+		// writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 
 	} else {
 		/* IIS TX DISABLE */
@@ -308,10 +339,10 @@ void sunxi_snd_txctrl_i2s(struct snd_pcm_substream *substream, int on)
 		reg_val &= ~SUNXI_IISINT_TXDRQEN;
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISINT);
 
-		//Global disable Digital Audio Interface
-		reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-		reg_val &= ~SUNXI_IISCTL_GEN;
-		writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+		// //Global disable Digital Audio Interface
+		// reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
+		// reg_val &= ~SUNXI_IISCTL_GEN;
+		// writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 	}
 
 	return;
@@ -342,12 +373,12 @@ void sunxi_snd_rxctrl_i2s(int on)
 		reg_val |= SUNXI_IISINT_RXDRQEN;
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISINT);
 
-		//Global Enable Digital Audio Interface
-		reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-		if(sunxi_iis.slave)
-			reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
-		reg_val |= SUNXI_IISCTL_GEN;
-		writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+		// //Global Enable Digital Audio Interface
+		// reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
+		// if(sunxi_iis.slave)
+		// 	reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
+		// reg_val |= SUNXI_IISCTL_GEN;
+		// writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 
 	} else {
 		/* IIS RX DISABLE */
@@ -360,10 +391,10 @@ void sunxi_snd_rxctrl_i2s(int on)
 		reg_val &= ~SUNXI_IISINT_RXDRQEN;
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISINT);
 
-		//Global disable Digital Audio Interface
-		reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-		reg_val &= ~SUNXI_IISCTL_GEN;
-		writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+		// //Global disable Digital Audio Interface
+		// reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
+		// reg_val &= ~SUNXI_IISCTL_GEN;
+		// writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 	}
 
 	return;
@@ -469,14 +500,14 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	switch(fmt & SND_SOC_DAIFMT_MASTER_MASK){
 		case SND_SOC_DAIFMT_CBS_CFS:   // codec clk & frm slave
 			reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
-			printk("[I2S] sunxi_i2s_set_fmt: Master Slave Select Slave.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Slave.\n");
 			break;
 		case SND_SOC_DAIFMT_CBM_CFM:   // codec clk & frm master
 			reg_val &= ~SUNXI_IISCTL_MS; // 0: Master!
-			printk("[I2S] sunxi_i2s_set_fmt: Master Slave Select Master.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Master.\n");
 			break;
 		default:
-			printk("[I2S] sunxi_i2s_set_fmt: Master Slave Select unknown mode mode\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Master-Slave Select unknown mode mode\n");
 			return -EINVAL;
 	}
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
@@ -484,44 +515,45 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	// I2S or PCM mode.
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
 	reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);	// Register Name in User Manual V1.2: DA_FAT0 - Digital Audio Format Register 0
-	switch(fmt & SND_SOC_DAIFMT_FORMAT_MASK){
+	switch(fmt & SND_SOC_DAIFMT_FORMAT_MASK)
+	{
 		case SND_SOC_DAIFMT_I2S:        /* I2S mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 			reg_val1 |= SUNXI_IISFAT0_FMT_I2S;
-			printk("[I2S] sunxi_i2s_set_fmt: Set I2S mode\n");
-			sunxi_iis.samp_format = 0;
+			printk("[I2S]sunxi_i2s_set_fmt: Set I2S mode\n");
+			sunxi_iis.samp_format = SND_SOC_DAIFMT_I2S;
 			break;
 		case SND_SOC_DAIFMT_RIGHT_J:    /* Right Justified mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 			reg_val1 |= SUNXI_IISFAT0_FMT_RGT;
-			printk("[I2S] sunxi_i2s_set_fmt: Set Right Justified mode\n");
-			sunxi_iis.samp_format = 1;
+			printk("[I2S]sunxi_i2s_set_fmt: Set Right Justified mode\n");
+			sunxi_iis.samp_format = SND_SOC_DAIFMT_RIGHT_J;
 			break;
 		case SND_SOC_DAIFMT_LEFT_J:     /* Left Justified mode */
 			reg_val &= ~SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 			reg_val1 |= SUNXI_IISFAT0_FMT_LFT;
-			printk("[I2S] sunxi_i2s_set_fmt: Set Left Justified mode\n");
-			sunxi_iis.samp_format = 2;
+			printk("[I2S]sunxi_i2s_set_fmt: Set Left Justified mode\n");
+			sunxi_iis.samp_format = SND_SOC_DAIFMT_LEFT_J;
 			break;
 		case SND_SOC_DAIFMT_DSP_A:      /* L data msb after FRM LRC */
 			reg_val |= SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 			reg_val1 &= ~SUNXI_IISFAT0_LRCP;
-			sunxi_iis.samp_format = 3;
-			printk("[I2S] sunxi_i2s_set_fmt: Set L data msb after FRM LRC mode\n");
+			sunxi_iis.samp_format = SND_SOC_DAIFMT_DSP_A;
+			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb after FRM LRC mode\n");
 			break;
 		case SND_SOC_DAIFMT_DSP_B:      /* L data msb during FRM LRC */
 			reg_val |= SUNXI_IISCTL_PCM;
 			reg_val1 &= ~SUNXI_IISFAT0_FMT_RVD;	// Clear FMT (Bit 1:0)
 			reg_val1 |= SUNXI_IISFAT0_LRCP;
-			sunxi_iis.samp_format = 4;
-			printk("[I2S] sunxi_i2s_set_fmt: Set L data msb during FRM LRC mode\n");
+			sunxi_iis.samp_format = SND_SOC_DAIFMT_DSP_B;
+			printk("[I2S]sunxi_i2s_set_fmt: Set L data msb during FRM LRC mode\n");
 			break;
 		default:
-			printk("[I2S] sunxi_i2s_set_fmt: Unknown mode\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode\n");
 			return -EINVAL;
 	}
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
@@ -529,76 +561,78 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 
 	// Word select Size
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-	printk("[I2S] sunxi_i2s_set_fmt: Word size = %d\n", sunxi_iis.ws_size);
-	switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_MASK){
+	switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_MASK)
+	{
 		case SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_16BCLK:
 			reg_val &= ~SUNXI_IISFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val |= SUNXI_IISFAT0_WSS_16BCLK;
 			sunxi_iis.ws_size = 16;
-			printk("[I2S] sunxi_i2s_set_fmt: Set word select size = 1.6\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 16.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_20BCLK:
 			reg_val &= ~SUNXI_IISFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val |= SUNXI_IISFAT0_WSS_20BCLK;
 			sunxi_iis.ws_size = 20;
-			printk("[I2S] sunxi_i2s_set_fmt: Set word select size = 20.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 20.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_24BCLK:
 			reg_val &= ~SUNXI_IISFAT0_WSS_32BCLK; /* clear word select size */
 			reg_val |= SUNXI_IISFAT0_WSS_24BCLK;
 			sunxi_iis.ws_size = 24;
-			printk("[I2S] sunxi_i2s_set_fmt: Set word select size = 24.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 24.\n");
 			break;
 		case SND_SOC_DAIFMT_SUNXI_IISFAT0_WSS_32BCLK:
 			reg_val |= SUNXI_IISFAT0_WSS_32BCLK;
 			sunxi_iis.ws_size = 32;
-			printk("[I2S] sunxi_i2s_set_fmt: Set word select size = 32.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Set word select size = 32.\n");
 			break;
 		default:
-			printk("[I2S] sunxi_i2s_set_fmt: Unknown mode.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode.\n");
 			break;
 	}
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
 
 	// Signal Inversion
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-	switch(fmt & SND_SOC_DAIFMT_INV_MASK){
+	switch(fmt & SND_SOC_DAIFMT_INV_MASK)
+	{
 		case SND_SOC_DAIFMT_NB_NF:     /* normal bit clock + frame */
 			reg_val &= ~SUNXI_IISFAT0_LRCP;
 			reg_val &= ~SUNXI_IISFAT0_BCP;
 			sunxi_iis.bclk_pol = 0;
 			sunxi_iis.lrc_pol = 0;
-			printk("[I2S] sunxi_i2s_set_fmt: Normal bit clock + frame\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Normal bit clock + frame\n");
 			break;
 		case SND_SOC_DAIFMT_NB_IF:     /* normal bclk + inverted frame */
 			reg_val |= SUNXI_IISFAT0_LRCP;
 			reg_val &= ~SUNXI_IISFAT0_BCP;
 			sunxi_iis.bclk_pol = 0;
 			sunxi_iis.lrc_pol = 1;
-			printk("[I2S] sunxi_i2s_set_fmt: Normal bclk + inverted frame\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Normal bclk + inverted frame\n");
 			break;
 		case SND_SOC_DAIFMT_IB_NF:     /* inverted bclk + normal frame */
 			reg_val &= ~SUNXI_IISFAT0_LRCP;
 			reg_val |= SUNXI_IISFAT0_BCP;
 			sunxi_iis.bclk_pol = 1;
 			sunxi_iis.lrc_pol = 0;
-			printk("[I2S] sunxi_i2s_set_fmt: Inverted bclk + normal frame\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + normal frame\n");
 			break;
 		case SND_SOC_DAIFMT_IB_IF:     /* inverted bclk + frame */
 			reg_val |= SUNXI_IISFAT0_LRCP;
 			reg_val |= SUNXI_IISFAT0_BCP;
 			sunxi_iis.bclk_pol = 1;
 			sunxi_iis.lrc_pol = 1;
-			printk("[I2S] sunxi_i2s_set_fmt: Inverted bclk + frame\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Inverted bclk + frame\n");
 			break;
 		default:
-			printk("[I2S] sunxi_i2s_set_fmt: Unknown mode\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode\n");
 			return -EINVAL;
 	}
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
 
 	// PCM REGISTER setup - TODO: Check if PCM configuration is needed for I2S
-	if((sunxi_iis.samp_format == 3) || (sunxi_iis.samp_format == 4))		// PCM Format.
+	if((sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_A) || 
+		(sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_B))		// PCM Format.
 	{
 		reg_val = readl(sunxi_iis.regs + SUNXI_IISFAT1);
 		// TX_PDM and RX_PDM
@@ -608,49 +642,49 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 				reg_val &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select size
 				reg_val |= (SUNXI_IISFAT1_TXPDM_16PCM | SUNXI_IISFAT1_RXPDM_16PCM);
 				sunxi_iis.pcm_datamode = 0;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM Data Mode 16-bits Linear PCM.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 16-bits Linear PCM.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8PCM:
 				reg_val &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
 				reg_val |= (SUNXI_IISFAT1_TXPDM_8PCM | SUNXI_IISFAT1_RXPDM_8PCM);
 				sunxi_iis.pcm_datamode = 1;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM Data Mode 8-bits Linear PCM.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits Linear PCM.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ULAW:
 				reg_val &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
 				reg_val |= (SUNXI_IISFAT1_TXPDM_8ULAW | SUNXI_IISFAT1_RXPDM_8ULAW);
 				sunxi_iis.pcm_datamode = 2;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM Data Mode 8-bits u-law.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits u-law.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ALAW:
 				reg_val &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
 				reg_val |= (SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);
 				sunxi_iis.pcm_datamode = 3;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM Data Mode 8-bits a-law.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits a-law.\n");
 				break;
 			default:
-				printk("[I2S] sunxi_i2s_set_fmt: unknown mode.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
 				break;
 		}
 		// Sync type.
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SSYNC){
 				reg_val |= SUNXI_IISFAT1_SSYNC;
 				sunxi_iis.pcm_sync_type = 1;
-				printk("[I2S] sunxi_i2s_set_fmt: Short Sync Select Short Frame Sync.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Short Frame Sync.\n");
 		}
 		else{
 				sunxi_iis.pcm_sync_type = 0;
-				printk("[I2S] sunxi_i2s_set_fmt: Short Sync Select Long Frame Sync.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Long Frame Sync.\n");
 		}
 		// Slot Width
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SW){
 				reg_val |= SUNXI_IISFAT1_SW;
 				sunxi_iis.pcm_sw = 1;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Width 16 clocks width.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Width 16 clocks width.\n");
 		}
 		else{
 				sunxi_iis.pcm_sw = 0;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Width 8 clocks width.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Width 8 clocks width.\n");
 		}
 		// Slot Index
 		switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_MASK)
@@ -658,60 +692,60 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_1ST:
 				reg_val |= SUNXI_IISFAT1_SI_1ST;
 				sunxi_iis.pcm_start_slot = 0;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Index the 1st slot.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 1st slot.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_2ND:
 				reg_val |= SUNXI_IISFAT1_SI_2ND;
 				sunxi_iis.pcm_start_slot = 1;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Index the 2nd slot.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 2nd slot.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_3RD:
 				reg_val |= SUNXI_IISFAT1_SI_3RD;
 				sunxi_iis.pcm_start_slot = 2;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Index the 3rd slot.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 3rd slot.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_4TH:
 				reg_val |= SUNXI_IISFAT1_SI_4TH;
 				sunxi_iis.pcm_start_slot = 3;
-				printk("[I2S] sunxi_i2s_set_fmt: Slot Index the 4th slot.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 4th slot.\n");
 				break;
 			default:
-				printk("[I2S] sunxi_i2s_set_fmt: unknown mode.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
 				break;
 		}
 		// Sign Extend
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SEXT){	
 			reg_val |= SUNXI_IISFAT1_SEXT;
-			printk("[I2S] sunxi_i2s_set_fmt: Sign Extend Sign extension at MSB position.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Sign extension at MSB position.\n");
 		}
 		else{
-			printk("[I2S] sunxi_i2s_set_fmt: Sign Extend Zeros or audio gain padding at LSB position.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Zeros or audio gain padding at LSB position.\n");
 		}
 		// MSB / LSB First Select
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_MLS){
 			reg_val |= SUNXI_IISFAT1_MLS;
 			sunxi_iis.pcm_lsb_first = 1;
-			printk("[I2S] sunxi_i2s_set_fmt: MSB/LSB First Select MSB First.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select MSB First.\n");
 		}
 		else{
 			sunxi_iis.pcm_lsb_first = 0;
-			printk("[I2S] sunxi_i2s_set_fmt: MSB/LSB First Select LSB First.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select LSB First.\n");
 		}
 		// PCM Out Mute
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_OUTMUTE){
 			reg_val |= SUNXI_IISFAT1_OUTMUTE;
-			printk("[I2S] sunxi_i2s_set_fmt: PCM Out Mute force PCM_OUT to 0.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute force PCM_OUT to 0.\n");
 		}
 		else{
-			printk("[I2S] sunxi_i2s_set_fmt: PCM Out Mute don't force PCM_OUT to 0.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute don't force PCM_OUT to 0.\n");
 		}
 		// PCM_SYNC_OUT
 		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCOUTEN){
 			reg_val |= SUNXI_IISFAT1_SYNCOUTEN;
-			printk("[I2S] sunxi_i2s_set_fmt: PCM Sync Out Suppress PCM_SYNC whilst keeping PCM_CLK running.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Suppress PCM_SYNC whilst keeping PCM_CLK running.\n");
 		}
 		else{
-			printk("[I2S] sunxi_i2s_set_fmt: PCM Sync Out Enable PCM_SYNC output in Master mode.\n");
+			printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Enable PCM_SYNC output in Master mode.\n");
 		}
 		// PCM_SYNC_PERIOD
 		switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_MASK)
@@ -719,41 +753,44 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_16BCLK:
 				reg_val |= SUNXI_IISFAT1_SYNCLEN_16BCLK;
 				sunxi_iis.pcm_sync_period = 16;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 16 BCLK period.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 16 BCLK period.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_32BCLK:
 				reg_val |= SUNXI_IISFAT1_SYNCLEN_32BCLK;
 				sunxi_iis.pcm_sync_period = 32;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 32 BCLK period.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 32 BCLK period.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_64BCLK:
 				reg_val |= SUNXI_IISFAT1_SYNCLEN_64BCLK;
 				sunxi_iis.pcm_sync_period = 64;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 64 BCLK period.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 64 BCLK period.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_128BCLK:
 				reg_val |= SUNXI_IISFAT1_SYNCLEN_128BCLK;
 				sunxi_iis.pcm_sync_period = 128;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 128 BCLK period.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 128 BCLK period.\n");
 				break;
 			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_256BCLK:
 				reg_val |= SUNXI_IISFAT1_SYNCLEN_256BCLK;
 				sunxi_iis.pcm_sync_period = 256;
-				printk("[I2S] sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 256 BCLK period.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 256 BCLK period.\n");
 				break;
 			default:
-				printk("[I2S] sunxi_i2s_set_fmt: unknown mode.\n");
+				printk("[I2S]sunxi_i2s_set_fmt: Unknown mode.\n");
 				break;
 		}
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT1);
 	}
 
-	// FIFO control register. TODO: Understand how to optimize this parameter.
-	reg_val = (1<<0);	// Expanding received sample sign bit at MSB of DA_RXFIFO register. TODO: Check if this configuration works.
-	reg_val |= (1<<2);	// Valid data at the LSB of TXFIFO register
-	reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level
-	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level
-	writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);
+	// // FIFO control register. TODO: Understand how to optimize this parameter.
+	// reg_val = (1<<0);	// Expanding received sample sign bit at MSB of DA_RXFIFO register. TODO: Check if this configuration works.
+	// reg_val |= (1<<2);	// Valid data at the LSB of TXFIFO register
+	// reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level
+	// reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level
+	// writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);
+
+	sunxi_i2s_printk_register_values();
+
 	return 0;
 }
 
@@ -778,8 +815,9 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	// Play or Record
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK) // Play
 	{
+		printk("[I2S]sunxi_i2s_hw_params: SNDRV_PCM_STREAM_PLAYBACK.\n");
 		dma_data = &sunxi_i2s_pcm_stereo_out;
-		printk("[I2S] sunxi_i2s_hw_params: dma_data = &sunxi_i2s_pcm_stereo_out\n");
+		printk("[I2S]sunxi_i2s_hw_params: dma_data = &sunxi_i2s_pcm_stereo_out.\n");
 
 		reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
 
@@ -789,26 +827,26 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 			case 1:
 			case 2:
 				reg_val |= SUNXI_IISCTL_SDO0EN;
-				printk("[I2S] sunxi_i2s_hw_params: Output SDO0 enabled.\n");
+				printk("[I2S]sunxi_i2s_hw_params: Output SDO0 enabled.\n");
 				break;
 			case 3:
 			case 4:
 				reg_val |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN);
-				printk("[I2S] sunxi_i2s_hw_params: Outputs SDO0 and SDO1 enabled.\n");
+				printk("[I2S]sunxi_i2s_hw_params: Outputs SDO0 and SDO1 enabled.\n");
 				break;
 			case 5:
 			case 6:
 				reg_val |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN);
-				printk("[I2S] sunxi_i2s_hw_params: Outputs SDO0, SDO1 and SDO2 enabled.\n");
+				printk("[I2S]sunxi_i2s_hw_params: Outputs SDO0, SDO1 and SDO2 enabled.\n");
 				break;
 			case 7:
 			case 8:
 				reg_val |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN);
-				printk("[I2S] sunxi_i2s_hw_params: Outputs SDO0, SDO1, SDO2 and SDO3 enabled.\n");
+				printk("[I2S]sunxi_i2s_hw_params: Outputs SDO0, SDO1, SDO2 and SDO3 enabled.\n");
 				break;
 			default:
 				reg_val |= SUNXI_IISCTL_SDO0EN;
-				printk("[I2S] sunxi_i2s_hw_params: Wrong number of channels. Default output SDO0 enabled.\n");
+				printk("[I2S]sunxi_i2s_hw_params: Wrong number of channels. Default output SDO0 enabled.\n");
 		}
 		#elif defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		switch (params_channels(params)) {
@@ -825,6 +863,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 	}
 	else {	// Record
+		printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_STREAM_CAPTURE.\n");
 		dma_data = &sunxi_i2s_pcm_stereo_in;
 		printk("[I2S] sunxi_i2s_hw_params: dma_data = &sunxi_i2s_pcm_stereo_in\n");
 	}
@@ -848,6 +887,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				reg_val |= SUNXI_IISFAT0_WSS_32BCLK;
 				writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
 				sunxi_iis.ws_size = 32;
+				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
 			printk("[I2S] sunxi_i2s_hw_params: format 24 bit\n");
 			break;
@@ -860,10 +900,15 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
 
 	// Samplign Rate. TODO.
-	sunxi_iis.samp_fs = params_rate(params);
-	sunxi_i2s_set_clkdiv(cpu_dai, SUNXI_SAMPLING_FREQ, sunxi_iis.samp_fs);
+	if(sunxi_iis.slave == 0)	// If is MASTER.
+	{
+		sunxi_iis.samp_fs = params_rate(params);
+		sunxi_i2s_set_clkdiv(cpu_dai, SUNXI_SAMPLING_FREQ, sunxi_iis.samp_fs);
+	}
 
 	snd_soc_dai_set_dma_data(rtd->cpu_dai, substream, dma_data);
+
+	sunxi_i2s_printk_register_values();
 
 	return 0;
 }
@@ -928,9 +973,43 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 */
 static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 {
+	u32 reg_val;
+
 	printk("[I2S]Entered %s\n", __func__);
 
-//	sunxi_i2s_set_fmt(cpu_dai, SND_SOC_DAIFMT_SUNXI_IIS_DEFAULT);
+	// I2S Default Register Configuration
+	sunxi_iis.slave = 1,
+	sunxi_iis.samp_fs = 48000,
+	sunxi_iis.samp_res = 24,
+	sunxi_iis.samp_format = SND_SOC_DAIFMT_I2S,
+	sunxi_iis.ws_size = 32,
+	sunxi_iis.mclk_rate = 512,
+	sunxi_iis.lrc_pol = 0,
+	sunxi_iis.bclk_pol = 0,
+	sunxi_iis.pcm_datamode = 0,
+	sunxi_iis.pcm_sw = 0,
+	sunxi_iis.pcm_sync_period = 0,
+	sunxi_iis.pcm_sync_type = 0,
+	sunxi_iis.pcm_start_slot = 0,
+	sunxi_iis.pcm_lsb_first = 0,
+	sunxi_iis.pcm_ch_num = 2,
+
+	// DIGITAL AUDIO CONTROL REGISTER
+	reg_val = SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_MS | SUNXI_IISCTL_GEN;
+	writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+
+	// DIGITAL AUDIO FORMAT REGISTER 0
+	reg_val = SUNXI_IISFAT0_FMT_I2S | SUNXI_IISFAT0_SR_24BIT | SUNXI_IISFAT0_WSS_32BCLK;
+	writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
+
+	// FIFO control register. TODO: Understand how to optimize this parameter.
+	reg_val = (1<<0);	// Expanding received sample sign bit at MSB of DA_RXFIFO register. TODO: Check if this configuration works.
+	reg_val |= (1<<2);	// Valid data at the LSB of TXFIFO register
+	reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level
+	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level
+	writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);
+
+	printk("[I2S]I2S default register configuration complete.\n");
 
 	return 0;
 }
@@ -942,6 +1021,10 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 static int sunxi_i2s_dai_remove(struct snd_soc_dai *dai)
 {
 	printk("[I2S]Entered %s\n", __func__);
+
+	// DIGITAL AUDIO CONTROL REGISTER
+	writel(0, sunxi_iis.regs + SUNXI_IISCTL);
+
 	return 0;
 }
 
@@ -998,8 +1081,8 @@ static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
 
 	//Global Enable Digital Audio Interface
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-	if(sunxi_iis.slave)
-		reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
+	// if(sunxi_iis.slave)
+	// 	reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
 	reg_val |= SUNXI_IISCTL_GEN;
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 
@@ -1048,61 +1131,62 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 */
 static int __devinit sunxi_i2s_dev_probe(struct platform_device *pdev)
 {
-	int reg_val = 0;
 	int ret;
 
 	printk("[I2S]Entered %s\n", __func__);
 
-	sunxi_iis.regs = ioremap(SUNXI_IISBASE, 0x100);
-	if (sunxi_iis.regs == NULL)
-		return -ENXIO;
+ 	if (i2s_used) {
+		sunxi_iis.regs = ioremap(SUNXI_IISBASE, 0x100);
+		if (sunxi_iis.regs == NULL)
+			return -ENXIO;
 
-	//i2s apbclk
-	#if defined CONFIG_ARCH_SUN7I
-	i2s_apbclk = clk_get(NULL,"apb_i2s0");
-	#else
-	i2s_apbclk = clk_get(NULL,"apb_i2s")
-	#endif
-	if(-1 == clk_enable(i2s_apbclk)){
-		printk("i2s_apbclk failed! line = %d\n", __LINE__);
-		goto out;
-	}
-	if(!sunxi_iis.slave) {
-		i2s_pllx8 = clk_get(NULL, "audio_pllx8");
-		//i2s pll2clk
-		i2s_pll2clk = clk_get(NULL, "audio_pll");
-		//i2s module clk
-		
+		//i2s apbclk
 		#if defined CONFIG_ARCH_SUN7I
-		i2s_moduleclk = clk_get(NULL,"i2s0");
+		i2s_apbclk = clk_get(NULL,"apb_i2s0");
 		#else
-		i2s_moduleclk = clk_get(NULL,"i2s");
+		i2s_apbclk = clk_get(NULL,"apb_i2s");
 		#endif
-		if(clk_set_parent(i2s_moduleclk, i2s_pll2clk)){
-			printk("try to set parent of i2s_moduleclk to i2s_pll2ck failed! line = %d\n",__LINE__);
-			goto out1;
+		if(-1 == clk_enable(i2s_apbclk)){
+			printk("i2s_apbclk failed! line = %d\n", __LINE__);
+			goto out;
 		}
-		if(clk_set_rate(i2s_moduleclk, 24576000/8)){
-			printk("set i2s_moduleclk clock freq to 24576000 failed! line = %d\n", __LINE__);
-			goto out1;
-		}
-		if(-1 == clk_enable(i2s_moduleclk)){
-			printk("open i2s_moduleclk failed! line = %d\n", __LINE__);
-			goto out1;
-		}
-	} 
-	reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
-	if(sunxi_iis.slave)
-		reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
-	reg_val |= SUNXI_IISCTL_GEN;
-	writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
+		if(!sunxi_iis.slave) {
+			i2s_pllx8 = clk_get(NULL, "audio_pllx8");
+			//i2s pll2clk
+			i2s_pll2clk = clk_get(NULL, "audio_pll");
+			//i2s module clk
+			
+			#if defined CONFIG_ARCH_SUN7I
+			i2s_moduleclk = clk_get(NULL,"i2s0");
+			#else
+			i2s_moduleclk = clk_get(NULL,"i2s");
+			#endif
+			if(clk_set_parent(i2s_moduleclk, i2s_pll2clk)){
+				printk("[I2S]Try to set parent of i2s_moduleclk to i2s_pll2ck failed! line = %d\n.",__LINE__);
+				goto out1;
+			}
+			if(clk_set_rate(i2s_moduleclk, 24576000/8)){
+				printk("[I2S]Set i2s_moduleclk clock freq to 24576000 failed! line = %d\n.", __LINE__);
+				goto out1;
+			}
+			if(-1 == clk_enable(i2s_moduleclk)){
+				printk("[I2S]Open i2s_moduleclk failed! line = %d\n.", __LINE__);
+				goto out1;
+			}
+		} 
+		// reg_val = readl(sunxi_iis.regs + SUNXI_IISCTL);
+		// if(sunxi_iis.slave)
+		// 	reg_val |= SUNXI_IISCTL_MS; // 1: Slave!
+		// reg_val |= SUNXI_IISCTL_GEN;	// Global Enable
+		// writel(reg_val, sunxi_iis.regs + SUNXI_IISCTL);
 
-	iounmap(sunxi_iis.ioregs);
-	ret = snd_soc_register_dai(&pdev->dev, &sunxi_iis_dai);
-	if (ret) {
-		dev_err(&pdev->dev, "Failed to register DAI\n");
-		goto out2;
-	}
+		// iounmap(sunxi_iis.ioregs);
+		ret = snd_soc_register_dai(&pdev->dev, &sunxi_iis_dai);
+		if (ret) {
+			dev_err(&pdev->dev, "Failed to register DAI\n");
+			goto out2;
+		}
+ 	}
 
 	goto out;
 	out2:
@@ -1111,6 +1195,7 @@ static int __devinit sunxi_i2s_dev_probe(struct platform_device *pdev)
 	out1:
 		clk_disable(i2s_apbclk);
 	out:
+
 	return 0;
 }
 
@@ -1151,6 +1236,8 @@ static int __devexit sunxi_i2s_dev_remove(struct platform_device *pdev)
 		clk_put(i2s_apbclk);
 
 		gpio_release(i2s_handler, 0);	// TODO: Check with parameter = 2 (original driver).
+
+		iounmap(sunxi_iis.ioregs);
 
 		snd_soc_unregister_dai(&pdev->dev);
 		platform_set_drvdata(pdev, NULL);
@@ -1193,29 +1280,29 @@ static int __init sunxi_i2s_init(void)
 		ret = script_parser_fetch("i2s_para","i2s_slave", &i2s_slv, sizeof(int));
 		if ((ret == 0) && i2s_slv) {
 			sunxi_iis.slave = 1;
-			printk("[I2S] sunxi_i2s_init I2S used in slave mode\n");
+			printk("[I2S]sunxi_i2s_init I2S used in slave mode\n");
 		} else {
 			sunxi_iis.slave = 0;
-			printk("[I2S] sunxi_i2s_init I2S used in master mode\n");
+			printk("[I2S]sunxi_i2s_init I2S used in master mode\n");
 		}
 
-		// printk("[I2S] sunxi_i2s_init - Plataform device registering (platform_device_register).\n");
+		// printk("[I2S]sunxi_i2s_init - Plataform device registering (platform_device_register).\n");
 		if((err = platform_device_register(&sunxi_i2s_device)) < 0)
 		{
-			printk("[I2S] sunxi_i2s_init - Plataform device registering error (platform_device_register).\n");
+			printk("[I2S]sunxi_i2s_init - Plataform device registering error (platform_device_register).\n");
 			return err;
 		}
-		else
-			printk("[I2S] sunxi_i2s_init - Plataform device registered (platform_device_register).\n");
+		// else
+		// 	printk("[I2S]sunxi_i2s_init - Plataform device registered (platform_device_register).\n");
 		
-		// printk("[I2S] sunxi_i2s_init - Plataform driver registering (platform_driver_register).\n");
+		// printk("[I2S]sunxi_i2s_init - Plataform driver registering (platform_driver_register).\n");
 		if ((err = platform_driver_register(&sunxi_i2s_driver)) < 0)
 		{
-			printk("[I2S] sunxi_i2s_init - Plataform driver registering error (platform_driver_register).\n");
+			printk("[I2S]sunxi_i2s_init - Plataform driver registering error (platform_driver_register).\n");
 			return err;
 		}
-		else
-			printk("[I2S] sunxi_i2s_init - Plataform driver registered (platform_driver_register).\n");
+		// else
+		// 	printk("[I2S]sunxi_i2s_init - Plataform driver registered (platform_driver_register).\n");
 	} 
 	else {
         printk("[I2S]sunxi-i2s cannot find any using configuration for controllers, return directly!\n");

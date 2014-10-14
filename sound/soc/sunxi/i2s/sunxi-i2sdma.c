@@ -36,7 +36,7 @@ static volatile unsigned int dmasrc = 0;
 static volatile unsigned int dmadst = 0;
 
 //DMA data width
-static unsigned int dma_width = 16;
+static unsigned int dma_width = 32;
 
 
 static const struct snd_pcm_hardware sunxi_pcm_hardware = {
@@ -149,7 +149,7 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
 		dma_width = 32;
 		break;
 	}
-	printk("[I2S-DMA] sunxi_pcm_hw_params: dma width %d bit.\n", dma_width);
+	printk("[I2S-DMA]sunxi_pcm_hw_params: dma width %d bit.\n", dma_width);
 
 	if (prtd->params == NULL) {
 		prtd->params = dma;
@@ -227,7 +227,7 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		dma_config_t codec_dma_conf;
 		memset(&codec_dma_conf, 0, sizeof(codec_dma_conf));
 
-		printk("[I2S-DMA] sunxi_pcm_prepare: DMA data width=(%d).\n", dma_width);
+		printk("[I2S-DMA]sunxi_pcm_prepare: DMA data width=(%d).\n", dma_width);
 		if(dma_width > 16)
 		{
 			codec_dma_conf.xfer_type.src_data_width	= DATA_WIDTH_32BIT;
@@ -275,8 +275,8 @@ static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		printk("[I2S] dma trigger start.\n");
-		printk("[I2S] 0x01c22400+0x24 = %#x, line= %d.\n", readl(0xf1c22400+0x24), __LINE__);
+		printk("[I2S]sunxi_pcm_trigger: dma trigger start.\n");
+		printk("[I2S]sunxi_pcm_trigger: 0x01c22400+0x24 = %#x, line= %d.\n", readl(0xf1c22400+0x24), __LINE__);
 		sunxi_dma_start(prtd->params);
 		break;
 
@@ -384,16 +384,21 @@ static int sunxi_pcm_preallocate_dma_buffer(struct snd_pcm *pcm, int stream)
 	struct snd_dma_buffer *buf = &substream->dma_buffer;
 	size_t size = sunxi_pcm_hardware.buffer_bytes_max;
 
-	printk("[I2S-DMA]Entered %s.\n", __func__);
+	printk("[I2S-DMA]Entered %s. ", __func__);
 
 	buf->dev.type = SNDRV_DMA_TYPE_DEV;
 	buf->dev.dev = pcm->card->dev;
 	buf->private_data = NULL;
-	buf->area = dma_alloc_writecombine(pcm->card->dev, size,
-					   &buf->addr, GFP_KERNEL);
+	buf->area = dma_alloc_writecombine(pcm->card->dev, size, &buf->addr, GFP_KERNEL);
 	if (!buf->area)
 		return -ENOMEM;
 	buf->bytes = size;
+
+	if(stream == SNDRV_PCM_STREAM_PLAYBACK)
+		printk("PLAYBACK buffer preallocated.\n");
+	else
+		printk("CAPTURE buffer preallocated.\n");
+
 	return 0;
 }
 
@@ -469,8 +474,8 @@ static int __devinit sunxi_i2s_pcm_probe(struct platform_device *pdev)
 		printk("[I2S-DMA]SOC plataform device registering error (snd_soc_register_platform).\n");
 		return err;
 	}
-	else
-		printk("[I2S-DMA]SOC plataform device registered (snd_soc_register_platform).\n");
+	// else
+	// 	printk("[I2S-DMA]SOC plataform device registered (snd_soc_register_platform).\n");
 
 	return err;
 }
@@ -509,15 +514,15 @@ static int __init sunxi_soc_platform_i2s_init(void)
 		printk("[I2S-DMA]Plataform device registering error (platform_device_register).\n");
 		return err;
 	}
-	else
-		printk("[I2S-DMA]Plataform device registered (platform_device_register).");
+	// else
+	// 	printk("[I2S-DMA]Plataform device registered (platform_device_register).\n");
 	if ((err = platform_driver_register(&sunxi_i2s_pcm_driver)) < 0)
 	{
 		printk("[I2S-DMA]Plataform driver registering error (platform_driver_register).\n");
 		return err;
 	}
-	else
-		printk("[I2S-DMA]Plataform driver registered (platform_driver_register).\n");
+	// else
+	// 	printk("[I2S-DMA]Plataform driver registered (platform_driver_register).\n");
 
 	return 0;
 }

@@ -319,8 +319,9 @@ unsigned int sunxi_i2s_get_clockrate(void);
 //extern struct sunxi_i2s_info sunxi_iis;
 //extern struct snd_soc_dai sunxi_iis_dai;
 
-extern void sunxi_snd_txctrl_i2s(struct snd_pcm_substream *substream, int on);
-extern void sunxi_snd_rxctrl_i2s(int on);
+// extern void sunxi_snd_txctrl_i2s(struct snd_pcm_substream *substream, int on);
+// //extern void sunxi_snd_rxctrl_i2s(int on);
+// extern void sunxi_snd_rxctrl_i2s(struct snd_pcm_substream *substream, int on);
 
 struct sunxi_i2s_info {
 	void __iomem   *regs;    /* IIS BASE */

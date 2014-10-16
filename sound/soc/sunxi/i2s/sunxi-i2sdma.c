@@ -72,6 +72,80 @@ struct sunxi_runtime_data {
 	struct sunxi_dma_params *params;
 };
 
+// static volatile unsigned int capture_dmasrc = 0;
+// static volatile unsigned int capture_dmadst = 0;
+// static volatile unsigned int play_dmasrc = 0;
+// static volatile unsigned int play_dmadst = 0;
+
+// // Check http://www.alsa-project.org/~tiwai/writing-an-alsa-driver/ch05s05.html.
+// // TODO: Make a typedef and two static declarations.
+// static const struct snd_pcm_hardware sunxi_pcm_playback_hardware = {
+// 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
+// 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
+// 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
+// 	// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE.
+// 	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+// 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
+// 	.rate_min		= 8000,
+// 	.rate_max		= 192000,
+// 	.channels_min		= 1,
+// 	.channels_max		= 2,
+// 	.buffer_bytes_max	= 128*1024,    	// value must be (2^n)Kbyte size
+// //	.period_bytes_min	= 1024*4,		// 1024*4,
+// 	.period_bytes_min	= 16*2,			// Value following the sunxi-codec.diff patch.
+// 	.period_bytes_max	= 1024*32,		//1024*32,
+// 	// .periods_min		= 4,			// 4,
+// 	.periods_min		= 2,			// Value following the sunxi-codec.diff patch.
+// 	.periods_max		= 8,			//8,
+// 	.fifo_size			= 64,			// 64x24-bits TX Fifo (A20 User Manual V1.2 pg.698)
+// };
+
+// static const struct snd_pcm_hardware sunxi_pcm_capture_hardware = {
+// 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
+// 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
+// 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
+// 	// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE.
+// 	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+// 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
+// 	.rate_min		= 8000,
+// 	.rate_max		= 192000,
+// 	.channels_min		= 1,
+// 	.channels_max		= 2,
+// 	.buffer_bytes_max	= 128*1024,    	// value must be (2^n)Kbyte size
+// //	.period_bytes_min	= 1024*4,		// 1024*4,
+// 	.period_bytes_min	= 16*2,			// Value following the sunxi-codec.diff patch.
+// 	.period_bytes_max	= 1024*32,		// 1024*32,
+// 	// .periods_min		= 4,			// 4,
+// 	.periods_min		= 2,			// Value following the sunxi-codec.diff patch.
+// 	.periods_max		= 8,			// 8,
+// 	.fifo_size			= 128,			// 128x24-bits TX Fifo (A20 User Manual V1.2 pg.698)
+// };
+
+// // TODO: Make a typedef and two static declarations.
+// struct sunxi_playback_runtime_data {
+// 	spinlock_t lock;
+// 	int state;
+// 	unsigned int dma_loaded;
+// 	unsigned int dma_limit;
+// 	unsigned int dma_period;
+// 	dma_addr_t dma_start;
+// 	dma_addr_t dma_pos;
+// 	dma_addr_t dma_end;
+// 	struct sunxi_dma_params *params;
+// };
+
+// struct sunxi_capture_runtime_data {
+// 	spinlock_t lock;
+// 	int state;
+// 	unsigned int dma_loaded;
+// 	unsigned int dma_limit;
+// 	unsigned int dma_period;
+// 	dma_addr_t dma_start;
+// 	dma_addr_t dma_pos;
+// 	dma_addr_t dma_end;
+// 	struct sunxi_dma_params *params;
+// };
+
 static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
 {
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
@@ -80,7 +154,7 @@ static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
 	int ret;
 	unsigned long len = prtd->dma_period;
 
-//	printk("[I2S-DMA]Entered %s.\n", __func__);
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
   	limit = prtd->dma_limit;
   	while(prtd->dma_loaded < limit) {
@@ -107,7 +181,7 @@ static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
 	struct sunxi_runtime_data *prtd;
 	struct snd_pcm_substream *substream = dev_id;
 
-//	printk("[I2S-DMA]Entered %s.\n", __func__);
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	prtd = substream->runtime->private_data;
 	if (substream) {
@@ -122,8 +196,44 @@ static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
 	spin_unlock(&prtd->lock);
 }
 
-static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream,
-	struct snd_pcm_hw_params *params)
+// static void sunxi_audio_capture_buffdone(dma_hdl_t dma_hdl, void *parg)
+// {
+// 	struct sunxi_capture_runtime_data *capture_prtd;
+// 	struct snd_pcm_substream *substream = parg;
+
+// 	/*pr_info("CAPTUR:sun7i_i2sdma.c::func:%s(line:%d)\n",__func__,__LINE__);*/
+// 	capture_prtd = substream->runtime->private_data;
+// 		if (substream && capture_prtd) {
+// 			snd_pcm_period_elapsed(substream);
+// 		}
+
+// 	spin_lock(&capture_prtd->lock);
+// 	{
+// 		capture_prtd->dma_loaded--;
+// 		sun7i_pcm_enqueue(substream);
+// 	}
+// 	spin_unlock(&capture_prtd->lock);
+// }
+
+// static void sunxi_audio_play_buffdone(dma_hdl_t dma_hdl, void *parg)
+// {
+// 	struct sunxi_playback_runtime_data *play_prtd;
+// 	struct snd_pcm_substream *substream = parg;
+// 	/*pr_info("sun7i_i2sdma.c::func:%s(line:%d)\n",__func__,__LINE__);*/
+// 	play_prtd = substream->runtime->private_data;
+// 	if ((substream) && (play_prtd)) {
+// 		snd_pcm_period_elapsed(substream);
+// 	}
+
+// 	spin_lock(&play_prtd->lock);
+// 	{
+// 		play_prtd->dma_loaded--;
+// 		sun7i_pcm_enqueue(substream);
+// 	}
+// 	spin_unlock(&play_prtd->lock);
+// }
+
+static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct sunxi_runtime_data *prtd = runtime->private_data;
@@ -188,13 +298,19 @@ static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
 	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	if (prtd->params)
+	{
 		sunxi_dma_flush(prtd->params);
+		printk("[I2S-DMA]Called sunxi_dma_flush.\n");
+	}
 
 	snd_pcm_set_runtime_buffer(substream, NULL);
+	printk("[I2S-DMA]Called snd_pcm_set_runtime_buffer.\n");
 
 	if (prtd->params) {
 		sunxi_dma_stop(prtd->params);
+		printk("[I2S-DMA]Called sunxi_dma_stop.\n");
 		sunxi_dma_release(prtd->params);
+		printk("[I2S-DMA]Called sunxi_dma_release.\n");
 		prtd->params = NULL;
 	}
 
@@ -211,7 +327,7 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 	if (!prtd->params)
 		return 0;
 
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
+//	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK){
 #if defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		struct dma_hw_conf codec_dma_conf;
 		codec_dma_conf.drqsrc_type  = DRQ_TYPE_SDRAM;
@@ -244,13 +360,22 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 //		codec_dma_conf.xfer_type.src_bst_len	= DATA_BRST_4;	/*like SPDIF module?*/
 		codec_dma_conf.address_type.src_addr_mode = NDMA_ADDR_INCREMENT;
 		codec_dma_conf.address_type.dst_addr_mode = NDMA_ADDR_NOCHANGE;
-		codec_dma_conf.src_drq_type		= N_SRC_SDRAM;
-		codec_dma_conf.dst_drq_type		= N_DST_IIS0_TX;
+
+		if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
+		{
+			codec_dma_conf.src_drq_type		= N_SRC_SDRAM;
+			codec_dma_conf.dst_drq_type		= N_DST_IIS0_TX;
+		}
+		else
+		{
+			codec_dma_conf.src_drq_type		= N_SRC_IIS0_RX;
+			codec_dma_conf.dst_drq_type		= N_DST_SDRAM;
+		}
 		codec_dma_conf.bconti_mode		= false;
 		codec_dma_conf.irq_spt			= CHAN_IRQ_FD;
 #endif
 		ret = sunxi_dma_config(prtd->params, &codec_dma_conf, 0);
-	}
+//	}
 
 	/* flush the DMA channel */
 	prtd->dma_loaded = 0;
@@ -269,21 +394,21 @@ static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	int ret ;
 	spin_lock(&prtd->lock);
 
-//	printk("[I2S-DMA]Entered %s.\n", __func__);
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	switch (cmd) {
 	case SNDRV_PCM_TRIGGER_START:
 	case SNDRV_PCM_TRIGGER_RESUME:
 	case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-		printk("[I2S]sunxi_pcm_trigger: dma trigger start.\n");
-		printk("[I2S]sunxi_pcm_trigger: 0x01c22400+0x24 = %#x, line= %d.\n", readl(0xf1c22400+0x24), __LINE__);
+		printk("[I2S-DMA]sunxi_pcm_trigger: dma trigger start/resume/pause release.\n");
+		printk("[I2S-DMA]sunxi_pcm_trigger: 0x01c22400+0x24 = %#x, line= %d.\n", readl(0xf1c22400+0x24), __LINE__);
 		sunxi_dma_start(prtd->params);
 		break;
 
 	case SNDRV_PCM_TRIGGER_SUSPEND:
 	case SNDRV_PCM_TRIGGER_STOP:
 	case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-        printk("[I2S] dma trigger stop.\n");
+        printk("[I2S-DMA]dma trigger suspend/stop/pause push.\n");
 		sunxi_dma_stop(prtd->params);
 		break;
 
@@ -303,11 +428,10 @@ static snd_pcm_uframes_t sunxi_pcm_pointer(struct snd_pcm_substream *substream)
 	unsigned long res = 0;
 	snd_pcm_uframes_t offset = 0;
 
-//	printk("[I2S-DMA]Entered %s.\n", __func__);
+	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	spin_lock(&prtd->lock);
-	sunxi_dma_getcurposition(prtd->params,
-				 (dma_addr_t*)&dmasrc, (dma_addr_t*)&dmadst);
+	sunxi_dma_getcurposition(prtd->params, (dma_addr_t*)&dmasrc, (dma_addr_t*)&dmadst);
 
 	if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		res = dmadst - prtd->dma_start;
@@ -361,9 +485,9 @@ static int sunxi_pcm_mmap(struct snd_pcm_substream *substream, struct vm_area_st
 	printk("[I2S-DMA]Entered %s.\n", __func__);
 
 	return dma_mmap_writecombine(substream->pcm->card->dev, vma,
-				     runtime->dma_area,
-				     runtime->dma_addr,
-				     runtime->dma_bytes);
+				     		runtime->dma_area,
+				     		runtime->dma_addr,
+				     		runtime->dma_bytes);
 }
 
 static struct snd_pcm_ops sunxi_pcm_ops = {

@@ -71,39 +71,39 @@ struct cs4245_private {
 // CS4245 Driver GPIO Handler - Reset control.
 static u32 cs4245_gpio_handler = 0;
 
-/*
-*
-*/
-static void cs4245_printk_register_values(struct snd_soc_codec *codec)
-{
-	int reg_val[12];
-	reg_val[0] = snd_soc_read(codec, CS4245_CHIP_ID);
-	reg_val[1] = snd_soc_read(codec, CS4245_POWER_CTRL);
-	reg_val[2] = snd_soc_read(codec, CS4245_DAC_CTRL_1);
-	reg_val[3] = snd_soc_read(codec, CS4245_ADC_CTRL);
-	reg_val[4] = snd_soc_read(codec, CS4245_MCLK_FREQ);
-	reg_val[5] = snd_soc_read(codec, CS4245_SIGNAL_SEL);
-	reg_val[6] = snd_soc_read(codec, CS4245_PGA_B_CTRL);
-	reg_val[7] = snd_soc_read(codec, CS4245_PGA_A_CTRL);
-	reg_val[8] = snd_soc_read(codec, CS4245_ANALOG_IN);
-	reg_val[9] = snd_soc_read(codec, CS4245_DAC_A_CTRL);
-	reg_val[10] = snd_soc_read(codec, CS4245_DAC_B_CTRL);
-	reg_val[11] = snd_soc_read(codec, CS4245_DAC_CTRL_2);
-	printk("[CS4245]Register Values:\n");
-	printk("[CS4245]CS4245_CHIP_ID: 0x%X.\n", reg_val[0]);
-	printk("[CS4245]CS4245_POWER_CTRL: 0x%X.\n", reg_val[1]);
-	printk("[CS4245]CS4245_DAC_CTRL_1: 0x%X.\n", reg_val[2]);
-	printk("[CS4245]CS4245_ADC_CTRL: 0x%X.\n", reg_val[3]);
-	printk("[CS4245]CS4245_MCLK_FREQ: 0x%X.\n", reg_val[4]);
-	printk("[CS4245]CS4245_SIGNAL_SEL: 0x%X.\n", reg_val[5]);
-	printk("[CS4245]CS4245_PGA_B_CTRL: 0x%X.\n", reg_val[6]);
-	printk("[CS4245]CS4245_PGA_A_CTRL: 0x%X.\n", reg_val[7]);
-	printk("[CS4245]CS4245_ANALOG_IN: 0x%X.\n", reg_val[8]);
-	printk("[CS4245]CS4245_DAC_A_CTRL: 0x%X.\n", reg_val[9]);
-	printk("[CS4245]CS4245_DAC_B_CTRL: 0x%X.\n", reg_val[10]);
-	printk("[CS4245]CS4245_DAC_CTRL_2: 0x%X.\n", reg_val[11]);
-	return;
-}
+// /*
+// *
+// */
+// static void cs4245_printk_register_values(struct snd_soc_codec *codec)
+// {
+// 	int reg_val[12];
+// 	reg_val[0] = snd_soc_read(codec, CS4245_CHIP_ID);
+// 	reg_val[1] = snd_soc_read(codec, CS4245_POWER_CTRL);
+// 	reg_val[2] = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+// 	reg_val[3] = snd_soc_read(codec, CS4245_ADC_CTRL);
+// 	reg_val[4] = snd_soc_read(codec, CS4245_MCLK_FREQ);
+// 	reg_val[5] = snd_soc_read(codec, CS4245_SIGNAL_SEL);
+// 	reg_val[6] = snd_soc_read(codec, CS4245_PGA_B_CTRL);
+// 	reg_val[7] = snd_soc_read(codec, CS4245_PGA_A_CTRL);
+// 	reg_val[8] = snd_soc_read(codec, CS4245_ANALOG_IN);
+// 	reg_val[9] = snd_soc_read(codec, CS4245_DAC_A_CTRL);
+// 	reg_val[10] = snd_soc_read(codec, CS4245_DAC_B_CTRL);
+// 	reg_val[11] = snd_soc_read(codec, CS4245_DAC_CTRL_2);
+// 	printk("[CS4245]Register Values:\n");
+// 	printk("[CS4245]CS4245_CHIP_ID: 0x%X.\n", reg_val[0]);
+// 	printk("[CS4245]CS4245_POWER_CTRL: 0x%X.\n", reg_val[1]);
+// 	printk("[CS4245]CS4245_DAC_CTRL_1: 0x%X.\n", reg_val[2]);
+// 	printk("[CS4245]CS4245_ADC_CTRL: 0x%X.\n", reg_val[3]);
+// 	printk("[CS4245]CS4245_MCLK_FREQ: 0x%X.\n", reg_val[4]);
+// 	printk("[CS4245]CS4245_SIGNAL_SEL: 0x%X.\n", reg_val[5]);
+// 	printk("[CS4245]CS4245_PGA_B_CTRL: 0x%X.\n", reg_val[6]);
+// 	printk("[CS4245]CS4245_PGA_A_CTRL: 0x%X.\n", reg_val[7]);
+// 	printk("[CS4245]CS4245_ANALOG_IN: 0x%X.\n", reg_val[8]);
+// 	printk("[CS4245]CS4245_DAC_A_CTRL: 0x%X.\n", reg_val[9]);
+// 	printk("[CS4245]CS4245_DAC_B_CTRL: 0x%X.\n", reg_val[10]);
+// 	printk("[CS4245]CS4245_DAC_CTRL_2: 0x%X.\n", reg_val[11]);
+// 	return;
+// }
 
 /*
 * TODO: Function description.
@@ -467,7 +467,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 			return -EINVAL;
  	}
 
-	cs4245_printk_register_values(codec);
+//	cs4245_printk_register_values(codec);
 
 	return 0;
 }
@@ -521,18 +521,14 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 			    struct snd_pcm_hw_params *params,
 			    struct snd_soc_dai *dai)
 {
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_codec *codec = rtd->codec;
-	// struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
-	// int ret;
-	// int reg;
-
-	// TODO: Implement configuration of salmple rate, bit resolution and channel selection.
+	// struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	// struct snd_soc_codec *codec = rtd->codec;
 
 	printk("[CS4245]Entered %s.\n", __func__);
 
-	cs4245_printk_register_values(codec);
+//	cs4245_printk_register_values(codec);
 
+	// TODO: Implement configuration of salmple rate, bit resolution and channel selection.
 	// params_format(params);
 	// params_rate(params);
 	// params_channels(params);
@@ -540,6 +536,68 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+/*
+* TODO: Function Description.
+* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
+*/
+static int cs4245_trigger(struct snd_pcm_substream *substream, 
+                              int cmd, struct snd_soc_dai *dai)
+{
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	struct snd_soc_codec *codec = rtd->codec;
+	int reg, ret = 0;
+
+	printk("[CS4245]Entered %s\n", __func__);
+
+	switch (cmd) {
+		case SNDRV_PCM_TRIGGER_START:
+		case SNDRV_PCM_TRIGGER_RESUME:
+		case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
+			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {	// CAPTURE - ADC
+				reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+				reg &= ~(CS4245_MUTE_ADC);	// UNMUTE
+				ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+				if (ret < 0) {
+					printk("[CS4245]ADC Control register configuration failed.\n");
+					return ret;
+				}
+			} else {	// PLAYBACK - DAC
+				reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+				reg &= ~(CS4245_MUTE_DAC);	// UNMUTE
+				ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+				if (ret < 0) {
+					printk("[CS4245]DAC Control 1 register configuration failed.\n");
+					return ret;
+				}
+			}
+			break;
+		case SNDRV_PCM_TRIGGER_STOP:
+		case SNDRV_PCM_TRIGGER_SUSPEND:
+		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
+			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {	// CAPTURE - ADC
+				reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+				reg |= (CS4245_MUTE_ADC);	// MUTE
+				ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+				if (ret < 0) {
+					printk("[CS4245]ADC Control register configuration failed.\n");
+					return ret;
+				}
+			} else {	// PLAYBACK - DAC
+				reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+				reg |= (CS4245_MUTE_DAC);	// MUTE
+				ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+				if (ret < 0) {
+					printk("[CS4245]DAC Control 1 register configuration failed.\n");
+					return ret;
+				}
+			}
+			break;
+		default:
+			ret = -EINVAL;
+			break;
+	}
+	return ret;
+}
 
 /* A list of non-DAPM controls that the CS4245 supports */ // - TODO - Add Alsa Mixer Controls
 // static const struct snd_kcontrol_new cs4245_snd_controls[] = {
@@ -639,21 +697,32 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 		printk("[CS4245]DAC Control 2 register configuration failed.\n");
 		return ret;
 	}
-	// Unmute DAC and ADC
-	reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
-	reg &= ~(CS4245_MUTE_DAC);
-	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
-	if (ret < 0) {
-		printk("[CS4245]DAC Control 1 register configuration failed.\n");
-		return ret;
-	}
-	reg = snd_soc_read(codec, CS4245_ADC_CTRL);
-	reg &= ~(CS4245_MUTE_ADC);
-	ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
-	if (ret < 0) {
-		printk("[CS4245]ADC Control register configuration failed.\n");
-		return ret;
-	}
+	// // Unmute DAC and ADC
+	// reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+	// reg &= ~(CS4245_MUTE_DAC);
+	// ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
+	// if (ret < 0) {
+	// 	printk("[CS4245]DAC Control 1 register configuration failed.\n");
+	// 	return ret;
+	// }
+	// reg = snd_soc_read(codec, CS4245_ADC_CTRL);
+	// reg &= ~(CS4245_MUTE_ADC);
+	// ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
+	// if (ret < 0) {
+	// 	printk("[CS4245]ADC Control register configuration failed.\n");
+	// 	return ret;
+	// }
+
+	// /* Signal Selection */
+	// reg = CS4245_LOOP;
+	// ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, reg);
+	// if (ret < 0) {
+	// 	printk("[CS4245]Master Signal Selection register configuration failed.\n");
+	// 	return ret;
+	// }
+	// else
+	// 	printk("[CS4245]Internal loop enabled: ADC->DAC.\n");
+
 	printk("[CS4245]CODEC default register configuration complete.\n");
 	return ret;
 }
@@ -668,25 +737,28 @@ static const struct snd_soc_dai_ops cs4245_dai_ops = {
 	.set_fmt = cs4245_set_dai_fmt,
 	.digital_mute = cs4245_dai_mute,
 	.hw_params = cs4245_hw_params,
+	.trigger = cs4245_trigger,
 };
 
 static struct snd_soc_dai_driver cs4245_dai = {
 	.name = "cs4245-dai",
 	.ops = &cs4245_dai_ops,
 	.capture = {
-		.stream_name = "Capture",
+//		.stream_name = "Capture",
+		.stream_name = "pcm0c",
 		.formats = CS4245_FORMATS,
 		.rates = SNDRV_PCM_RATE_CONTINUOUS,
-		.rate_min = 4000,
+		.rate_min = 4000,	// TODO: Use ALSA defines.
 		.rate_max = 192000,
 		.channels_min = 1,
 		.channels_max = 2,
 	},
 	.playback = {
-		.stream_name = "Playback",
+		// .stream_name = "Playback",
+		.stream_name = "pcm0p",
 		.formats = CS4245_FORMATS,
 		.rates = SNDRV_PCM_RATE_CONTINUOUS,
-		.rate_min = 4000,
+		.rate_min = 4000,	// TODO: Use ALSA defines.
 		.rate_max = 192000,
 		.channels_min = 1,
 		.channels_max = 2,

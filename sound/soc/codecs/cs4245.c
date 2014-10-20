@@ -481,22 +481,15 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
  */
 static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 {
-	// struct snd_soc_codec *codec = dai->codec;
-	// // struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
-	// int reg3;
-
+	struct snd_soc_codec *codec = dai->codec;
+	int reg;
 	printk("[CS4245]Entered %s.\n", __func__);
-
-	printk("[CS4245]Digital Mute Set to %d.\n", mute);
-
-	// reg3 = snd_soc_read(codec, CS4245_DAC_CTRL_1);
-
-	// if (mute)
-	// 	reg3 |= CS4245_MUTE_DAC;
-	// else 
-	// 	reg3 &= ~(CS4245_MUTE_DAC);
-	// return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg3);
-
+	reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
+	if (mute)
+		reg |= CS4245_MUTE_DAC;
+	else 
+		reg &= ~(CS4245_MUTE_DAC);
+	return snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
 	return 0;
 }
 

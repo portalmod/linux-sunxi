@@ -366,6 +366,9 @@ static int mod_duo_hw_params(struct snd_pcm_substream *substream,
 	case SNDRV_PCM_FORMAT_S16_LE:
 		printk("[MOD Duo Machine Driver]mod_duo_hw_params: format 16 bit.\n");
 		break;
+	case SNDRV_PCM_FORMAT_S24_3LE:
+		printk("[MOD Duo Machine Driver]mod_duo_hw_params: format 24 bit in 3 bytes.\n");
+		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 		printk("[MOD Duo Machine Driver]mod_duo_hw_params: format 24 bit in 4 bytes.\n");
 		break;
@@ -504,6 +507,11 @@ static int __init mod_duo_audio_init(void)
 		printk("[MOD Duo Machine Driver]I2S not configured on script.bin.\n");
 		return -ENODEV;
 	}
+	ret = script_parser_fetch("mod_duo_souncard_para","mod_duo_souncard_used", &mod_duo_used, sizeof(int));
+	if ((ret != 0) || (!mod_duo_used)) {
+        printk("[MOD Duo Machine Driver]MOD Duo Sound Card not configured on script.bin.\n");
+        return -ENODEV;
+	}
 	/* Register analog device */
 	mod_duo_audio_device = platform_device_alloc("soc-audio", 0);	// TODO: Check memory integrity with variable "mod_duo_audio_device".
 	if (!mod_duo_audio_device)
@@ -515,10 +523,6 @@ static int __init mod_duo_audio_init(void)
 	if (ret < 0) {
 		platform_device_put(mod_duo_audio_device);
 		return ret;
-	}
-	ret = script_parser_fetch("mod_duo_souncard_para","mod_duo_souncard_used", &mod_duo_used, sizeof(int));
-	if ((ret != 0) || (!mod_duo_used)) {
-        printk("[MOD Duo Machine Driver]MOD Duo Sound Card not configured on script.bin.\n");
 	}
 	if(mod_duo_used) {
 		mod_duo_gpio_init();

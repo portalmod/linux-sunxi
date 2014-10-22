@@ -465,11 +465,11 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	// Master/Slave Definition
 	reg_val1 = readl(sunxi_iis.regs + SUNXI_IISCTL);
 	switch(fmt & SND_SOC_DAIFMT_MASTER_MASK){
-		case SND_SOC_DAIFMT_CBS_CFS:   // codec clk & frm slave
+		case SND_SOC_DAIFMT_CBS_CFS:   // clk & frm slave
 			reg_val1 |= SUNXI_IISCTL_MS; // 1: Slave!
 			printk("[I2S]sunxi_i2s_set_fmt: Slave.\n");
 			break;
-		case SND_SOC_DAIFMT_CBM_CFM:   // codec clk & frm master
+		case SND_SOC_DAIFMT_CBM_CFM:   // clk & frm master
 			reg_val1 &= ~SUNXI_IISCTL_MS; // 0: Master!
 			printk("[I2S]sunxi_i2s_set_fmt: Master.\n");
 			break;
@@ -597,164 +597,164 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	}
 	writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
 
-	// PCM register setup
-	if((sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_A) || 
-		(sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_B))		// PCM Format.
-	{
-		// TODO: Wrong configuration scheme. Refactor this code.
-		reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT1);
-		// TX_PDM and RX_PDM
-		switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_MASK)
-		{
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_16PCM:
-				reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select size
-				reg_val1 |= (SUNXI_IISFAT1_TXPDM_16PCM | SUNXI_IISFAT1_RXPDM_16PCM);
-				sunxi_iis.pcm_datamode = 0;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 16-bits Linear PCM.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8PCM:
-				reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
-				reg_val1 |= (SUNXI_IISFAT1_TXPDM_8PCM | SUNXI_IISFAT1_RXPDM_8PCM);
-				sunxi_iis.pcm_datamode = 1;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits Linear PCM.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ULAW:
-				reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
-				reg_val1 |= (SUNXI_IISFAT1_TXPDM_8ULAW | SUNXI_IISFAT1_RXPDM_8ULAW);
-				sunxi_iis.pcm_datamode = 2;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits u-law.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ALAW:
-				reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
-				reg_val1 |= (SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);
-				sunxi_iis.pcm_datamode = 3;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits a-law.\n");
-				break;
-			default:
-				printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
-				break;
-		}
-		// Sync type.
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SSYNC){
-				reg_val1 |= SUNXI_IISFAT1_SSYNC;
-				sunxi_iis.pcm_sync_type = 1;
-				printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Short Frame Sync.\n");
-		}
-		else{
-				reg_val1 &= ~(SUNXI_IISFAT1_SSYNC);
-				sunxi_iis.pcm_sync_type = 0;
-				printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Long Frame Sync.\n");
-		}
-		// Slot Width
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SW){
-				reg_val1 |= SUNXI_IISFAT1_SW;
-				sunxi_iis.pcm_sw = 1;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Width 16 clocks width.\n");
-		}
-		else{
-				reg_val1 &= ~(SUNXI_IISFAT1_SW);
-				sunxi_iis.pcm_sw = 0;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Width 8 clocks width.\n");
-		}
-		// Slot Index
-		switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_MASK)
-		{
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_1ST:
-				reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
-				reg_val1 |= SUNXI_IISFAT1_SI_1ST;
-				sunxi_iis.pcm_start_slot = 0;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 1st slot.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_2ND:
-				reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
-				reg_val1 |= SUNXI_IISFAT1_SI_2ND;
-				sunxi_iis.pcm_start_slot = 1;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 2nd slot.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_3RD:
-				reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
-				reg_val1 |= SUNXI_IISFAT1_SI_3RD;
-				sunxi_iis.pcm_start_slot = 2;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 3rd slot.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_4TH:
-				reg_val1 |= SUNXI_IISFAT1_SI_4TH;
-				sunxi_iis.pcm_start_slot = 3;
-				printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 4th slot.\n");
-				break;
-			default:
-				printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
-				break;
-		}
-		// Sign Extend
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SEXT){	
-			reg_val1 |= SUNXI_IISFAT1_SEXT;
-			printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Sign extension at MSB position.\n");
-		}
-		else{
-			reg_val1 &= ~(SUNXI_IISFAT1_SEXT);
-			printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Zeros or audio gain padding at LSB position.\n");
-		}
-		// MSB / LSB First Select
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_MLS){
-			reg_val1 |= SUNXI_IISFAT1_MLS;
-			sunxi_iis.pcm_lsb_first = 1;
-			printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select MSB First.\n");
-		}
-		else{
-			sunxi_iis.pcm_lsb_first = 0;
-			printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select LSB First.\n");
-		}
-		// PCM Out Mute
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_OUTMUTE){
-			reg_val1 |= SUNXI_IISFAT1_OUTMUTE;
-			printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute force PCM_OUT to 0.\n");
-		}
-		else{
-			printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute don't force PCM_OUT to 0.\n");
-		}
-		// PCM_SYNC_OUT
-		if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCOUTEN){
-			reg_val1 |= SUNXI_IISFAT1_SYNCOUTEN;
-			printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Suppress PCM_SYNC whilst keeping PCM_CLK running.\n");
-		}
-		else{
-			printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Enable PCM_SYNC output in Master mode.\n");
-		}
-		// PCM_SYNC_PERIOD
-		switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_MASK)
-		{
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_16BCLK:
-				reg_val1 |= SUNXI_IISFAT1_SYNCLEN_16BCLK;
-				sunxi_iis.pcm_sync_period = 16;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 16 BCLK period.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_32BCLK:
-				reg_val1 |= SUNXI_IISFAT1_SYNCLEN_32BCLK;
-				sunxi_iis.pcm_sync_period = 32;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 32 BCLK period.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_64BCLK:
-				reg_val1 |= SUNXI_IISFAT1_SYNCLEN_64BCLK;
-				sunxi_iis.pcm_sync_period = 64;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 64 BCLK period.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_128BCLK:
-				reg_val1 |= SUNXI_IISFAT1_SYNCLEN_128BCLK;
-				sunxi_iis.pcm_sync_period = 128;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 128 BCLK period.\n");
-				break;
-			case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_256BCLK:
-				reg_val1 |= SUNXI_IISFAT1_SYNCLEN_256BCLK;
-				sunxi_iis.pcm_sync_period = 256;
-				printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 256 BCLK period.\n");
-				break;
-			default:
-				printk("[I2S]sunxi_i2s_set_fmt: Unknown mode.\n");
-				break;
-		}
-		writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT1);
-	}
+	// // PCM register setup
+	// if((sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_A) || 
+	// 	(sunxi_iis.samp_format == SND_SOC_DAIFMT_DSP_B))		// PCM Format.
+	// {
+	// 	// TODO: Wrong configuration scheme. Refactor this code.
+	// 	reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT1);
+	// 	// TX_PDM and RX_PDM
+	// 	switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_MASK)
+	// 	{
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_16PCM:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select size
+	// 			reg_val1 |= (SUNXI_IISFAT1_TXPDM_16PCM | SUNXI_IISFAT1_RXPDM_16PCM);
+	// 			sunxi_iis.pcm_datamode = 0;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 16-bits Linear PCM.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8PCM:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
+	// 			reg_val1 |= (SUNXI_IISFAT1_TXPDM_8PCM | SUNXI_IISFAT1_RXPDM_8PCM);
+	// 			sunxi_iis.pcm_datamode = 1;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits Linear PCM.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ULAW:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
+	// 			reg_val1 |= (SUNXI_IISFAT1_TXPDM_8ULAW | SUNXI_IISFAT1_RXPDM_8ULAW);
+	// 			sunxi_iis.pcm_datamode = 2;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits u-law.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_PDM_8ALAW:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);	// clear word select siz
+	// 			reg_val1 |= (SUNXI_IISFAT1_TXPDM_8ALAW | SUNXI_IISFAT1_RXPDM_8ALAW);
+	// 			sunxi_iis.pcm_datamode = 3;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM Data Mode 8-bits a-law.\n");
+	// 			break;
+	// 		default:
+	// 			printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
+	// 			break;
+	// 	}
+	// 	// Sync type.
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SSYNC){
+	// 			reg_val1 |= SUNXI_IISFAT1_SSYNC;
+	// 			sunxi_iis.pcm_sync_type = 1;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Short Frame Sync.\n");
+	// 	}
+	// 	else{
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_SSYNC);
+	// 			sunxi_iis.pcm_sync_type = 0;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Short Sync Select Long Frame Sync.\n");
+	// 	}
+	// 	// Slot Width
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SW){
+	// 			reg_val1 |= SUNXI_IISFAT1_SW;
+	// 			sunxi_iis.pcm_sw = 1;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Width 16 clocks width.\n");
+	// 	}
+	// 	else{
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_SW);
+	// 			sunxi_iis.pcm_sw = 0;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Width 8 clocks width.\n");
+	// 	}
+	// 	// Slot Index
+	// 	switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_MASK)
+	// 	{
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_1ST:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
+	// 			reg_val1 |= SUNXI_IISFAT1_SI_1ST;
+	// 			sunxi_iis.pcm_start_slot = 0;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 1st slot.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_2ND:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
+	// 			reg_val1 |= SUNXI_IISFAT1_SI_2ND;
+	// 			sunxi_iis.pcm_start_slot = 1;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 2nd slot.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_3RD:
+	// 			reg_val1 &= ~(SUNXI_IISFAT1_SI_4TH);
+	// 			reg_val1 |= SUNXI_IISFAT1_SI_3RD;
+	// 			sunxi_iis.pcm_start_slot = 2;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 3rd slot.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SI_4TH:
+	// 			reg_val1 |= SUNXI_IISFAT1_SI_4TH;
+	// 			sunxi_iis.pcm_start_slot = 3;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Slot Index the 4th slot.\n");
+	// 			break;
+	// 		default:
+	// 			printk("[I2S]sunxi_i2s_set_fmt: unknown mode.\n");
+	// 			break;
+	// 	}
+	// 	// Sign Extend
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SEXT){	
+	// 		reg_val1 |= SUNXI_IISFAT1_SEXT;
+	// 		printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Sign extension at MSB position.\n");
+	// 	}
+	// 	else{
+	// 		reg_val1 &= ~(SUNXI_IISFAT1_SEXT);
+	// 		printk("[I2S]sunxi_i2s_set_fmt: Sign Extend Zeros or audio gain padding at LSB position.\n");
+	// 	}
+	// 	// MSB / LSB First Select
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_MLS){
+	// 		reg_val1 |= SUNXI_IISFAT1_MLS;
+	// 		sunxi_iis.pcm_lsb_first = 1;
+	// 		printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select MSB First.\n");
+	// 	}
+	// 	else{
+	// 		sunxi_iis.pcm_lsb_first = 0;
+	// 		printk("[I2S]sunxi_i2s_set_fmt: MSB/LSB First Select LSB First.\n");
+	// 	}
+	// 	// PCM Out Mute
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_OUTMUTE){
+	// 		reg_val1 |= SUNXI_IISFAT1_OUTMUTE;
+	// 		printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute force PCM_OUT to 0.\n");
+	// 	}
+	// 	else{
+	// 		printk("[I2S]sunxi_i2s_set_fmt: PCM Out Mute don't force PCM_OUT to 0.\n");
+	// 	}
+	// 	// PCM_SYNC_OUT
+	// 	if(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCOUTEN){
+	// 		reg_val1 |= SUNXI_IISFAT1_SYNCOUTEN;
+	// 		printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Suppress PCM_SYNC whilst keeping PCM_CLK running.\n");
+	// 	}
+	// 	else{
+	// 		printk("[I2S]sunxi_i2s_set_fmt: PCM Sync Out Enable PCM_SYNC output in Master mode.\n");
+	// 	}
+	// 	// PCM_SYNC_PERIOD
+	// 	switch(fmt & SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_MASK)
+	// 	{
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_16BCLK:
+	// 			reg_val1 |= SUNXI_IISFAT1_SYNCLEN_16BCLK;
+	// 			sunxi_iis.pcm_sync_period = 16;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 16 BCLK period.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_32BCLK:
+	// 			reg_val1 |= SUNXI_IISFAT1_SYNCLEN_32BCLK;
+	// 			sunxi_iis.pcm_sync_period = 32;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 32 BCLK period.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_64BCLK:
+	// 			reg_val1 |= SUNXI_IISFAT1_SYNCLEN_64BCLK;
+	// 			sunxi_iis.pcm_sync_period = 64;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 64 BCLK period.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_128BCLK:
+	// 			reg_val1 |= SUNXI_IISFAT1_SYNCLEN_128BCLK;
+	// 			sunxi_iis.pcm_sync_period = 128;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 128 BCLK period.\n");
+	// 			break;
+	// 		case SND_SOC_DAIFMT_SUNXI_IISFAT1_SYNCLEN_256BCLK:
+	// 			reg_val1 |= SUNXI_IISFAT1_SYNCLEN_256BCLK;
+	// 			sunxi_iis.pcm_sync_period = 256;
+	// 			printk("[I2S]sunxi_i2s_set_fmt: PCM SYNC Period Clock Number 256 BCLK period.\n");
+	// 			break;
+	// 		default:
+	// 			printk("[I2S]sunxi_i2s_set_fmt: Unknown mode.\n");
+	// 			break;
+	// 	}
+	// 	writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT1);
+	// }
 
 //	sunxi_i2s_printk_register_values();
 
@@ -1047,8 +1047,8 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 	// FIFO control register. TODO: Understand how to optimize this parameter.
 	reg_val = (1<<0);	// Expanding received sample sign bit at MSB of DA_RXFIFO register. TODO: Check if this configuration works.
 	reg_val |= (1<<2);	// Valid data at the LSB of TXFIFO register
-	reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level
-	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level
+	reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level - try to make it multiple of 8 to enable DMA burst of 8.
+	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level - try to make it multiple of 8 to enable DMA burst of 8
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);
 
 	printk("[I2S]I2S default register configuration complete.\n");
@@ -1149,7 +1149,7 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 	.capture 	= {
 		.stream_name = "pcm0c",
 		// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE.
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
 		.rates = SUNXI_I2S_RATES,
 		.rate_min = SNDRV_PCM_RATE_8000,
 		.rate_max = SNDRV_PCM_RATE_192000,
@@ -1159,7 +1159,7 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 	.playback 	= {
 		.stream_name = "pcm0p",
 		// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE. Implies in changing the word select size in *_set_fmt.
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
 		.rates = SUNXI_I2S_RATES,
 		.rate_min = SNDRV_PCM_RATE_8000,
 		.rate_max = SNDRV_PCM_RATE_192000,

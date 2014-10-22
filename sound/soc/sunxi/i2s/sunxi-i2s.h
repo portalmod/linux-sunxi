@@ -104,7 +104,8 @@
 	#define SUNXI_IISINT_TXUIEN			(1<<6)
 	#define SUNXI_IISINT_TXOIEN			(1<<5)
 	#define SUNXI_IISINT_TXEIEN			(1<<4)
-	#define SUNXI_IISINT_RXDRQEN		(1<<2)
+	#define SUNXI_IISINT_RXDRQEN		(1<<3)
+ 	#define SUNXI_IISINT_RXUIEN			(1<<2)
 	#define SUNXI_IISINT_RXOIEN			(1<<1)
 	#define SUNXI_IISINT_RXAIEN			(1<<0)
 

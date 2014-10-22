@@ -647,14 +647,14 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	cs4245->adc_slave_mode = 1;
 	cs4245->async = 0;
 	/* DAC Control 1 */
-	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_DIF_I2S | CS4245_DAC_MASTER;
+	reg = CS4245_DAC_FM_SINGLE | CS4245_DAC_DIF_I2S | CS4245_MUTE_DAC | CS4245_DAC_MASTER;
 	ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
 	if (ret < 0) {
 		printk("[CS4245]DAC Control 1 register configuration failed.\n");
 		return ret;
 	}
 	/* ADC Control */
-	reg = CS4245_ADC_FM_SINGLE | CS4245_ADC_DIF_I2S | CS4245_HPF_FREEZE;
+	reg = CS4245_ADC_FM_SINGLE | CS4245_ADC_DIF_I2S | CS4245_MUTE_ADC | CS4245_HPF_FREEZE;
 	ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
 	if (ret < 0) {
 		// dev_err(codec->dev, "i2c write failed\n");
@@ -690,21 +690,6 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 		printk("[CS4245]DAC Control 2 register configuration failed.\n");
 		return ret;
 	}
-	// // Unmute DAC and ADC
-	// reg = snd_soc_read(codec, CS4245_DAC_CTRL_1);
-	// reg &= ~(CS4245_MUTE_DAC);
-	// ret = snd_soc_write(codec, CS4245_DAC_CTRL_1, reg);
-	// if (ret < 0) {
-	// 	printk("[CS4245]DAC Control 1 register configuration failed.\n");
-	// 	return ret;
-	// }
-	// reg = snd_soc_read(codec, CS4245_ADC_CTRL);
-	// reg &= ~(CS4245_MUTE_ADC);
-	// ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
-	// if (ret < 0) {
-	// 	printk("[CS4245]ADC Control register configuration failed.\n");
-	// 	return ret;
-	// }
 
 	// /* Signal Selection */
 	// reg = CS4245_LOOP;

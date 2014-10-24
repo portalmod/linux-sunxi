@@ -353,25 +353,34 @@ void sunxi_snd_rxctrl_i2s(int on)
 
 /*
 * TODO: Function Description
-* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.
-* Function called internally. The Machine Driver doesn't need to call this function because it is called whenever sunxi_i2s_set_clkdiv is called.
-* The master clock in Allwinner SoM depends on the sampling frequency.
+* Saved in snd_soc_dai_ops sunxi_iis_dai_ops.  Function called
+* internally. The Machine Driver doesn't need to call this function
+* because it is called whenever sunxi_i2s_set_clkdiv is called.  The
+* master clock in Allwinner SoM depends on the sampling frequency.
 */
 static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigned int freq, int dir)
 {
 	u32 reg_val;
-	printk("[I2S]Entered %s\n", __func__);
+	printk("[I2S]Entered %s (clk_id %i, freq %i, dir %i,  slave %i)\n", __func__, clk_id, freq , dir, sunxi_iis.slave);
 	if(!sunxi_iis.slave)
 	{
 		switch(clk_id)
 		{
 			case SUNXI_SET_MCLK:	// Set the master clock frequency.
-				// TODO - Check if the master clock is needed when slave mode is selected.
+				// Two different pll clocks
+			        if (freq == 0)
+			        {
+				  freq = 24576000; // 8k, 12k, 16k, 24k, 32k, 48k, 64k, 96k, 128k, 192k
+			        } else
+			        {
+				  freq = 22579200; // 11.025k, 22.05k, 44.1k, 88.2k, 176.4k
+			        }
 				if (clk_set_rate(i2s_pll2clk, freq))
 				{
 					pr_err("Try to set the i2s_pll2clk failed!\n");	
 					return -EINVAL;
 				}
+				printk("[I2S]Entered %s set pll to: %i\n", __func__, freq);
 				break;
 			case SUNXI_MCLKO_EN:	// Enables the master clock output
 				reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
@@ -380,7 +389,8 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 				if(dir == 0)	// Disable
 					reg_val &= ~(0x1<<7);
 				writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
-			break;
+				printk("[I2S]Entered %s Master Clock output set to %i (0=disabled, 1=enabled)\n", __func__, dir);
+				break;
 		}
 	}
 	return 0;
@@ -399,21 +409,47 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 
 	// Here i should know the sample rate and the FS multiple.
 
- 	printk("[I2S]Entered %s\n", __func__);
+	printk("[I2S]Entered %s (div_id: %i, slave %i, value %i)\n", __func__, div_id, sunxi_iis.slave, value);
 
  	switch (div_id) {
 		case SUNXI_DIV_MCLK:	// Sets MCLKDIV
-			reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
-			reg_val &= ~(0xf<<0);
-			reg_val |= ((value & 0xf)<<0);
-			writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
-			break;
+		  if(value <= 8)
+		    value = (value >>1);
+		  else if(value == 12)
+		    value = 0x5;
+		  else if(value == 16)
+		    value = 0x6;
+		  else if(value == 24)
+		    value = 0x7;
+		  else if(value == 32)
+		    value = 0x8;
+		  else if(value == 48)
+		    value = 0x9;
+		  else if(value == 64)
+		    value = 0xa;
+			
+		  reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
+		  reg_val &= ~(0xf<<0);
+		  reg_val |= (value<<0);
+		  writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
+		  break;
 		case SUNXI_DIV_BCLK:	// Sets BCLKDIV
-			reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
-			reg_val &= ~(0x7<<4);
-			reg_val |= ((value & 0x7)<<4);
-			writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
-			break;
+		  if(value <= 8)
+		    value = (value>>1) - 1;
+		  else if(value == 12)
+		    value = 0x4;
+		  else if(value == 16)
+		    value = 0x5;
+		  else if(value == 32)
+		    value = 0x6;
+		  else if(value == 64)
+		    value = 0x7;
+
+		  reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
+		  reg_val &= ~(0x7<<4);
+		  reg_val |= (value<<4);
+		  writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
+		  break;
 		case SUNXI_SAMPLING_FREQ:
 			if(!sunxi_iis.slave)
 			{
@@ -429,11 +465,12 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 				else
 				{
 					sunxi_iis.samp_fs = (u32)value;
-					sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0);	// Set the master clock.
-					reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
-					reg_val &= ~(0x7f<<0);	// Clear MCLK and BCLK
-					reg_val |= (((mclk_div & 0xf)<<0) | ((bclk_div & 0x7)<<4));
-					writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
+					sunxi_i2s_set_sysclk(cpu_dai, SUNXI_SET_MCLK, mclk, 0);	// Set the master clock (PLL).
+					sunxi_i2s_set_sysclk(cpu_dai, SUNXI_MCLKO_EN, mclk, 1); // Enable master clock output
+					/* reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD); */
+					/* reg_val &= ~(0x7f<<0);	// Clear MCLK and BCLK */
+					/* reg_val |= (((mclk_div & 0xf)<<0) | ((bclk_div & 0x7)<<4)); */
+					/* writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD); */
 				}
 			}
 			else

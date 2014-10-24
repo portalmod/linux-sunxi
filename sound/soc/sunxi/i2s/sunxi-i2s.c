@@ -1019,7 +1019,7 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 	printk("[I2S]Entered %s\n", __func__);
 
 	// I2S Default Register Configuration
-	sunxi_iis.slave = 1,
+	// sunxi_iis.slave = 1, // already set in sunxi_i2s_dai_probe
 	sunxi_iis.samp_fs = 48000,
 	sunxi_iis.samp_res = 24,
 	sunxi_iis.samp_format = SND_SOC_DAIFMT_I2S,

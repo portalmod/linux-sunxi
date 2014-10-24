@@ -1197,7 +1197,7 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 		.rate_min = SNDRV_PCM_RATE_8000,
 		.rate_max = SNDRV_PCM_RATE_192000,
 		.channels_min = 1,
-		.channels_max = 2,
+		.channels_max = 8,
 	},
 	.symmetric_rates = 1,
 };

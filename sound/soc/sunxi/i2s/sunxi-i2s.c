@@ -961,11 +961,9 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 			sunxi_iis.samp_res = 24;
 			if(sunxi_iis.ws_size != 32)	// If the Word Size is not equal to 32, sets word size to 32.
 			{
-				reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-				reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
-				writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
-				sunxi_iis.ws_size = 32;
-				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
+			  reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK; //
+			  sunxi_iis.ws_size = 32;
+			  printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
 			printk("[I2S] sunxi_i2s_hw_params: format 24 bit\n");
 			break;
@@ -975,11 +973,9 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 			sunxi_iis.samp_res = 24;
 			if(sunxi_iis.ws_size < 24)	// If the Word Size is lower tehen 24bits, sets the default Word Size (32bits).
 			{
-				reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-				reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
-				writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
-				sunxi_iis.ws_size = 32;
-				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
+			  reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
+			  sunxi_iis.ws_size = 32;
+			  printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
 			break;
 	}

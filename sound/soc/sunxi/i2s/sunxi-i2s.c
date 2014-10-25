@@ -371,7 +371,7 @@ static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigne
 			        if (freq == 0)
 			        {
 				  freq = 24576000; // 8k, 12k, 16k, 24k, 32k, 48k, 64k, 96k, 128k, 192k
-			        } else
+			        } else if (freq == 1)
 			        {
 				  freq = 22579200; // 11.025k, 22.05k, 44.1k, 88.2k, 176.4k
 			        }

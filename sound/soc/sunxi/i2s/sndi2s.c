@@ -144,7 +144,7 @@ struct snd_soc_dai_driver sndi2s_dai = {
 	.playback = {
 		.stream_name = "Playback",
 		.channels_min = 1,
-		.channels_max = 2,
+		.channels_max = 8,
 		.rates = sndi2s_RATES_MASTER,
 		.formats = sndi2s_FORMATS,
 	},

@@ -278,13 +278,13 @@ static int sunxi_sndi2s_hw_params(struct snd_pcm_substream *substream,
 
 	//call sunxi_iis_set_fmt
 	ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S |
-			SND_SOC_DAIFMT_NB_NF/* | SND_SOC_DAIFMT_CBM_CFM*/);
+			SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBM_CFM);
 	if (ret < 0)
 		return ret;
 
 	//call sunxi_iis_set_fmt
 	ret = snd_soc_dai_set_fmt(cpu_dai, SND_SOC_DAIFMT_I2S |
-			SND_SOC_DAIFMT_NB_NF/* | SND_SOC_DAIFMT_CBM_CFM*/);
+			SND_SOC_DAIFMT_NB_NF | SND_SOC_DAIFMT_CBM_CFM);
 	if (ret < 0)
 		return ret;
 

@@ -45,7 +45,7 @@ static const struct snd_pcm_hardware sunxi_pcm_play_hardware = {
 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
-	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
+	.formats		= SUNXI_I2S_PLAYBACK_FORMATS,
 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
 	.rate_min		= 8000,
 	.rate_max		= 192000,
@@ -64,7 +64,7 @@ static const struct snd_pcm_hardware sunxi_pcm_capture_hardware = {
 	.info			= SNDRV_PCM_INFO_INTERLEAVED | SNDRV_PCM_INFO_BLOCK_TRANSFER |
 				      SNDRV_PCM_INFO_MMAP | SNDRV_PCM_INFO_MMAP_VALID |
 				      SNDRV_PCM_INFO_PAUSE | SNDRV_PCM_INFO_RESUME,
-	.formats		= SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
+	.formats		= SUNXI_I2S_CAPTURE_FORMATS,
 	.rates			= SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT,
 	.rate_min		= 8000,
 	.rate_max		= 192000,
@@ -198,18 +198,23 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_p
 	/* set DMA width for using in sunxi_pcm_prepare*/
 	snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params)); // TODO: Use this call?! Seems to check if there is already alocated buffer. Debug! Hard one.
 
+	printk("[I2S-DMA]params_buffer_bytes: %d.\n", params_buffer_bytes(params));
+
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 	{
 		switch(params_format(params)) 
 		{
-			// case SNDRV_PCM_FORMAT_S8:
-			// 	playback_dma_width = 8;
 			case SNDRV_PCM_FORMAT_S16_LE:
 				playback_dma_width = 16;
+				printk("[I2S-DMA]PLAYBACK SNDRV_PCM_FORMAT_S16_LE.\n");
 				break;
 			case SNDRV_PCM_FORMAT_S24_3LE:
+				playback_dma_width = 32;
+				printk("[I2S-DMA]PLAYBACK SNDRV_PCM_FORMAT_S24_3LE.\n");
+				break;
 			case SNDRV_PCM_FORMAT_S24_LE:
 				playback_dma_width = 32;
+				printk("[I2S-DMA]PLAYBACK SNDRV_PCM_FORMAT_S24_LE.\n");
 				break;
 		}
 	}
@@ -217,14 +222,17 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_p
 	{
 		switch(params_format(params)) 
 		{
-			// case SNDRV_PCM_FORMAT_S8:
-			// 	capture_dma_width = 8;
 			case SNDRV_PCM_FORMAT_S16_LE:
 				capture_dma_width = 16;
+				printk("[I2S-DMA]CAPTURE SNDRV_PCM_FORMAT_S16_LE.\n");
 				break;
 			case SNDRV_PCM_FORMAT_S24_3LE:
+				capture_dma_width = 32;
+				printk("[I2S-DMA]CAPTURE SNDRV_PCM_FORMAT_S24_3LE.\n");
+				break;
 			case SNDRV_PCM_FORMAT_S24_LE:
 				capture_dma_width = 32;
+				printk("[I2S-DMA]CAPTURE SNDRV_PCM_FORMAT_S24_LE.\n");
 				break;
 		}
 	}

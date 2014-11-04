@@ -917,33 +917,38 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		case SNDRV_PCM_FORMAT_S16_LE:
 			reg_val1 |= SUNXI_IISFAT0_SR_16BIT;
 			sunxi_iis.samp_res = 16;
-			printk("[I2S] sunxi_i2s_hw_params: format 16 bit\n");
+			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S16_LE.\n");
+			break;
+
+		case SNDRV_PCM_FORMAT_S24_3LE:
+			reg_val1 |= SUNXI_IISFAT0_SR_24BIT;
+			sunxi_iis.samp_res = 24;
+			if(sunxi_iis.ws_size != 32)	// If the Word Size is not equal to 32, sets word size to 32.
+			{
+				reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
+				sunxi_iis.ws_size = 32;
+				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
+			}
+			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_3LE.\n");
 			break;
 		case SNDRV_PCM_FORMAT_S24_LE:
 			reg_val1 |= SUNXI_IISFAT0_SR_24BIT;
 			sunxi_iis.samp_res = 24;
 			if(sunxi_iis.ws_size != 32)	// If the Word Size is not equal to 32, sets word size to 32.
 			{
-				reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);
 				reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
-				writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
 				sunxi_iis.ws_size = 32;
 				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
-			printk("[I2S] sunxi_i2s_hw_params: format 24 bit\n");
+			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_LE.\n");
 			break;
 		default:
-			printk("[I2S] sunxi_i2s_hw_params: Unsupported format (%d). Setting 24 bit format.\n", (int)params_format(params));
+			printk("[I2S] sunxi_i2s_hw_params: Unsupported format (%d).\n", (int)params_format(params));
 			reg_val1 |= SUNXI_IISFAT0_SR_24BIT;
+			reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
 			sunxi_iis.samp_res = 24;
-			if(sunxi_iis.ws_size < 24)	// If the Word Size is lower tehen 24bits, sets the default Word Size (32bits).
-			{
-				reg_val1 = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-				reg_val1 |= SUNXI_IISFAT0_WSS_32BCLK;
-				writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
-				sunxi_iis.ws_size = 32;
-				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
-			}
+			sunxi_iis.ws_size = 32;
+			printk("[I2S] sunxi_i2s_hw_params: Setting 24 bit format and changing word slect size to 32bit.\n");
 			break;
 	}
 	writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT0);
@@ -1130,7 +1135,6 @@ static int sunxi_i2s_resume(struct snd_soc_dai *cpu_dai)
 	return 0;
 }
 
-#define SUNXI_I2S_RATES (SNDRV_PCM_RATE_8000_192000 | SNDRV_PCM_RATE_KNOT)
 static struct snd_soc_dai_ops sunxi_i2s_dai_ops = {
 	.set_sysclk = sunxi_i2s_set_sysclk,
 	.set_clkdiv = sunxi_i2s_set_clkdiv,
@@ -1149,7 +1153,7 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 	.capture 	= {
 		.stream_name = "pcm0c",
 		// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE.
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
+		.formats = SUNXI_I2S_CAPTURE_FORMATS,
 		.rates = SUNXI_I2S_RATES,
 		.rate_min = SNDRV_PCM_RATE_8000,
 		.rate_max = SNDRV_PCM_RATE_192000,
@@ -1159,7 +1163,7 @@ static struct snd_soc_dai_driver sunxi_iis_dai = {
 	.playback 	= {
 		.stream_name = "pcm0p",
 		// TODO: Support SNDRV_PCM_FMTBIT_S20_3LE and SNDRV_PCM_FMTBIT_S24_3LE. Implies in changing the word select size in *_set_fmt.
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE | SNDRV_PCM_FMTBIT_S24_3LE,
+		.formats = SUNXI_I2S_PLAYBACK_FORMATS,
 		.rates = SUNXI_I2S_RATES,
 		.rate_min = SNDRV_PCM_RATE_8000,
 		.rate_max = SNDRV_PCM_RATE_192000,

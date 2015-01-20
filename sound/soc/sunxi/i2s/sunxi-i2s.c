@@ -474,7 +474,7 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 			printk("[I2S]sunxi_i2s_set_fmt: Master.\n");
 			break;
 		default:
-			printk("[I2S]sunxi_i2s_set_fmt: Master-Slave Select unknown mode mode\n");
+			printk("[I2S]sunxi_i2s_set_fmt: Master-Slave Select unknown mode: (fmt=%x)\n", fmt);
 			return -EINVAL;
 	}
 	writel(reg_val1, sunxi_iis.regs + SUNXI_IISCTL);

@@ -290,8 +290,8 @@ gpio_pin_9 = port:PH19<1><0><0><1>
 gpio_pin_10 = port:PH12<1><0><0><1>
 gpio_pin_11 = port:PH27<1><0><0><1>
 gpio_pin_12 = port:PH25<1><0><0><1>
-gpio_pin_13 = port:PA09<1><0><0><0>
-gpio_pin_14 = port:PA07<1><0><0><0>
+gpio_pin_13 = port:PA07<1><0><0><0>
+gpio_pin_14 = port:PA09<1><0><0><0>
 gpio_pin_15 = port:PA11<1><0><0><0>
 gpio_pin_16 = port:PA05<1><0><0><0>
 

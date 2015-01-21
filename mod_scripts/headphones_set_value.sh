@@ -4,7 +4,12 @@
 # desc: initialize the headphone gain.
 
 PIN_CLK=14 # PA09 -> CLOCK
-PIN_UP_DOWN=13 # PA07 -> VOLUME UP/DOWN
+PIN_VOLUME=13 # PA07 -> VOLUME UP/DOWN
+
+# We are working with inverted (negative) boolean logic due to
+# the transistors between the CPU and the headphone gain-control IC:
+HIGH=0
+LOW=1
 
 # Export pin to access.
 function pin_export() {
@@ -26,21 +31,24 @@ function pin_set_value() {
 
 # pins setup
 pin_export $PIN_CLK
-pin_export $PIN_UP_DOWN
+pin_export $PIN_VOLUME
 pin_direction $PIN_CLK out
-pin_direction $PIN_UP_DOWN out
+pin_direction $PIN_VOLUME out
+
+UP=$HIGH
+DOWN=$LOW
 
 # Set volume to minimum
-pin_set_value $PIN_UP_DOWN 0
-for i in `seq 1 16`;
+pin_set_value $PIN_VOLUME $DOWN
+for i in `seq 1 50`;
 do
-  pin_set_value $PIN_CLK 1
-  pin_set_value $PIN_CLK 0
+  pin_set_value $PIN_CLK $LOW
+  pin_set_value $PIN_CLK $HIGH
 done
 
-pin_set_value $PIN_UP_DOWN 1
+pin_set_value $PIN_VOLUME $UP
 for i in `seq 1 $1`;
 do
-  pin_set_value $PIN_CLK 1
-  pin_set_value $PIN_CLK 0
+  pin_set_value $PIN_CLK $LOW
+  pin_set_value $PIN_CLK $HIGH
 done

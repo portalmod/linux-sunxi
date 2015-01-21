@@ -1002,8 +1002,8 @@ LV7_volt = 1050
 codec_used = 1
 codec_rst_pin = port:PB21<1><0><0><0>
 
-[mod_duo_souncard_para]
-mod_duo_souncard_used = 1
+[mod_duo_soundcard_para]
+mod_duo_soundcard_used = 1
 jfet_sw_a1_pin = port:PD00<1><0><0><1>
 jfet_sw_a2_pin = port:PD11<1><0><0><1>
 jfet_sw_a3_pin = port:PD03<1><0><0><0>

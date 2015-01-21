@@ -1016,8 +1016,8 @@ led_ovfl1_pin = port:PH19<1><0><0><1>
 led_ovfl2_pin = port:PH12<1><0><0><1>
 led_ovfl3_pin = port:PH27<1><0><0><1>
 led_ovfl4_pin = port:PH25<1><0><0><1>
-hp_vol_pin = port:PA09<1><0><0><0>
-hp_clk_pin = port:PA07<1><0><0><0>
+hp_vol_pin = port:PA07<1><0><0><0>
+hp_clk_pin = port:PA09<1><0><0><0>
 bypass_a_pin = port:PA11<1><0><0><0>
 bypass_b_pin = port:PA05<1><0><0><0>
 

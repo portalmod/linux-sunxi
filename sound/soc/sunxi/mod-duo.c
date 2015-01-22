@@ -51,6 +51,8 @@
 
 #define I2C_ADDRESS	0b10011000	// 10011xx + R/!W
 
+//Default headphone volume is 11th step (of a total of 16) which corresponds to a 0dB gain.
+//Each step corresponds to 3dB.
 static int headphone_volume = 11;
 
 static int mod_duo_used = 0;
@@ -284,10 +286,21 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 	return 0;
 }
 
+/* This routine flips the GPIO pins to send the volume adjustment message to the actual headphone gain-control chip (LM4811) */
 static void set_headphone_volume(int new_volume){
-//	printk("[MOD Duo Machine Driver]Entered %s. (new_volume=%d)\n", __func__, new_volume);
+	int steps = new_volume - headphone_volume;
+	int i;
+
+	//select volume adjustment direction:
+	gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "hp_vol_pin");
+
+	for (i=0; i<abs(steps); i++){
+		//toggle clock in order to sample the volume pin upon clock's rising edge:
+		gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "hp_clk_pin");
+		gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "hp_clk_pin");
+	}
+
 	headphone_volume = new_volume;
-	/*TODO: Implement here the routine that flips the GPIOs to communicate the new headphone volume */
 }
 
 static int headphone_info(struct snd_kcontrol *kcontrol,

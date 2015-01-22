@@ -57,12 +57,12 @@ static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
 
 #define MOD_DUO_GPIO_INIT(name)\
-    err = script_parser_fetch("mod_duo_soundcard_para", "(name)", (int *) &info, sizeof (script_gpio_set_t));\
+    err = script_parser_fetch("mod_duo_soundcard_para", name, (int *) &info, sizeof (script_gpio_set_t));\
     if (err) {\
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"(name)\" gpio handler, already used by others?.", __FUNCTION__);\
+        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"" name "\" gpio handler, already used by others?.", __FUNCTION__);\
         return -EBUSY;\
     }\
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "(name)");
+	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, name);
 
 /*
 * GPIO Initialization
@@ -77,31 +77,31 @@ static int mod_duo_gpio_init(void)
 	mod_duo_gpio_handler = gpio_request_ex("mod_duo_soundcard_para", NULL);
 
 	// JFET Switch A Pin Configuration
-	MOD_DUO_GPIO_INIT(jfet_sw_a1_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_a2_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_a3_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_a4_pin)
+	MOD_DUO_GPIO_INIT("jfet_sw_a1_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_a2_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_a3_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_a4_pin")
 
 	// JFET Switch B Pin Configuration
-	MOD_DUO_GPIO_INIT(jfet_sw_b1_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_b2_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_b3_pin)
-	MOD_DUO_GPIO_INIT(jfet_sw_b4_pin)
+	MOD_DUO_GPIO_INIT("jfet_sw_b1_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_b2_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_b3_pin")
+	MOD_DUO_GPIO_INIT("jfet_sw_b4_pin")
 
 	// Overflow Leds Pin Configuration
-	MOD_DUO_GPIO_INIT(led_ovfl1_pin)
-	MOD_DUO_GPIO_INIT(led_ovfl2_pin)
-	MOD_DUO_GPIO_INIT(led_ovfl3_pin)
-	MOD_DUO_GPIO_INIT(led_ovfl4_pin)
+	MOD_DUO_GPIO_INIT("led_ovfl1_pin")
+	MOD_DUO_GPIO_INIT("led_ovfl2_pin")
+	MOD_DUO_GPIO_INIT("led_ovfl3_pin")
+	MOD_DUO_GPIO_INIT("led_ovfl4_pin")
 
 	// Headphone Volume Control Pin Configuration
 	// TODO: Create a separate driver for Headphone Amplifier (LM4811).
-	MOD_DUO_GPIO_INIT(hp_vol_pin)
-	MOD_DUO_GPIO_INIT(hp_clk_pin)
+	MOD_DUO_GPIO_INIT("hp_vol_pin")
+	MOD_DUO_GPIO_INIT("hp_clk_pin")
 
 	// True Bypass Control Pin Configuration
-	MOD_DUO_GPIO_INIT(bypass_a_pin)
-	MOD_DUO_GPIO_INIT(bypass_b_pin)
+	MOD_DUO_GPIO_INIT("bypass_a_pin")
+	MOD_DUO_GPIO_INIT("bypass_b_pin")
 
 	printk("[MOD Duo Machine Driver]GPIOs initialized.\n");
 	return 0;
@@ -285,7 +285,7 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 }
 
 static void set_headphone_volume(int new_volume){
-	printk("[MOD Duo Machine Driver]Entered %s. (new_volume=%d)\n", __func__, new_volume);
+//	printk("[MOD Duo Machine Driver]Entered %s. (new_volume=%d)\n", __func__, new_volume);
 	headphone_volume = new_volume;
 	/*TODO: Implement here the routine that flips the GPIOs to communicate the new headphone volume */
 }

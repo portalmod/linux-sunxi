@@ -51,6 +51,8 @@
 
 #define I2C_ADDRESS	0b10011000	// 10011xx + R/!W
 
+static int headphone_volume = 11;
+
 static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
 
@@ -282,6 +284,51 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 	return 0;
 }
 
+static void set_headphone_volume(int new_volume){
+	printk("[MOD Duo Machine Driver]Entered %s. (new_volume=%d)\n", __func__, new_volume);
+	headphone_volume = new_volume;
+	/*TODO: Implement here the routine that flips the GPIOs to communicate the new headphone volume */
+}
+
+static int headphone_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+      uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+      uinfo->count = 1;
+      uinfo->value.integer.min = 0;
+      uinfo->value.integer.max = 15;
+      return 0;
+}
+
+static int headphone_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = headphone_volume;
+	return 0;
+}
+
+
+static int headphone_put(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (headphone_volume != ucontrol->value.integer.value[0]) {
+		set_headphone_volume(ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+static struct snd_kcontrol_new headphone_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Headphone Playback Volume",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = headphone_info,
+	.get = headphone_get,
+	.put = headphone_put
+};
+
 static int mod_duo_hw_params(struct snd_pcm_substream *substream,
 							 struct snd_pcm_hw_params *params)
 {
@@ -422,28 +469,36 @@ static int __init mod_duo_audio_init(void)
 {
 	int ret, i2s_used;
 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+
 	ret = script_parser_fetch("i2s_para", "i2s_used", &i2s_used, 1);
 	if ((ret != 0) || (!i2s_used)){
 		printk("[MOD Duo Machine Driver]I2S not configured on script.bin.\n");
 		return -ENODEV;
 	}
+
 	ret = script_parser_fetch("mod_duo_soundcard_para","mod_duo_soundcard_used", &mod_duo_used, sizeof(int));
 	if ((ret != 0) || (!mod_duo_used)) {
         printk("[MOD Duo Machine Driver]MOD Duo Sound Card not configured on script.bin.\n");
         return -ENODEV;
 	}
+
 	/* Register analog device */
 	mod_duo_audio_device = platform_device_alloc("soc-audio", 0);	// TODO: Check memory integrity with variable "mod_duo_audio_device".
 	if (!mod_duo_audio_device)
 		return -ENOMEM;
-	// else
-	// 	printk("[MOD Duo Machine Driver] Plataform Device Allocated.\n");
+
 	platform_set_drvdata(mod_duo_audio_device, &snd_soc_mod_duo_soundcard);
+
 	ret = platform_device_add(mod_duo_audio_device);
 	if (ret < 0) {
 		platform_device_put(mod_duo_audio_device);
 		return ret;
 	}
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&headphone_control, NULL));
+	if (ret < 0)
+		return ret;
+
 	if(mod_duo_used) {
 		mod_duo_gpio_init();
 		mod_duo_set_stage_gain(CHANNEL_A, STAGE_GAIN_OFF);
@@ -453,6 +508,7 @@ static int __init mod_duo_audio_init(void)
 		mod_duo_set_bypass(CHANNEL_A, PROCESS);
 		mod_duo_set_bypass(CHANNEL_B, PROCESS);
 	}
+
 	return 0;
 }
 

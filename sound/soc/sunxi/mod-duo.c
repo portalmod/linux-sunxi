@@ -51,6 +51,14 @@ static int mod_duo_used = 0;
 // GPIO Handler
 static u32 mod_duo_gpio_handler = 0;
 
+#define MOD_DUO_GPIO_INIT(name)\
+    err = script_parser_fetch("mod_duo_soundcard_para", "(name)", (int *) &info, sizeof (script_gpio_set_t));\
+    if (err) {\
+        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"(name)\" gpio handler, already used by others?.", __FUNCTION__);\
+        return -EBUSY;\
+    }\
+	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "(name)");
+
 /*
 * GPIO Initialization - TODO: Function description.
 */
@@ -62,107 +70,34 @@ static int mod_duo_gpio_init(void)
 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 
 	mod_duo_gpio_handler = gpio_request_ex("mod_duo_soundcard_para", NULL);
+
 // JFET Switch A Pin Configuration
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_a1_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_a1_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_a1_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_a2_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_a2_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_a2_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_a3_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_a3_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_a3_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_a4_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_a4_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_a4_pin");
+	MOD_DUO_GPIO_INIT(jfet_sw_a1_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_a2_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_a3_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_a4_pin)
+
 // JFET Switch B Pin Configuration
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_b1_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_b1_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
- 	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_b1_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_b2_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_b2_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
- 	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_b2_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_b3_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_b3_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_b3_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "jfet_sw_b4_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"jfet_sw_b4_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "jfet_sw_b4_pin");
+	MOD_DUO_GPIO_INIT(jfet_sw_b1_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_b2_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_b3_pin)
+	MOD_DUO_GPIO_INIT(jfet_sw_b4_pin)
+
 // Overflow Leds Pin Configuration
-    err = script_parser_fetch("mod_duo_soundcard_para", "led_ovfl1_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"led_ovfl1_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "led_ovfl1_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "led_ovfl2_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"led_ovfl2_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-  	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "led_ovfl2_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "led_ovfl3_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"led_ovfl3_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-  	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "led_ovfl3_pin");
-	err = script_parser_fetch("mod_duo_soundcard_para", "led_ovfl4_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"led_ovfl4_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "led_ovfl4_pin");
-// Headphone Volume Control Pin Configuration - TODO: Create a separate driver for Headphone Aomplifier (LM4811).
-    err = script_parser_fetch("mod_duo_soundcard_para", "hp_vol_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"hp_vol_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "hp_vol_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "hp_clk_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"hp_clk_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "hp_clk_pin");
+	MOD_DUO_GPIO_INIT(led_ovfl1_pin)
+	MOD_DUO_GPIO_INIT(led_ovfl2_pin)
+	MOD_DUO_GPIO_INIT(led_ovfl3_pin)
+	MOD_DUO_GPIO_INIT(led_ovfl4_pin)
+
+// Headphone Volume Control Pin Configuration
+// TODO: Create a separate driver for Headphone Amplifier (LM4811).
+	MOD_DUO_GPIO_INIT(hp_vol_pin)
+	MOD_DUO_GPIO_INIT(hp_clk_pin)
+
 // True Bypass Control Pin Configuration
-    err = script_parser_fetch("mod_duo_soundcard_para", "bypass_a_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"bypass_a_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "bypass_a_pin");
-    err = script_parser_fetch("mod_duo_soundcard_para", "bypass_b_pin", (int *) &info, sizeof (script_gpio_set_t));
-    if (err) {
-        printk(KERN_INFO "%s: can not get \"mod_duo_soundcard_para\" \"bypass_b_pin\" gpio handler, already used by others?.", __FUNCTION__);
-        return -EBUSY;
-    }
-	gpio_set_one_pin_io_status(mod_duo_gpio_handler, PIN_DIR_OUT, "bypass_b_pin");
+	MOD_DUO_GPIO_INIT(bypass_a_pin)
+	MOD_DUO_GPIO_INIT(bypass_b_pin)
+
 	printk("[MOD Duo Machine Driver]GPIOs initialized.\n");
 	return 0;
 }

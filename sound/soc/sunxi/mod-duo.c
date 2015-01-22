@@ -39,13 +39,14 @@
 #define INSTRUMENT 		0
 #define LINE 			1
 #define MICROPHONE 		2
-#define STAGE_GAIN_OFF		3
-#define STAGE_GAIN_ON		4
+
+#define STAGE_GAIN_OFF	0
+#define STAGE_GAIN_ON	1
 
 #define BYPASS 			0
 #define PROCESS 		1
 
-#define TURN_SWITCH_ON 0
+#define TURN_SWITCH_ON	0
 #define TURN_SWITCH_OFF 1
 
 #define I2C_ADDRESS	0b10011000	// 10011xx + R/!W
@@ -132,14 +133,6 @@ static void mod_duo_set_impedance(int channel, int type)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a1_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a2_pin");
 					break;
-				case STAGE_GAIN_OFF:
-					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a3_pin");
-					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a4_pin");
-					break;
-				case STAGE_GAIN_ON:
-					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a3_pin");
-					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a4_pin");
-					break;
 			}
 			break;
 		}
@@ -159,6 +152,36 @@ static void mod_duo_set_impedance(int channel, int type)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b1_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b2_pin");
 					break;
+			}
+			break;
+		}
+	}
+	return;
+}
+
+static void mod_duo_set_stage_gain(int channel, int state)
+{
+	switch(channel)
+	{
+		case CHANNEL_A:
+		{
+			switch(state)
+			{
+				case STAGE_GAIN_OFF:
+					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a3_pin");
+					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a4_pin");
+					break;
+				case STAGE_GAIN_ON:
+					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a3_pin");
+					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a4_pin");
+					break;
+			}
+			break;
+		}
+		case CHANNEL_B:
+		{
+			switch(state)
+			{
 				case STAGE_GAIN_OFF:
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b3_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b4_pin");
@@ -423,8 +446,8 @@ static int __init mod_duo_audio_init(void)
 	}
 	if(mod_duo_used) {
 		mod_duo_gpio_init();
-		mod_duo_set_impedance(CHANNEL_A, STAGE_GAIN_OFF);
-		mod_duo_set_impedance(CHANNEL_B, STAGE_GAIN_OFF);
+		mod_duo_set_stage_gain(CHANNEL_A, STAGE_GAIN_OFF);
+		mod_duo_set_stage_gain(CHANNEL_B, STAGE_GAIN_OFF);
 		mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
 		mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
 		mod_duo_set_bypass(CHANNEL_A, PROCESS);

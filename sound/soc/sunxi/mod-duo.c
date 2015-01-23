@@ -189,6 +189,7 @@ static void mod_duo_set_stage_gain(int channel, int state)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a4_pin");
 					break;
 			}
+			input_left_stagegain = state;
 			break;
 		}
 		case CHANNEL_B:
@@ -204,6 +205,7 @@ static void mod_duo_set_stage_gain(int channel, int state)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b4_pin");
 					break;
 			}
+			input_right_stagegain = state;
 			break;
 		}
 	}

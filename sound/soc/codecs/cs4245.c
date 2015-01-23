@@ -108,19 +108,9 @@ static void cs4245_printk_register_values(struct snd_soc_codec *codec)
 }
 #endif
 
-static void cs4245_reset(bool en)
+static void cs4245_reset(bool state)
 {
-	if(CODEC_ENABLE)
-	{
-		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_ENABLE, "codec_rst_pin");
-		// printk("[CS4245]Codec Enabled - Reset = %u.\n", CODEC_ENABLE);
-	}
-	else 
-	{
-		gpio_write_one_pin_value(cs4245_gpio_handler, CODEC_DISABLE, "codec_rst_pin");
-		// printk("[CS4245]Codec Disabled - Reset = %u.\n", CODEC_DISABLE);
-	}
-	return;
+	gpio_write_one_pin_value(cs4245_gpio_handler, state, "codec_rst_pin");
 }
 
 static int cs4245_reg_is_readable(struct snd_soc_codec *codec, unsigned int index)

@@ -154,7 +154,7 @@ Gain[5:0] 	|	Setting
 
 /* Codec Reset Pin Defines */
 #define CODEC_ENABLE	1
-#define CODEC_DISABLE	(!CODEC_ENABLE)
+#define CODEC_DISABLE	0
 
 /* Codec Master Clock Defines */
 #define CS4245_MCLK1_SET 		0 // Sets the Master Clock 1

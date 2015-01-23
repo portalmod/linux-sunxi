@@ -451,7 +451,7 @@ static int input_left_stagegain_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_right_impedance != ucontrol->value.integer.value[0]) {
+	if (input_left_stagegain != ucontrol->value.integer.value[0]) {
 		mod_duo_set_stage_gain(CHANNEL_A, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}
@@ -482,7 +482,7 @@ static int input_right_stagegain_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_right_impedance != ucontrol->value.integer.value[0]) {
+	if (input_right_stagegain != ucontrol->value.integer.value[0]) {
 		mod_duo_set_stage_gain(CHANNEL_B, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}

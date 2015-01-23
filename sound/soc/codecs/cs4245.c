@@ -871,15 +871,16 @@ static int __init cs4245_init(void)
 		return -ENODEV;
 	}
 	
-// Codec Reset Pin Configuration
+    // Codec Reset Pin Configuration
 	cs4245_gpio_handler = gpio_request_ex("codec_para", NULL);
 	ret = script_parser_fetch("codec_para", "codec_rst_pin", (int *) &info, sizeof (script_gpio_set_t));
     if (ret) {
         printk(KERN_INFO "%s: can not get \"codec_para\" \"codec_rst_pin\" gpio handler, already used by others?", __FUNCTION__);
         return -EBUSY;
     }
+    gpio_set_one_pin_io_status(cs4245_gpio_handler, 1, "codec_rst_pin");
 
-	gpio_set_one_pin_io_status(cs4245_gpio_handler, 1, "codec_rst_pin");
+
 	cs4245_reset(CODEC_ENABLE);
 
 	ret = i2c_add_driver(&cs4245_i2c_driver);	// This call also cs4245_i2c_probe
@@ -896,9 +897,7 @@ static void __exit cs4245_exit(void)
 	printk("[CS4245]Entered %s.\n", __func__);
 
 	cs4245_reset(CODEC_DISABLE);
-
 	gpio_release(cs4245_gpio_handler, 2);
-
 	i2c_del_driver(&cs4245_i2c_driver);
 }
 module_exit(cs4245_exit);

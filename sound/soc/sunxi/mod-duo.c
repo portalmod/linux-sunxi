@@ -58,6 +58,8 @@ static int input_left_impedance = 0;
 static int input_right_impedance = 0;
 static int input_left_stagegain = 0;
 static int input_right_stagegain = 0;
+static int input_left_truebypass = 0;
+static int input_right_truebypass = 0;
 
 static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
@@ -219,9 +221,13 @@ static void mod_duo_set_bypass(int channel, bool state)
 	switch(channel)
 	{
 		case CHANNEL_A:
-			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_a_pin"); break;
+			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_a_pin");
+			input_left_truebypass = state;
+			break;
 		case CHANNEL_B:
-			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_b_pin"); break;
+			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_b_pin");
+			input_right_truebypass = state;
+			break;
 	}
 	return;
 }
@@ -484,6 +490,69 @@ static int input_right_stagegain_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
+static int input_left_truebypass_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
+	uinfo->count = 1;
+    uinfo->value.integer.min = 0;
+    uinfo->value.integer.max = 1;
+	return 0;
+}
+
+static int input_left_truebypass_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = input_left_truebypass;
+	return 0;
+}
+
+
+static int input_left_truebypass_put(struct snd_kcontrol *kcontrol,
+									struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (input_left_truebypass != ucontrol->value.integer.value[0]) {
+		mod_duo_set_bypass(CHANNEL_A, ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+//----------------------------------------------------------------------
+
+static int input_right_truebypass_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
+	uinfo->count = 1;
+    uinfo->value.integer.min = 0;
+    uinfo->value.integer.max = 1;
+	return 0;
+}
+
+static int input_right_truebypass_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = input_right_truebypass;
+	return 0;
+}
+
+
+static int input_right_truebypass_put(struct snd_kcontrol *kcontrol,
+									struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (input_right_truebypass != ucontrol->value.integer.value[0]) {
+		mod_duo_set_bypass(CHANNEL_B, ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+//----------------------------------------------------------------------
+
+
 static struct snd_kcontrol_new input_left_impedance_control __devinitdata = {
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Capture Source",
@@ -522,6 +591,26 @@ static struct snd_kcontrol_new input_right_stagegain_control __devinitdata = {
 	.info = input_right_stagegain_info,
 	.get = input_right_stagegain_get,
 	.put = input_right_stagegain_put
+};
+
+static struct snd_kcontrol_new input_left_truebypass_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Left True-Bypass",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = input_left_truebypass_info,
+	.get = input_left_truebypass_get,
+	.put = input_left_truebypass_put
+};
+
+static struct snd_kcontrol_new input_right_truebypass_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Right True-Bypass",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = input_right_truebypass_info,
+	.get = input_right_truebypass_get,
+	.put = input_right_truebypass_put
 };
 
 //----------------------------------------------------------------------
@@ -709,6 +798,14 @@ static int __init mod_duo_audio_init(void)
 		return ret;
 
 	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_stagegain_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_truebypass_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_truebypass_control, NULL));
 	if (ret < 0)
 		return ret;
 

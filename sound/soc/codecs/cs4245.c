@@ -588,12 +588,6 @@ static int cs4245_trigger(struct snd_pcm_substream *substream,
 	return ret;
 }
 
-/* A list of non-DAPM controls that the CS4245 supports */ // - TODO - Add Alsa Mixer Controls
-// static const struct snd_kcontrol_new cs4245_snd_controls[] = {
-// 	SOC_DOUBLE_R("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1),
-// 	SOC_DOUBLE_R("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0xFF, 1),
-// };
-
 /**
  * cs4245_probe - ASoC probe function
  * @pdev: platform device
@@ -743,6 +737,10 @@ static struct snd_soc_dai_driver cs4245_dai = {
 };
 //EXPORT_SYMBOL(cs4245_dai);
 
+static const struct snd_kcontrol_new cs4245_snd_controls[] = {
+	SOC_DOUBLE_R("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1),
+	SOC_DOUBLE_R("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0xFF, 1),
+};
 
 /*
  * ASoC codec driver structure
@@ -757,6 +755,8 @@ static const struct snd_soc_codec_driver soc_codec_device_cs4245 = {
 	.reg_cache_size = CS4245_LASTREG + 1,
 	.reg_word_size = sizeof(u8),
 	.reg_cache_default = cs4245_default_reg_cache,
+	.controls = cs4245_snd_controls,
+	.num_controls = ARRAY_SIZE(cs4245_snd_controls),
 };
 
 /*

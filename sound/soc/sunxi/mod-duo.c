@@ -54,6 +54,9 @@
 //Default headphone volume is 11th step (of a total of 16) which corresponds to a 0dB gain.
 //Each step corresponds to 3dB.
 static int headphone_volume = 11;
+
+static int playback_left_volume = 0;
+static int playback_right_volume = 0;
 static int input_left_impedance = 0;
 static int input_right_impedance = 0;
 static int input_left_stagegain = 0;
@@ -297,6 +300,99 @@ static int mod_duo_analog_resume(struct snd_soc_card *card)
 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 	return 0;
 }
+
+//----------------------------------------------------------------------
+
+static void set_playback_left_volume(int new_volume){
+	/* TODO: Implement-me! */
+	playback_left_volume = new_volume;
+}
+
+static int playback_left_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+      uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+      uinfo->count = 1;
+      uinfo->value.integer.min = 0;
+      uinfo->value.integer.max = 15;
+      return 0;
+}
+
+static int playback_left_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = playback_left_volume;
+	return 0;
+}
+
+static int playback_left_put(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (playback_left_volume != ucontrol->value.integer.value[0]) {
+		set_playback_left_volume(ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+static struct snd_kcontrol_new playback_left_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Playback Left Volume",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = playback_left_info,
+	.get = playback_left_get,
+	.put = playback_left_put
+};
+
+//----------------------------------------------------------------------
+
+static void set_playback_right_volume(int new_volume){
+	/* TODO: Implment-me! */
+	playback_right_volume = new_volume;
+}
+
+static int playback_right_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+      uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+      uinfo->count = 1;
+      uinfo->value.integer.min = 0;
+      uinfo->value.integer.max = 15;
+      return 0;
+}
+
+static int playback_right_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = playback_right_volume;
+	return 0;
+}
+
+
+static int playback_right_put(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (playback_right_volume != ucontrol->value.integer.value[0]) {
+		set_playback_right_volume(ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+static struct snd_kcontrol_new playback_right_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Playback Right Volume",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = playback_right_info,
+	.get = playback_right_get,
+	.put = playback_right_put
+};
+
+//----------------------------------------------------------------------
 
 /* This routine flips the GPIO pins to send the volume adjustment message to the actual headphone gain-control chip (LM4811) */
 static void set_headphone_volume(int new_volume){
@@ -780,6 +876,14 @@ static int __init mod_duo_audio_init(void)
 		platform_device_put(mod_duo_audio_device);
 		return ret;
 	}
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&playback_left_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&playback_right_control, NULL));
+	if (ret < 0)
+		return ret;
 
 	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&headphone_control, NULL));
 	if (ret < 0)

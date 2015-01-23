@@ -54,6 +54,8 @@
 //Default headphone volume is 11th step (of a total of 16) which corresponds to a 0dB gain.
 //Each step corresponds to 3dB.
 static int headphone_volume = 11;
+static int input_left_impedance = 0;
+static int input_right_impedance = 0;
 
 static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
@@ -138,6 +140,7 @@ static void mod_duo_set_impedance(int channel, int type)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a2_pin");
 					break;
 			}
+			input_left_impedance = type;
 			break;
 		}
 		case CHANNEL_B:
@@ -157,6 +160,7 @@ static void mod_duo_set_impedance(int channel, int type)
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b2_pin");
 					break;
 			}
+			input_right_impedance = type;
 			break;
 		}
 	}
@@ -342,6 +346,99 @@ static struct snd_kcontrol_new headphone_control __devinitdata = {
 	.put = headphone_put
 };
 
+//----------------------------------------------------------------------
+
+static int input_left_impedance_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+	static char *texts[3] = { "Instrument", "Line", "Mic" };
+
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
+	uinfo->count = 1;
+	uinfo->value.enumerated.items = 3;
+	if (uinfo->value.enumerated.item > 2)
+		uinfo->value.enumerated.item = 2;
+	strcpy(uinfo->value.enumerated.name,
+		texts[uinfo->value.enumerated.item]);
+	return 0;
+}
+
+static int input_left_impedance_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = input_left_impedance;
+	return 0;
+}
+
+
+static int input_left_impedance_put(struct snd_kcontrol *kcontrol,
+									struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (input_left_impedance != ucontrol->value.integer.value[0]) {
+		mod_duo_set_impedance(CHANNEL_A, ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+
+static int input_right_impedance_info(struct snd_kcontrol *kcontrol,
+						  struct snd_ctl_elem_info *uinfo)
+{
+	static char *texts[3] = { "Instrument", "Line", "Mic" };
+
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
+	uinfo->count = 1;
+	uinfo->value.enumerated.items = 3;
+	if (uinfo->value.enumerated.item > 2)
+		uinfo->value.enumerated.item = 2;
+	strcpy(uinfo->value.enumerated.name,
+		texts[uinfo->value.enumerated.item]);
+	return 0;
+}
+
+static int input_right_impedance_get(struct snd_kcontrol *kcontrol,
+						 struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = input_right_impedance;
+	return 0;
+}
+
+
+static int input_right_impedance_put(struct snd_kcontrol *kcontrol,
+									struct snd_ctl_elem_value *ucontrol)
+{
+	int changed = 0;
+	if (input_right_impedance != ucontrol->value.integer.value[0]) {
+		mod_duo_set_impedance(CHANNEL_B, ucontrol->value.integer.value[0]);
+		changed = 1;
+	}
+	return changed;
+}
+
+static struct snd_kcontrol_new input_left_impedance_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Capture Source",
+	.index = 0,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = input_left_impedance_info,
+	.get = input_left_impedance_get,
+	.put = input_left_impedance_put
+};
+
+static struct snd_kcontrol_new input_right_impedance_control __devinitdata = {
+	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+	.name = "Capture Source",
+	.index = 1,
+	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+	.info = input_right_impedance_info,
+	.get = input_right_impedance_get,
+	.put = input_right_impedance_put
+};
+
+//----------------------------------------------------------------------
+
 static int mod_duo_hw_params(struct snd_pcm_substream *substream,
 							 struct snd_pcm_hw_params *params)
 {
@@ -509,6 +606,14 @@ static int __init mod_duo_audio_init(void)
 	}
 
 	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&headphone_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
 	if (ret < 0)
 		return ret;
 

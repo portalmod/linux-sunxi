@@ -714,46 +714,23 @@ static struct snd_soc_card snd_soc_mod_duo_soundcard = {
 	.resume_pre	= mod_duo_analog_resume,
 };
 
-// static int __devinit mod_duo_probe(struct platform_device *pdev)
-// {
-// 	printk("[MOD Duo Machine Driver] %s\n", __func__);
-
-// 	snd_soc_mod_duo_soundcard.dev = &pdev->dev;
-// 	return snd_soc_register_card(&snd_soc_mod_duo_soundcard);
-// }
-
-// static int __devexit mod_duo_remove(struct platform_device *pdev)
-// {
-// 	printk("[MOD Duo Machine Driver] %s\n", __func__);
-
-// 	snd_soc_unregister_card(&snd_soc_sunxi_sndi2s);
-// 	return 0;
-// }
-
-static struct platform_device *mod_duo_audio_device;
-// static struct platform_device mod_duo_audio_device = {
-// 	.name = "MOD-Duo-Sound-Card",
-// };
-
-// /*
-// *
-// */
-// static struct platform_driver mod_duo_audio_driver = {
-// 	.probe = mod_duo_probe,
-// 	.remove = __devexit_p(mod_duo_remove),
-// 	.driver = {
-// 		.name = "MOD-Duo-Sound-Card",
-// 		.owner = THIS_MODULE,
-// 	},
-// };
-
-/*
-* When loading the module, the kernel sends a message saying to use snd_soc_register_card()
-* "soc-audio soc-audio.0: ASoC machine MOD-Duo-Sound-Card should use snd_soc_register_card()"
-*/
-static int __init mod_duo_audio_init(void)
+static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
 {
+	struct snd_soc_card *card = platform_get_drvdata(pdev);
+
+	if(mod_duo_used){
+		mod_duo_gpio_release();
+	}
+
+	snd_soc_unregister_card(card);
+	return 0;
+}
+
+static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
+{
+	struct snd_soc_card *card = &snd_soc_mod_duo_soundcard;
 	int ret, i2s_used;
+
 	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	ret = script_parser_fetch("i2s_para", "i2s_used", &i2s_used, 1);
@@ -766,19 +743,6 @@ static int __init mod_duo_audio_init(void)
 	if ((ret != 0) || (!mod_duo_used)) {
         printk("[MOD Duo Machine Driver]MOD Duo Sound Card not configured on script.bin.\n");
         return -ENODEV;
-	}
-
-	/* Register analog device */
-	mod_duo_audio_device = platform_device_alloc("soc-audio", 0);	// TODO: Check memory integrity with variable "mod_duo_audio_device".
-	if (!mod_duo_audio_device)
-		return -ENOMEM;
-
-	platform_set_drvdata(mod_duo_audio_device, &snd_soc_mod_duo_soundcard);
-
-	ret = platform_device_add(mod_duo_audio_device);
-	if (ret < 0) {
-		platform_device_put(mod_duo_audio_device);
-		return ret;
 	}
 
 	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&headphone_control, NULL));
@@ -819,24 +783,27 @@ static int __init mod_duo_audio_init(void)
 		mod_duo_set_true_bypass(CHANNEL_B, PROCESS);
 	}
 
-	return 0;
+	card->dev = &pdev->dev;
+	platform_set_drvdata(pdev, card);
+	ret = snd_soc_register_card(card);
+	if (ret)
+		dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n",	ret);
+
+	return ret;
 }
 
-static void __exit mod_duo_audio_exit(void)
-{
-	printk("[MOD Duo Machine Driver] %s\n", __func__);
+static struct platform_driver mod_duo_audio_driver = {
+	.driver		= {
+		.name	= "mod-duo-audio",
+		.owner	= THIS_MODULE,
+	},
+	.probe		= mod_duo_audio_probe,
+	.remove		= __devexit_p(mod_duo_audio_remove),
+};
 
-	if(mod_duo_used)
-	{
-		mod_duo_gpio_release();
-	}
-	platform_device_unregister(mod_duo_audio_device);
-	return;
-}
+module_platform_driver(mod_duo_audio_driver);
 
-module_init(mod_duo_audio_init);
-module_exit(mod_duo_audio_exit);
-
+/* Module information */
 MODULE_AUTHOR("Felipe Sanches <juca@members.fsf.org>, Rafael Guayer <rafael@musicaloperatingdevices.com>");
 MODULE_DESCRIPTION("MOD Duo Sound Card Audio Machine Driver");
 MODULE_LICENSE("GPL");

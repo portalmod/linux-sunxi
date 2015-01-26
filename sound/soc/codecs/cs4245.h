@@ -5,8 +5,6 @@
  * way, ALSA will always match the bit patterns.
  */
 
-// CODEC I2C ADRESS - 0x48
-
 /*
 #define CS4245_FORMATS (SNDRV_PCM_FMTBIT_S8      | \
 			SNDRV_PCM_FMTBIT_S16_LE  | SNDRV_PCM_FMTBIT_S16_BE  | \
@@ -40,7 +38,6 @@
 #define CS4245_FIRSTREG		0x01
 #define CS4245_LASTREG		0x10
 #define CS4245_NUMREGS		(CS4245_LASTREG - CS4245_FIRSTREG + 1)
-#define CS4245_I2C_INCR		0x80 	/* TODO - What is this? */
 
 /* Bit masks for the CS4245 registers */
 

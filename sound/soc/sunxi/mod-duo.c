@@ -49,8 +49,6 @@
 #define TURN_SWITCH_ON	0
 #define TURN_SWITCH_OFF 1
 
-#define I2C_ADDRESS	0b10011000	// 10011xx + R/!W
-
 //Default headphone volume is 11th step (of a total of 16) which corresponds to a 0dB gain.
 //Each step corresponds to 3dB.
 static int headphone_volume = 11;

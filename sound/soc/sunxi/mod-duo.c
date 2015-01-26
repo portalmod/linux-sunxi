@@ -40,8 +40,8 @@
 #define LINE 			1
 #define MICROPHONE 		2
 
-#define STAGE_GAIN_OFF	0
-#define STAGE_GAIN_ON	1
+#define GAIN_STAGE_OFF	0
+#define GAIN_STAGE_ON	1
 
 #define BYPASS 			0
 #define PROCESS 		1
@@ -57,10 +57,10 @@ static int headphone_volume = 11;
 
 static int input_left_impedance = 0;
 static int input_right_impedance = 0;
-static int input_left_stagegain = 0;
-static int input_right_stagegain = 0;
-static int input_left_truebypass = 0;
-static int input_right_truebypass = 0;
+static int input_left_gain_stage = 0;
+static int input_right_gain_stage = 0;
+static int left_true_bypass = 0;
+static int right_true_bypass = 0;
 
 static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
@@ -172,7 +172,7 @@ static void mod_duo_set_impedance(int channel, int type)
 	return;
 }
 
-static void mod_duo_set_stage_gain(int channel, int state)
+static void mod_duo_set_gain_stage(int channel, int state)
 {
 	switch(channel)
 	{
@@ -180,39 +180,39 @@ static void mod_duo_set_stage_gain(int channel, int state)
 		{
 			switch(state)
 			{
-				case STAGE_GAIN_OFF:
+				case GAIN_STAGE_OFF:
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a3_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a4_pin");
 					break;
-				case STAGE_GAIN_ON:
+				case GAIN_STAGE_ON:
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a3_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a4_pin");
 					break;
 			}
-			input_left_stagegain = state;
+			input_left_gain_stage = state;
 			break;
 		}
 		case CHANNEL_B:
 		{
 			switch(state)
 			{
-				case STAGE_GAIN_OFF:
+				case GAIN_STAGE_OFF:
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b3_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b4_pin");
 					break;
-				case STAGE_GAIN_ON:
+				case GAIN_STAGE_ON:
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b3_pin");
 					gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b4_pin");
 					break;
 			}
-			input_right_stagegain = state;
+			input_right_gain_stage = state;
 			break;
 		}
 	}
 	return;
 }
 
-static void mod_duo_set_bypass(int channel, bool state)
+static void mod_duo_set_true_bypass(int channel, bool state)
 {
 // state == BYPASS:
 // 	No audio processing.
@@ -225,11 +225,11 @@ static void mod_duo_set_bypass(int channel, bool state)
 	{
 		case CHANNEL_A:
 			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_a_pin");
-			input_left_truebypass = state;
+			left_true_bypass = state;
 			break;
 		case CHANNEL_B:
 			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_b_pin");
-			input_right_truebypass = state;
+			right_true_bypass = state;
 			break;
 	}
 	return;
@@ -431,7 +431,7 @@ static int input_right_impedance_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
-static int input_left_stagegain_info(struct snd_kcontrol *kcontrol,
+static int input_left_gain_stage_info(struct snd_kcontrol *kcontrol,
 						  struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
@@ -441,20 +441,20 @@ static int input_left_stagegain_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int input_left_stagegain_get(struct snd_kcontrol *kcontrol,
+static int input_left_gain_stage_get(struct snd_kcontrol *kcontrol,
 						 struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = input_left_stagegain;
+	ucontrol->value.integer.value[0] = input_left_gain_stage;
 	return 0;
 }
 
 
-static int input_left_stagegain_put(struct snd_kcontrol *kcontrol,
+static int input_left_gain_stage_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_left_stagegain != ucontrol->value.integer.value[0]) {
-		mod_duo_set_stage_gain(CHANNEL_A, ucontrol->value.integer.value[0]);
+	if (input_left_gain_stage != ucontrol->value.integer.value[0]) {
+		mod_duo_set_gain_stage(CHANNEL_A, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}
 	return changed;
@@ -462,7 +462,7 @@ static int input_left_stagegain_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
-static int input_right_stagegain_info(struct snd_kcontrol *kcontrol,
+static int input_right_gain_stage_info(struct snd_kcontrol *kcontrol,
 						  struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
@@ -472,20 +472,20 @@ static int input_right_stagegain_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int input_right_stagegain_get(struct snd_kcontrol *kcontrol,
+static int input_right_gain_stage_get(struct snd_kcontrol *kcontrol,
 						 struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = input_right_stagegain;
+	ucontrol->value.integer.value[0] = input_right_gain_stage;
 	return 0;
 }
 
 
-static int input_right_stagegain_put(struct snd_kcontrol *kcontrol,
+static int input_right_gain_stage_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_right_stagegain != ucontrol->value.integer.value[0]) {
-		mod_duo_set_stage_gain(CHANNEL_B, ucontrol->value.integer.value[0]);
+	if (input_right_gain_stage != ucontrol->value.integer.value[0]) {
+		mod_duo_set_gain_stage(CHANNEL_B, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}
 	return changed;
@@ -493,7 +493,7 @@ static int input_right_stagegain_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
-static int input_left_truebypass_info(struct snd_kcontrol *kcontrol,
+static int left_true_bypass_info(struct snd_kcontrol *kcontrol,
 						  struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
@@ -503,20 +503,20 @@ static int input_left_truebypass_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int input_left_truebypass_get(struct snd_kcontrol *kcontrol,
+static int left_true_bypass_get(struct snd_kcontrol *kcontrol,
 						 struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = input_left_truebypass;
+	ucontrol->value.integer.value[0] = left_true_bypass;
 	return 0;
 }
 
 
-static int input_left_truebypass_put(struct snd_kcontrol *kcontrol,
+static int left_true_bypass_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_left_truebypass != ucontrol->value.integer.value[0]) {
-		mod_duo_set_bypass(CHANNEL_A, ucontrol->value.integer.value[0]);
+	if (left_true_bypass != ucontrol->value.integer.value[0]) {
+		mod_duo_set_true_bypass(CHANNEL_A, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}
 	return changed;
@@ -524,7 +524,7 @@ static int input_left_truebypass_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
-static int input_right_truebypass_info(struct snd_kcontrol *kcontrol,
+static int right_true_bypass_info(struct snd_kcontrol *kcontrol,
 						  struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
@@ -534,20 +534,20 @@ static int input_right_truebypass_info(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int input_right_truebypass_get(struct snd_kcontrol *kcontrol,
+static int right_true_bypass_get(struct snd_kcontrol *kcontrol,
 						 struct snd_ctl_elem_value *ucontrol)
 {
-	ucontrol->value.integer.value[0] = input_right_truebypass;
+	ucontrol->value.integer.value[0] = right_true_bypass;
 	return 0;
 }
 
 
-static int input_right_truebypass_put(struct snd_kcontrol *kcontrol,
+static int right_true_bypass_put(struct snd_kcontrol *kcontrol,
 									struct snd_ctl_elem_value *ucontrol)
 {
 	int changed = 0;
-	if (input_right_truebypass != ucontrol->value.integer.value[0]) {
-		mod_duo_set_bypass(CHANNEL_B, ucontrol->value.integer.value[0]);
+	if (right_true_bypass != ucontrol->value.integer.value[0]) {
+		mod_duo_set_true_bypass(CHANNEL_B, ucontrol->value.integer.value[0]);
 		changed = 1;
 	}
 	return changed;
@@ -576,44 +576,44 @@ static struct snd_kcontrol_new input_right_impedance_control __devinitdata = {
 	.put = input_right_impedance_put
 };
 
-static struct snd_kcontrol_new input_left_stagegain_control __devinitdata = {
+static struct snd_kcontrol_new input_left_gain_stage_control __devinitdata = {
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-	.name = "Left Stage Gain",
+	.name = "Left Gain Stage",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.info = input_left_stagegain_info,
-	.get = input_left_stagegain_get,
-	.put = input_left_stagegain_put
+	.info = input_left_gain_stage_info,
+	.get = input_left_gain_stage_get,
+	.put = input_left_gain_stage_put
 };
 
-static struct snd_kcontrol_new input_right_stagegain_control __devinitdata = {
+static struct snd_kcontrol_new input_right_gain_stage_control __devinitdata = {
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-	.name = "Right Stage Gain",
+	.name = "Right Gain Stage",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.info = input_right_stagegain_info,
-	.get = input_right_stagegain_get,
-	.put = input_right_stagegain_put
+	.info = input_right_gain_stage_info,
+	.get = input_right_gain_stage_get,
+	.put = input_right_gain_stage_put
 };
 
-static struct snd_kcontrol_new input_left_truebypass_control __devinitdata = {
+static struct snd_kcontrol_new left_true_bypass_control __devinitdata = {
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Left True-Bypass",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.info = input_left_truebypass_info,
-	.get = input_left_truebypass_get,
-	.put = input_left_truebypass_put
+	.info = left_true_bypass_info,
+	.get = left_true_bypass_get,
+	.put = left_true_bypass_put
 };
 
-static struct snd_kcontrol_new input_right_truebypass_control __devinitdata = {
+static struct snd_kcontrol_new right_true_bypass_control __devinitdata = {
 	.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
 	.name = "Right True-Bypass",
 	.index = 0,
 	.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-	.info = input_right_truebypass_info,
-	.get = input_right_truebypass_get,
-	.put = input_right_truebypass_put
+	.info = right_true_bypass_info,
+	.get = right_true_bypass_get,
+	.put = right_true_bypass_put
 };
 
 //----------------------------------------------------------------------
@@ -796,30 +796,30 @@ static int __init mod_duo_audio_init(void)
 	if (ret < 0)
 		return ret;
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_stagegain_control, NULL));
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_gain_stage_control, NULL));
 	if (ret < 0)
 		return ret;
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_stagegain_control, NULL));
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_gain_stage_control, NULL));
 	if (ret < 0)
 		return ret;
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_truebypass_control, NULL));
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&left_true_bypass_control, NULL));
 	if (ret < 0)
 		return ret;
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_truebypass_control, NULL));
+	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&right_true_bypass_control, NULL));
 	if (ret < 0)
 		return ret;
 
 	if(mod_duo_used) {
 		mod_duo_gpio_init();
-		mod_duo_set_stage_gain(CHANNEL_A, STAGE_GAIN_OFF);
-		mod_duo_set_stage_gain(CHANNEL_B, STAGE_GAIN_OFF);
+		mod_duo_set_gain_stage(CHANNEL_A, GAIN_STAGE_OFF);
+		mod_duo_set_gain_stage(CHANNEL_B, GAIN_STAGE_OFF);
 		mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
 		mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
-		mod_duo_set_bypass(CHANNEL_A, PROCESS);
-		mod_duo_set_bypass(CHANNEL_B, PROCESS);
+		mod_duo_set_true_bypass(CHANNEL_A, PROCESS);
+		mod_duo_set_true_bypass(CHANNEL_B, PROCESS);
 	}
 
 	return 0;

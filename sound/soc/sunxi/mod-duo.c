@@ -693,7 +693,7 @@ static struct snd_soc_ops mod_duo_ops = {
 	.hw_params = mod_duo_hw_params,
 };
 
-static struct snd_soc_dai_link snd_soc_mod_duo_dai_link =
+static struct snd_soc_dai_link mod_duo_dai =
 {
 	.name = "MOD-DUO-I2S",
 	.stream_name = "MOD-DUO-SUNXI-I2S",
@@ -706,9 +706,9 @@ static struct snd_soc_dai_link snd_soc_mod_duo_dai_link =
 };
 
 static struct snd_soc_card snd_soc_mod_duo_soundcard = {
-	.name = "MOD-Duo-Sound-Card",
+	.name = "MOD Duo",
 	.owner = THIS_MODULE,
-	.dai_link = &snd_soc_mod_duo_dai_link,
+	.dai_link = &mod_duo_dai,
 	.num_links = 1,
 	.suspend_post = mod_duo_analog_suspend,
 	.resume_pre	= mod_duo_analog_resume,
@@ -794,7 +794,7 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 
 static struct platform_driver mod_duo_audio_driver = {
 	.driver		= {
-		.name	= "mod-duo-audio",
+		.name	= "mod-duo",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= mod_duo_audio_probe,
@@ -807,3 +807,4 @@ module_platform_driver(mod_duo_audio_driver);
 MODULE_AUTHOR("Felipe Sanches <juca@members.fsf.org>, Rafael Guayer <rafael@musicaloperatingdevices.com>");
 MODULE_DESCRIPTION("MOD Duo Sound Card Audio Machine Driver");
 MODULE_LICENSE("GPL");
+MODULE_ALIAS("platform:mod-duo");

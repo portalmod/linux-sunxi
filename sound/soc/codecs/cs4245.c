@@ -1,12 +1,15 @@
 /*
- * CS4245 ALSA SoC (ASoC) codec driver
+ * ALSA System on Chip (ASoC) codec driver for
+ * Cirrus Logic CS4245 (104dB, 24-bit, 192kHz Stereo Audio CODEC)
  *
- * Author: Rafael Guayer <rafael@musicaloperatingdevices.com>
+ * Authors:
+ *   Felipe Correa da Silva Sanches <juca@members.fsf.org>
+ *   Rafael Guayer <rafael@musicaloperatingdevices.com>
  *
- * Copyright 2014 Musical Operating Devices LLC.  This file is licensed
- * under the terms of the GNU General Public License version 2.  This
- * program is licensed "as is" without any warranty of any kind, whether
- * express or implied.
+ * (c)2014,2015 Musical Operating Devices LLC.  This file is licensed
+ * under the terms of the GNU General Public License version 2 (or later).
+ * This program is licensed "as is" without any warranty of any kind,
+ * whether express or implied.
  *
  * This is an ASoC device driver for the Cirrus Logic CS4245 codec.
  *

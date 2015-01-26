@@ -29,7 +29,7 @@
 
 #include "i2s/sunxi-i2s.h"
 #include "i2s/sunxi-i2sdma.h"
-#include "../codecs/cs4245.h"	// Really needed?
+#include "../codecs/cs4245.h"
 
 // GPIO macros
 #define PIN_DIR_OUT		1
@@ -81,7 +81,7 @@ static int mod_duo_gpio_init(void)
 	int err;
 	script_gpio_set_t info;
 
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	mod_duo_gpio_handler = gpio_request_ex("mod_duo_soundcard_para", NULL);
 
@@ -112,13 +112,12 @@ static int mod_duo_gpio_init(void)
 	MOD_DUO_GPIO_INIT("bypass_a_pin")
 	MOD_DUO_GPIO_INIT("bypass_b_pin")
 
-	printk("[MOD Duo Machine Driver]GPIOs initialized.\n");
+	printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
 	return 0;
 }
 
 static void mod_duo_gpio_release(void)
 {
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
 	gpio_release(mod_duo_gpio_handler, 2);
 	printk("[MOD Duo Machine Driver] GPIOs released.\n");
 	return;
@@ -253,7 +252,7 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 	// unsigned int fmt = 0;
 	// unsigned int mclk = 24576000;	// MOD Duo Sound Card has an 2457600Hz external clock
 
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	// // Initialize the CS4245 Codec Driver
 	// fmt = 	SND_SOC_DAIFMT_I2S |	/* I2S mode */
@@ -285,23 +284,24 @@ static int mod_duo_startup(struct snd_pcm_substream *substream)
 
 static void mod_duo_shutdown(struct snd_pcm_substream *substream)
 {
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 	return;
 }
 
 static int mod_duo_analog_suspend(struct snd_soc_card *card)
 {
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 	return 0;
 }
 
 static int mod_duo_analog_resume(struct snd_soc_card *card)
 {
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 	return 0;
 }
 
-/* This routine flips the GPIO pins to send the volume adjustment message to the actual headphone gain-control chip (LM4811) */
+/* This routine flips the GPIO pins to send the volume adjustment
+   message to the actual headphone gain-control chip (LM4811) */
 static void set_headphone_volume(int new_volume){
 	int steps = new_volume - headphone_volume;
 	int i;
@@ -625,7 +625,7 @@ static int mod_duo_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	printk("[MOD Duo Machine Driver]mod_duo_hw_params: codec_dai=(%s), cpu_dai=(%s).\n", codec_dai->name, cpu_dai->name);
 	printk("MOD Duo Machine Driver]mod_duo_hw_params: channel num=(%d).\n", params_channels(params));
@@ -660,7 +660,7 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	unsigned int fmt = 0;
 	unsigned int mclk = 24576000;	// MOD Duo Sound Card has an 2457600Hz external clock
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	// Configure the CS4245 Codec Driver for MOD Duo Sound Card
 	fmt = 	SND_SOC_DAIFMT_I2S |	/* I2S mode */
@@ -685,8 +685,7 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 
 	//call sunxi_i2s_set_fmt (I2S Plataform Driver)- CPU DAI.
 	ret = snd_soc_dai_set_fmt(cpu_dai, fmt);
-	if (ret < 0)
-		return ret;
+
 	return ret;
 }
 
@@ -719,7 +718,7 @@ static struct snd_soc_card snd_soc_mod_duo_soundcard = {
 
 // static int __devinit mod_duo_probe(struct platform_device *pdev)
 // {
-// 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+// 	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 // 	snd_soc_mod_duo_soundcard.dev = &pdev->dev;
 // 	return snd_soc_register_card(&snd_soc_mod_duo_soundcard);
@@ -727,7 +726,7 @@ static struct snd_soc_card snd_soc_mod_duo_soundcard = {
 
 // static int __devexit mod_duo_remove(struct platform_device *pdev)
 // {
-// 	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+// 	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 // 	snd_soc_unregister_card(&snd_soc_sunxi_sndi2s);
 // 	return 0;
@@ -757,7 +756,7 @@ static struct platform_device *mod_duo_audio_device;
 static int __init mod_duo_audio_init(void)
 {
 	int ret, i2s_used;
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	ret = script_parser_fetch("i2s_para", "i2s_used", &i2s_used, 1);
 	if ((ret != 0) || (!i2s_used)){
@@ -827,7 +826,7 @@ static int __init mod_duo_audio_init(void)
 
 static void __exit mod_duo_audio_exit(void)
 {
-	printk("[MOD Duo Machine Driver]Entered %s.\n", __func__);
+	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	if(mod_duo_used)
 	{

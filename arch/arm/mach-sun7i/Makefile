@@ -19,4 +19,4 @@ endif
 
 endif
 
-
+obj-$(CONFIG_MACH_MODDUO)		+= board-mod-duo.o

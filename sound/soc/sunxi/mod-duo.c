@@ -614,6 +614,47 @@ static struct snd_kcontrol_new right_true_bypass_control __devinitdata = {
 	.put = right_true_bypass_put
 };
 
+static int snd_soc_mod_duo_probe(struct snd_soc_card *card)
+{
+	struct snd_card* snd_card = card->snd_card;
+	int ret;
+
+	if (!snd_card){
+		printk("[MOD Duo Machine Driver] Error trying to register ALSA Controls\n");
+		return 0;
+	}
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&headphone_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_gain_stage_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_gain_stage_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&left_true_bypass_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&right_true_bypass_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	return 0;
+}
+
 //----------------------------------------------------------------------
 
 static int mod_duo_hw_params(struct snd_pcm_substream *substream,
@@ -712,6 +753,7 @@ static struct snd_soc_card snd_soc_mod_duo_soundcard = {
 	.num_links = 1,
 	.suspend_post = mod_duo_analog_suspend,
 	.resume_pre	= mod_duo_analog_resume,
+	.probe = snd_soc_mod_duo_probe,
 };
 
 static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
@@ -729,7 +771,6 @@ static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
 static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card* card = &snd_soc_mod_duo_soundcard;
-	struct snd_card* snd_card = card->snd_card;
 	int ret, i2s_used;
 
 	printk("[MOD Duo Machine Driver] %s\n", __func__);
@@ -763,39 +804,6 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 		mod_duo_set_true_bypass(CHANNEL_A, PROCESS);
 		mod_duo_set_true_bypass(CHANNEL_B, PROCESS);
 	}
-
-	if (!snd_card){
-		printk("[MOD Duo Machine Driver] Error trying to register ALSA Controls\n");
-		return 0;
-	}
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&headphone_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_gain_stage_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_gain_stage_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&left_true_bypass_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_card, snd_ctl_new1(&right_true_bypass_control, NULL));
-	if (ret < 0)
-		return ret;
 
 	return ret;
 }

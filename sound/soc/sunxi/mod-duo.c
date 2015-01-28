@@ -706,7 +706,7 @@ static struct snd_soc_dai_link mod_duo_dai =
 };
 
 static struct snd_soc_card snd_soc_mod_duo_soundcard = {
-	.name = "MOD Duo",
+	.name = "MOD-DUO",
 	.owner = THIS_MODULE,
 	.dai_link = &mod_duo_dai,
 	.num_links = 1,
@@ -728,7 +728,8 @@ static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
 
 static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 {
-	struct snd_soc_card *card = &snd_soc_mod_duo_soundcard;
+	struct snd_soc_card* card = &snd_soc_mod_duo_soundcard;
+	struct snd_card* snd_card = card->snd_card;
 	int ret, i2s_used;
 
 	printk("[MOD Duo Machine Driver] %s\n", __func__);
@@ -745,33 +746,13 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
         return -ENODEV;
 	}
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&headphone_control, NULL));
-	if (ret < 0)
-		return ret;
+	card->dev = &pdev->dev;
 
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
-	if (ret < 0)
+	ret = snd_soc_register_card(card);
+	if (ret){
+		dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n",	ret);
 		return ret;
-
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_left_gain_stage_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&input_right_gain_stage_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&left_true_bypass_control, NULL));
-	if (ret < 0)
-		return ret;
-
-	ret = snd_ctl_add(snd_soc_mod_duo_soundcard.snd_card, snd_ctl_new1(&right_true_bypass_control, NULL));
-	if (ret < 0)
-		return ret;
+	}
 
 	if(mod_duo_used) {
 		mod_duo_gpio_init();
@@ -783,18 +764,45 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 		mod_duo_set_true_bypass(CHANNEL_B, PROCESS);
 	}
 
-	card->dev = &pdev->dev;
+	if (!snd_card){
+		printk("[MOD Duo Machine Driver] Error trying to register ALSA Controls\n");
+		return 0;
+	}
 
-	ret = snd_soc_register_card(card);
-	if (ret)
-		dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n",	ret);
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&headphone_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_gain_stage_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_gain_stage_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&left_true_bypass_control, NULL));
+	if (ret < 0)
+		return ret;
+
+	ret = snd_ctl_add(snd_card, snd_ctl_new1(&right_true_bypass_control, NULL));
+	if (ret < 0)
+		return ret;
 
 	return ret;
 }
 
 static struct platform_driver mod_duo_audio_driver = {
 	.driver		= {
-		.name	= "mod-duo",
+		.name	= "mod-duo-audio",
 		.owner	= THIS_MODULE,
 	},
 	.probe		= mod_duo_audio_probe,
@@ -807,4 +815,4 @@ module_platform_driver(mod_duo_audio_driver);
 MODULE_AUTHOR("Felipe Sanches <juca@members.fsf.org>, Rafael Guayer <rafael@musicaloperatingdevices.com>");
 MODULE_DESCRIPTION("MOD Duo Sound Card Audio Machine Driver");
 MODULE_LICENSE("GPL");
-MODULE_ALIAS("platform:mod-duo");
+MODULE_ALIAS("platform:mod-duo-audio");

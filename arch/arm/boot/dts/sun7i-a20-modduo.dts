@@ -16,16 +16,16 @@
 /include/ "sunxi-common-regulators.dtsi"
 
 / {
-	model = "MOD Duo";
+	model = "MOD Duo RC1";
 	compatible = "cubietech,cubieboard2", "allwinner,sun7i-a20";
 
 	soc@01c00000 {
 		mmc0: mmc@01c0f000 {
 			pinctrl-names = "default";
-			pinctrl-0 = <&mmc0_pins_a>, <&mmc0_cd_pin_reference_design>;
+			pinctrl-0 = <&mmc0_pins_a>, <&mmc0_cd_modduo_rc1>;
 			vmmc-supply = <&reg_vcc3v3>;
 			bus-width = <4>;
-			cd-gpios = <&pio 7 1 0>; /* PH1 */
+			cd-gpios = <&pio 8 18 0>; /* PI18 */
 			cd-inverted;
 			status = "okay";
 		};
@@ -63,6 +63,13 @@
 				allwinner,function = "gpio_out";
 				allwinner,drive = <0>;
 				allwinner,pull = <0>;
+			};
+
+			mmc0_cd_modduo_rc1: mmc0_cd_pin@0 {
+				allwinner,pins = "PI18";
+				allwinner,function = "gpio_in";
+				allwinner,drive = <0>;
+				allwinner,pull = <1>;
 			};
 		};
 

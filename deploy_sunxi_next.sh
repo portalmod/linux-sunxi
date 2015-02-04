@@ -1,5 +1,5 @@
 VERSION=3.17.0-rc3-156746-g6c39f4e
-SDCARD=/media/fsanches/ce905953-c26e-411b-8047-9c1336a605c3
+SDCARD=/media/fsanches/ce905953-c26e-411b-8047-9c1336a605c31
 FEXC=../../github_linux-sunxi/sunxi-tools/fexc
 
 echo "building modules tree..."

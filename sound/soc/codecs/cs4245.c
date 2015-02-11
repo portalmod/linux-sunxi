@@ -23,6 +23,7 @@
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/initval.h>
+#include <sound/tlv.h>
 #include <linux/i2c.h>
 #include <plat/sys_config.h>
 #include "cs4245.h"
@@ -742,9 +743,16 @@ static struct snd_soc_dai_driver cs4245_dai = {
 };
 //EXPORT_SYMBOL(cs4245_dai);
 
+static const DECLARE_TLV_DB_SCALE(db_scale_dac, -12750, 50, 0); // DAC output attenuation from -127.5dB to 0dB (in 0.5dB steps)
+//static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/pre-attenuation from -12dB to +12dB (in 0.5dB steps)
+
 static const struct snd_kcontrol_new cs4245_snd_controls[] = {
-	SOC_DOUBLE_R("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1),
-	SOC_DOUBLE_R("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0xFF, 1),
+	SOC_DOUBLE_R_TLV("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1, db_scale_dac),
+//	SOC_DOUBLE_R_TLV("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0x3F, 0, db_scale_pga),
+//TODO: The encoding of the bits in the PGA registers does not seem simple enough to be easily handled by these macros
+//      min=xx101000
+//      max=xx11000
+//      (values encoded in two's complement with 0.5dB steps)
 };
 
 /*

@@ -1056,6 +1056,12 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level - try to make it multiple of 8 to enable DMA burst of 8
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);
 
+	//enable MCLK output
+	reg_val = readl(sunxi_iis.regs + SUNXI_IISCLKD);
+	reg_val |= SUNXI_IISCLKD_MCLKOEN;
+	writel(reg_val, sunxi_iis.regs + SUNXI_IISCLKD);
+	printk("[IIS-0] sunxi_i2s_set_clkdiv: enable MCLK\n");
+
 	printk("[I2S]I2S default register configuration complete.\n");
 
 	return 0;

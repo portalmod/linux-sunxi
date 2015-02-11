@@ -63,6 +63,8 @@ static int right_true_bypass = 0;
 static int mod_duo_used = 0;
 static u32 mod_duo_gpio_handler = 0;
 
+struct clk *codec_pll2clk,*codec_moduleclk;
+
 #define MOD_DUO_GPIO_INIT(name)\
     err = script_parser_fetch("mod_duo_soundcard_para", name, (int *) &info, sizeof (script_gpio_set_t));\
     if (err) {\
@@ -698,7 +700,8 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 	unsigned int fmt = 0;
-	unsigned int mclk = 24576000;	// MOD Duo Sound Card has an 2457600Hz external clock
+	unsigned int mclk = 24576000;	// MOD Duo Sound Card does not have an 2457600Hz external clock
+
 	printk("[MOD Duo Machine Driver] %s\n", __func__);
 
 	// Configure the CS4245 Codec Driver for MOD Duo Sound Card
@@ -715,6 +718,26 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 	if (ret < 0)
 		return ret;
 
+	/* Setup I2S-related clock signals */
+	codec_pll2clk = clk_get(NULL,"audio_pll");
+	ret = clk_enable(codec_pll2clk);
+	if (ret < 0){
+		printk("[MOD Duo Machine Driver] clk_enable(codec_pll2clk) failed; \n");
+		return ret;
+	}
+
+	codec_moduleclk = clk_get(NULL,"audio_codec");
+	ret = clk_set_parent(codec_moduleclk, codec_pll2clk);
+	if (ret < 0) {
+		printk("[MOD Duo Machine Driver] try to set parent of codec_moduleclk to codec_pll2clk failed!\n");
+		return ret;
+	}
+
+	ret = clk_enable(codec_moduleclk);
+	if (ret < 0){
+		printk("[MOD Duo Machine Driver] clk_enable(codec_moduleclk) failed; \n");
+		return ret;
+	}
 
 	// Configure the I2S Plataform Driver for MOD Duo Sound Card
 	fmt = 	SND_SOC_DAIFMT_CBS_CFS |					// SoC clk & frm slave.

@@ -165,7 +165,7 @@ uart_rts = port:PI16<3><1><default><default>
 uart_cts = port:PI17<3><1><default><default>
 
 [uart_para3]
-uart_used = 1
+uart_used = 0
 uart_port = 3
 uart_type = 4
 uart_tx = port:PH00<4><1><default><default>
@@ -195,11 +195,11 @@ uart_tx = port:PA12<4><1><default><default>
 uart_rx = port:PA13<4><1><default><default>
 
 [uart_para7]
-uart_used = 0
+uart_used = 1
 uart_port = 7
 uart_type = 2
-uart_tx = port:PA14<4><1><default><default>
-uart_rx = port:PA15<4><1><default><default>
+uart_tx = port:PI20<3><1><default><default>
+uart_rx = port:PI21<3><1><default><default>
 
 [spi0_para]
 spi_used = 0
@@ -280,14 +280,8 @@ gpio_pin_5 = port:PH24<1><0><0><1>
 gpio_pin_6 = port:PH25<1><0><0><1>
 gpio_pin_7 = port:PH26<1><0><0><0>
 gpio_pin_8 = port:PH27<1><0><0><1>
-gpio_pin_9 = port:PH16<1><0><0><1>
-gpio_pin_10 = port:PH17<1><0><0><1>
-gpio_pin_11 = port:PH18<1><0><0><1>
-gpio_pin_12 = port:PH19<1><0><0><1>
-gpio_pin_13 = port:PH08<1><0><0><0>
-gpio_pin_14 = port:PH09<1><0><0><0>
-gpio_pin_15 = port:PH14<1><0><0><0>
-gpio_pin_16 = port:PH15<1><0><0><0>
+gpio_pin_9 = port:PH14<1><0><0><0>
+gpio_pin_10 = port:PH15<1><0><0><0>
 
 [nand_para]
 nand_used = 1
@@ -742,7 +736,7 @@ kp_out6 = port:PH26<4><1><default><default>
 kp_out7 = port:PH27<4><1><default><default>
 
 [usbc0]
-usb_used = 1
+usb_used = 0
 usb_port_type = 2
 usb_detect_type = 1
 usb_id_gpio = port:PH04<0><1><default><default>
@@ -755,7 +749,7 @@ usb_restric_voltage = 3550000
 usb_restric_capacity = 5
 
 [usbc1]
-usb_used = 1
+usb_used = 0
 usb_port_type = 1
 usb_detect_type = 0
 usb_drv_vbus_gpio = port:PH06<1><0><default><0>
@@ -764,7 +758,7 @@ usb_host_init_state = 1
 usb_restric_flag = 0
 
 [usbc2]
-usb_used = 1
+usb_used = 0
 usb_port_type = 1
 usb_detect_type = 0
 usb_drv_vbus_gpio = port:PH03<1><0><default><0>
@@ -891,13 +885,13 @@ spdif_din =
 
 [audio_para]
 audio_used = 1
-audio_pa_ctrl = port:PH15<1><default><default><1>
+audio_pa_ctrl = port:PH16<1><default><default><1>
 
 [switch_para]
 switch_used = 1
 
 [leds_para]
-leds_used = 1
+leds_used = 0
 leds_num = 2
 leds_pin_1 = port:PH20<1><default><default><0>
 leds_name_1 = "green:ph20:led1"
@@ -997,24 +991,24 @@ LV7_volt = 1050
 
 [codec_para]
 codec_used = 1
-codec_rst_pin = port:PB21<1><0><0><0>
+codec_rst_pin = port:PI14<1><0><0><0>
 
 [mod_duo_soundcard_para]
 mod_duo_soundcard_used = 1
-jfet_sw_a1_pin = port:PH20<1><0><0><1>
-jfet_sw_a2_pin = port:PH21<1><0><0><1>
-jfet_sw_a3_pin = port:PH22<1><0><0><0>
-jfet_sw_a4_pin = port:PH23<1><0><0><1>
-jfet_sw_b1_pin = port:PH24<1><0><0><1>
-jfet_sw_b2_pin = port:PH25<1><0><0><1>
-jfet_sw_b3_pin = port:PH26<1><0><0><0>
-jfet_sw_b4_pin = port:PH27<1><0><0><1>
-led_ovfl1_pin = port:PH16<1><0><0><1>
-led_ovfl2_pin = port:PH17<1><0><0><1>
-led_ovfl3_pin = port:PH18<1><0><0><1>
-led_ovfl4_pin = port:PH19<1><0><0><1>
-hp_vol_pin = port:PH08<1><0><0><0>
-hp_clk_pin = port:PH09<1><0><0><0>
+jfet_sw_b1_pin = port:PH20<1><0><0><1>
+jfet_sw_b2_pin = port:PH21<1><0><0><1>
+jfet_sw_b3_pin = port:PH22<1><0><0><0>
+jfet_sw_b4_pin = port:PH23<1><0><0><1>
+jfet_sw_a1_pin = port:PH24<1><0><0><1>
+jfet_sw_a2_pin = port:PH25<1><0><0><1>
+jfet_sw_a3_pin = port:PH26<1><0><0><0>
+jfet_sw_a4_pin = port:PH27<1><0><0><1>
+led_ovfl1_pin = port:PH10<1><0><0><1>
+led_ovfl2_pin = port:PH11<1><0><0><1>
+led_ovfl3_pin = port:PH12<1><0><0><1>
+led_ovfl4_pin = port:PH13<1><0><0><1>
+hp_vol_pin = port:PH00<1><0><0><0>
+hp_clk_pin = port:PH02<1><0><0><0>
 bypass_a_pin = port:PH14<1><0><0><0>
 bypass_b_pin = port:PH15<1><0><0><0>
 

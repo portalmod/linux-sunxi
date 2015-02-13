@@ -223,11 +223,11 @@ static void mod_duo_set_true_bypass(int channel, bool state)
 	switch(channel)
 	{
 		case CHANNEL_A:
-			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_a_pin");
+			gpio_write_one_pin_value(mod_duo_gpio_handler, !state, "bypass_a_pin");
 			left_true_bypass = state;
 			break;
 		case CHANNEL_B:
-			gpio_write_one_pin_value(mod_duo_gpio_handler, state, "bypass_b_pin");
+			gpio_write_one_pin_value(mod_duo_gpio_handler, !state, "bypass_b_pin");
 			right_true_bypass = state;
 			break;
 	}

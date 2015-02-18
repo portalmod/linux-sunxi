@@ -1,4 +1,4 @@
-SDCARD=/media/fsanches/ce905953-c26e-411b-8047-9c1336a605c31
+SDCARD=/media/ce905953-c26e-411b-8047-9c1336a605c3
 FEXC=../../github_linux-sunxi/sunxi-tools/fexc
 
 echo "building modules tree..."

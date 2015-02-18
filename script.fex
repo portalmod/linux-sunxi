@@ -313,7 +313,7 @@ nand_ndqs = port:PC24<2><default><default><default>
 good_block_ratio = 0
 
 [disp_init]
-disp_init_enable = 0
+disp_init_enable = 1
 disp_mode = 0
 screen0_output_type = 3
 screen0_output_mode = 4
@@ -490,7 +490,7 @@ dac2_src = 6
 dac3_src = 0
 
 [hdmi_para]
-hdmi_used = 0
+hdmi_used = 1
 
 [camera_list_para]
 camera_list_para_used = 0

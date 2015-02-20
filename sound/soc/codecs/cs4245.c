@@ -44,24 +44,72 @@
  * be read.
  */
 static const u8 cs4245_default_reg_cache[CS4245_LASTREG + 1] = {
-	0x00, 	/* 0x00 - Padding for ASoC index 0 read */
-	0x00, 	/* 0x01 - Chip ID */
-	0x01,  	/* 0x02 - Power Control */
-	0x08,  	/* 0x03 - DAC Control 1 */
-	0x00,  	/* 0x04 - ADC Control */
-	0x00,  	/* 0x05 - MCLK Frequency */
-	0x40,  	/* 0x06 - Signal Selection */
-	0x00,  	/* 0x07 - PGA Ch B Gain Control */
-	0x00,  	/* 0x08 - PGA Ch A Gain Control */
-	0x19,  	/* 0x09 - Analog Input Control */
-	0x00,  	/* 0x0A - DAC Ch A Volume Control */
-	0x00,  	/* 0x0B - DAC Ch B Volume Control */
-	0xc0,  	/* 0x0C - DAC Control 2 */
-	0x00,  	/* 0x0D - Interrupt Status */
-	0x00,  	/* 0x0E - Interrupt Mask */
-	0x00,  	/* 0x0F - Interrupt Mode MSB */
-	0x00  	/* 0x10 - Interrupt Mode LSB */
+	0x00, 	/* Padding for ASoC index 0 read */
+
+	0x00, 	/* Register 0x01 - Chip ID
+             - READONLY REGISTER */
+
+	0x01,  	/* Register 0x02 - Power Control
+             - (Bit 7) Disable Freeze bit
+             - (Bit 0) Enable Device Power-Down */
+
+	0x08,  	/* Register 0x03 - DAC Control 1
+             - (Bits 7:6) Single-Speed Mode: 4 to 50kHz sample rates
+             - (Bits 5:4) Left Justified, up to 24-bit data (default)
+             - (Bit 2) Unmute DAC Output
+             - (Bit 1) Disable 50/15us de-emphasis filter response
+             - (Bit 0) Set DAC Slave Mode on serial audio port 2 */
+
+	0x00,  	/* Register 0x04 - ADC Control
+             - (Bits 7:6) Single-Speed Mode: 4 to 50kHz sample rates
+             - (Bit 4) Left Justified, up to 24-bit data (default)
+             - (Bit 2) Unmute serial audio output of both ADC channels
+             - (Bit 1) Enable internal high-pass filter - See "High-Pass Filter and DC Offset Calibration"
+             - (Bit 0) Set ADC Slave Mode on serial audio port 1 */
+
+	0x00,  	/* Register 0x05 - MCLK Frequency
+             - (Bits 6:4) MCLK1 Divider: ÷1
+             - (Bits 2:0) MCLK2 Divider: ÷1 */
+
+	0x40,  	/* Register 0x06 - Signal Selection
+             - (Bits 6:5) Auxiliary analog output source: PGA output
+             - (Bit 1) Disable internal digital loopback from ADC to DAC (a.k.a "soft-bypass")
+             - (Bit 0) Set Synchronous Mode: ADC and DAC operate at synchronous sample rates derived from MCLK1 */
+
+	0x00,  	/* Register 0x07 - PGA Ch B Gain Control
+             - (Bits 5:0) Set PGA gain = 0dB for PGA channel B */
+
+	0x00,  	/* Register 0x08 - PGA Ch A Gain Control
+             - (Bits 5:0) Set PGA gain = 0dB for PGA channel A */
+
+	0x19,  	/* Register 0x09 - ADC Input Control
+             - (Bits 4:3) PGA Soft Ramp and Zero Cross enabled (default)
+             - (Bits 2:0) Input source for the PGA and ADC: Microphone-Level Inputs (+32 dB Gain Enabled) */
+
+	0x00,  	/* Register 0x0A - DAC Ch A Volume Control
+             - (Bits 7:0) Set DAC attenuation = 0dB for channel A */
+
+	0x00,  	/* Register 0x0B - DAC Ch B Volume Control
+             - (Bits 7:0) Set DAC attenuation = 0dB for channel B */
+
+	0xc0,  	/* Register 0x0C - DAC Control 2
+             - (Bits 7:6) Soft Ramp and Zero Cross enabled (default)
+             - (Bit 5) Do NOT invert DAC output
+             - (Bit 0) INT pin is an active low open drain driver using an external pull-up resistor */
+
+	0x00,  	/* Register 0x0D - Interrupt Status
+             - (Bits 3:0) These bits indicate occurences of interrupt conditions.
+                          By default we leave them all unset. */
+
+	0x00,  	/* Register 0x0E - Interrupt Mask
+             - (Bit 3:0) All error conditions are masked by default.
+                         This means their occurence will not affect the Interrupt Status register.*/
+
+	0x00,	0x00 /* Registers 0x0F and 0x10 - Interrupt Mode MSB and LSB
+             - (Bits 3:0) All conditions set to Rising-Edge Active Mode:
+                          The INT pin becomes active on the arrival of the interrupt condition */
 };
+
 
 struct cs4245_private {
 	enum snd_soc_control_type control_type;

@@ -26,6 +26,7 @@
 #include <sound/soc-dapm.h>
 #include <plat/sys_config.h>
 #include <linux/io.h>
+#include <sound/tlv.h>
 
 #include "i2s/sunxi-i2s.h"
 #include "i2s/sunxi-i2sdma.h"
@@ -40,8 +41,26 @@
 #define LINE            1
 #define MICROPHONE      2
 
-#define GAIN_STAGE_OFF  0
-#define GAIN_STAGE_ON   1
+#define GAIN_STAGE_OFF       0 // 0 dB
+#define GAIN_STAGE_9_9_DB    1 // 9.9 dB
+#define GAIN_STAGE_19_6_DB   2 // 19.6 dB
+#define GAIN_STAGE_28_1_DB   3 // 28.1 dB
+
+static unsigned int gain_stage_left_tlv[] = {
+	TLV_DB_RANGE_HEAD(4),
+	0, 0, TLV_DB_SCALE_ITEM(0,  0, 0),
+	1, 1, TLV_DB_SCALE_ITEM(9.9, 0, 0),
+	2, 2, TLV_DB_SCALE_ITEM(19.6, 0, 0),
+	3, 3, TLV_DB_SCALE_ITEM(28.1, 0, 0),
+};
+
+static unsigned int gain_stage_right_tlv[] = {
+	TLV_DB_RANGE_HEAD(4),
+	0, 0, TLV_DB_SCALE_ITEM(0,  0, 0),
+	1, 1, TLV_DB_SCALE_ITEM(9.9, 0, 0),
+	2, 2, TLV_DB_SCALE_ITEM(19.6, 0, 0),
+	3, 3, TLV_DB_SCALE_ITEM(28.1, 0, 0),
+};
 
 #define BYPASS          0
 #define PROCESS         1
@@ -168,29 +187,13 @@ static void mod_duo_set_gain_stage(int channel, int state)
 {
     switch(channel){
         case CHANNEL_A:
-            switch(state){
-                case GAIN_STAGE_OFF:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a3_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a4_pin");
-                    break;
-                case GAIN_STAGE_ON:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a3_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a4_pin");
-                    break;
-            }
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_a3_pin");
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_a4_pin");
             input_left_gain_stage = state;
             break;
         case CHANNEL_B:
-            switch(state){
-                case GAIN_STAGE_OFF:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b3_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b4_pin");
-                    break;
-                case GAIN_STAGE_ON:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b3_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b4_pin");
-                    break;
-            }
+ 	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_b3_pin");
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_b4_pin");
             input_right_gain_stage = state;
             break;
     }
@@ -419,10 +422,10 @@ static int input_right_impedance_put(struct snd_kcontrol *kcontrol,
 static int input_left_gain_stage_info(struct snd_kcontrol *kcontrol,
                                       struct snd_ctl_elem_info *uinfo)
 {
-    uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
+    uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
     uinfo->count = 1;
     uinfo->value.integer.min = 0;
-    uinfo->value.integer.max = 1;
+    uinfo->value.integer.max = 3;
     return 0;
 }
 
@@ -449,10 +452,10 @@ static int input_left_gain_stage_put(struct snd_kcontrol *kcontrol,
 static int input_right_gain_stage_info(struct snd_kcontrol *kcontrol,
                                        struct snd_ctl_elem_info *uinfo)
 {
-    uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
+    uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
     uinfo->count = 1;
     uinfo->value.integer.min = 0;
-    uinfo->value.integer.max = 1;
+    uinfo->value.integer.max = 3;
     return 0;
 }
 
@@ -564,7 +567,8 @@ static struct snd_kcontrol_new input_left_gain_stage_control __devinitdata = {
     .access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
     .info = input_left_gain_stage_info,
     .get = input_left_gain_stage_get,
-    .put = input_left_gain_stage_put
+    .put = input_left_gain_stage_put,
+    .tlv.p = gain_stage_left_tlv
 };
 
 static struct snd_kcontrol_new input_right_gain_stage_control __devinitdata = {
@@ -574,7 +578,8 @@ static struct snd_kcontrol_new input_right_gain_stage_control __devinitdata = {
     .access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
     .info = input_right_gain_stage_info,
     .get = input_right_gain_stage_get,
-    .put = input_right_gain_stage_put
+    .put = input_right_gain_stage_put,
+    .tlv.p = gain_stage_right_tlv
 };
 
 static struct snd_kcontrol_new left_true_bypass_control __devinitdata = {

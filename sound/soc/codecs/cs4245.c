@@ -791,17 +791,90 @@ static struct snd_soc_dai_driver cs4245_dai = {
 };
 //EXPORT_SYMBOL(cs4245_dai);
 
+static unsigned char pga_channel_ctrl_encode(unsigned char value){
+/* Encoding of the bits in the PGA registers:
+      min=xx101000
+      max=xx011000
+      (values encoded in two's complement with 0.5dB steps)
+*/
+	unsigned char code;
+	if (value < 24){
+		code = 0x20 & (value+8);
+	} else {
+		code = value - 24;
+	}
+
+	return code;
+}
+
+static unsigned char pga_channel_ctrl_decode(unsigned char code){
+	unsigned char value;
+	if (code & 0x20){
+		value = (code & 0x1F) - 8; 
+	} else {
+		value = code + 24;
+	}
+
+	return value;
+}
+
+int pga_gain_put(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	int err;
+	unsigned char val_a, val_b;
+	//with 0.5dB steps we have
+	//step #0 = -12dB
+	//step #24 = 0dB
+	//step #48 = -12dB
+
+	val_a = pga_channel_ctrl_encode(ucontrol->value.integer.value[0]);
+	val_b = pga_channel_ctrl_encode(ucontrol->value.integer.value[1]);
+
+	if (val_a > 48 || val_b > 48)
+		return -1;
+
+	err = snd_soc_update_bits_locked(codec, CS4245_PGA_A_CTRL,
+	                                 /* mask: */ 0x3F, val_a);
+	if (err < 0)
+		return err;
+
+	err = snd_soc_update_bits_locked(codec, CS4245_PGA_B_CTRL,
+	                                 /* mask: */ 0x3F, val_b);
+
+	return err;
+}
+
+int pga_gain_get(struct snd_kcontrol *kcontrol,
+	struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_kcontrol_chip(kcontrol);
+	unsigned char val_a, val_b;
+
+	val_a = pga_channel_ctrl_decode(snd_soc_read(codec, CS4245_PGA_A_CTRL));
+	val_b = pga_channel_ctrl_decode(snd_soc_read(codec, CS4245_PGA_B_CTRL));
+	
+	ucontrol->value.integer.value[0] = val_a;
+	ucontrol->value.integer.value[1] = val_b;
+
+	return 0;
+}
+
 static const DECLARE_TLV_DB_SCALE(db_scale_dac, -12750, 50, 0); // DAC output attenuation from -127.5dB to 0dB (in 0.5dB steps)
-//static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/pre-attenuation from -12dB to +12dB (in 0.5dB steps)
+static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/pre-attenuation from -12dB to +12dB (in 0.5dB steps)
 
 static const struct snd_kcontrol_new cs4245_snd_controls[] = {
 	SOC_DOUBLE_R_TLV("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1, db_scale_dac),
-//	SOC_DOUBLE_R_TLV("PGA Gain", CS4245_PGA_A_CTRL, CS4245_PGA_B_CTRL, 0, 0x3F, 0, db_scale_pga),
-//TODO: The encoding of the bits in the PGA registers does not seem simple enough to be easily handled by these macros
-//      min=xx101000
-//      max=xx11000
-//      (values encoded in two's complement with 0.5dB steps)
+
+	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = "PGA Gain",
+		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.info = snd_soc_info_volsw,
+		.get = pga_gain_get, .put = pga_gain_put,
+		.tlv.p = db_scale_pga
+	}
 };
+		
 
 /*
  * ASoC codec driver structure

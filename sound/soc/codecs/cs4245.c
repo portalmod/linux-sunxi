@@ -799,7 +799,7 @@ static unsigned char pga_channel_ctrl_encode(unsigned char value){
 */
 	unsigned char code;
 	if (value < 24){
-		code = 0x20 & (value+8);
+		code = 0x20 | (value+8);
 	} else {
 		code = value - 24;
 	}
@@ -832,9 +832,6 @@ int pga_gain_put(struct snd_kcontrol *kcontrol,
 	val_a = pga_channel_ctrl_encode(ucontrol->value.integer.value[0]);
 	val_b = pga_channel_ctrl_encode(ucontrol->value.integer.value[1]);
 
-	if (val_a > 48 || val_b > 48)
-		return -1;
-
 	err = snd_soc_update_bits_locked(codec, CS4245_PGA_A_CTRL,
 	                                 /* mask: */ 0x3F, val_a);
 	if (err < 0)
@@ -861,6 +858,16 @@ int pga_gain_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int pga_gain_info(struct snd_kcontrol *kcontrol,
+                          struct snd_ctl_elem_info *uinfo)
+{
+    uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+    uinfo->count = 2;
+    uinfo->value.integer.min = 0;
+    uinfo->value.integer.max = 48;
+    return 0;
+}
+
 static const DECLARE_TLV_DB_SCALE(db_scale_dac, -12750, 50, 0); // DAC output attenuation from -127.5dB to 0dB (in 0.5dB steps)
 static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/pre-attenuation from -12dB to +12dB (in 0.5dB steps)
 
@@ -869,7 +876,7 @@ static const struct snd_kcontrol_new cs4245_snd_controls[] = {
 
 	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = "PGA Gain",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-		.info = snd_soc_info_volsw,
+		.info = pga_gain_info,
 		.get = pga_gain_get, .put = pga_gain_put,
 		.tlv.p = db_scale_pga
 	}

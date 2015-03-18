@@ -84,7 +84,7 @@ static const u8 cs4245_default_reg_cache[CS4245_LASTREG + 1] = {
 
 	0x19,  	/* Register 0x09 - ADC Input Control
              - (Bits 4:3) PGA Soft Ramp and Zero Cross enabled (default)
-             - (Bits 2:0) Input source for the PGA and ADC: Microphone-Level Inputs (+32 dB Gain Enabled) */
+             - (Bits 2:0) Input source for the PGA and ADC: Line-Level Input Pair 1 */
 
 	0x00,  	/* Register 0x0A - DAC Ch A Volume Control
              - (Bits 7:0) Set DAC attenuation = 0dB for channel A */

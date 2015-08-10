@@ -51,16 +51,9 @@ static _mali_osk_resource_t arch_configuration [] =
 		.mmu_id = 2
 	},
 	{
-		.type = MEMORY,
-		.description = "Mali Sdram",
-		.alloc_order = 0,    /* highest preference for this memory */
-		.base = 0x5C000000,
-		.size = 64 * 1024 * 1024, /*64M*/
-		.flags = _MALI_CPU_WRITEABLE | _MALI_CPU_READABLE | _MALI_MMU_READABLE | _MALI_MMU_WRITEABLE
-	},
-	{
 		.type = OS_MEMORY,
 		.description = "OS Memory",
+		.cpu_usage_adjust = 0x40000000, /* PHYS_OFFSET */
 		.alloc_order = 1, /* Lowest preference for this memory */
 		.size = 192 * 1024 * 1024, /* 64 MB */
 		.flags = _MALI_CPU_WRITEABLE | _MALI_CPU_READABLE | _MALI_MMU_READABLE | _MALI_MMU_WRITEABLE

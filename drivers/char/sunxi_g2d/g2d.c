@@ -29,9 +29,12 @@
 struct clk *g2d_ahbclk,*g2d_dramclk,*g2d_mclk,*g2d_src;
 extern __g2d_drv_t	 g2d_ext_hd;
 
+/* Arbitrarily pick 240MHz (TODO: confirm what is the real limit) */
+#define G2D_CLOCK_SPEED_LIMIT 240000000
+
 int g2d_openclk(void)
 {
-	__u32 ret;
+	__u32 ret, g2d_div;
 
 	/* ahb g2d gating */
 	g2d_ahbclk = clk_get(NULL,"ahb_de_mix");
@@ -51,7 +54,8 @@ int g2d_openclk(void)
 	clk_put(g2d_src);
 
 	ret = clk_get_rate(g2d_src);
-	clk_set_rate(g2d_mclk,ret/2);
+	g2d_div = DIV_ROUND_UP(ret, G2D_CLOCK_SPEED_LIMIT);
+	clk_set_rate(g2d_mclk, ret / g2d_div);
 
 	return 0;
 }
@@ -138,7 +142,8 @@ int g2d_blit(g2d_blt * para)
 	__s32 err = 0;
 
 	/* check the parameter valid */
-    if(((para->src_rect.x < 0)&&((-para->src_rect.x) > para->src_rect.w)) ||
+    if(para->src_rect.w == 0 || para->src_rect.h == 0 ||
+       ((para->src_rect.x < 0)&&((-para->src_rect.x) > para->src_rect.w)) ||
        ((para->src_rect.y < 0)&&((-para->src_rect.y) > para->src_rect.h)) ||
        ((para->dst_x < 0)&&((-para->dst_x) > para->src_rect.w)) ||
        ((para->dst_y < 0)&&((-para->dst_y) > para->src_rect.h)) ||
@@ -204,7 +209,8 @@ int g2d_fill(g2d_fillrect * para)
 	__s32 err = 0;
 
 	/* check the parameter valid */
-	if(((para->dst_rect.x < 0)&&((-para->dst_rect.x)>para->dst_rect.w)) ||
+	if(para->dst_rect.w == 0 || para->dst_rect.h == 0 ||
+	   ((para->dst_rect.x < 0)&&((-para->dst_rect.x)>para->dst_rect.w)) ||
 	   ((para->dst_rect.y < 0)&&((-para->dst_rect.y)>para->dst_rect.h)) ||
 	   ((para->dst_rect.x > 0)&&(para->dst_rect.x > para->dst_image.w - 1)) ||
 	   ((para->dst_rect.y > 0)&&(para->dst_rect.y > para->dst_image.h - 1)))
@@ -245,7 +251,9 @@ int g2d_stretchblit(g2d_stretchblt * para)
 	__s32 err = 0;
 
 	/* check the parameter valid */
-    if(((para->src_rect.x < 0)&&((-para->src_rect.x) > para->src_rect.w)) ||
+    if(para->src_rect.w == 0 || para->src_rect.h == 0 ||
+       para->dst_rect.w == 0 || para->dst_rect.h == 0 ||
+       ((para->src_rect.x < 0)&&((-para->src_rect.x) > para->src_rect.w)) ||
        ((para->src_rect.y < 0)&&((-para->src_rect.y) > para->src_rect.h)) ||
        ((para->dst_rect.x < 0)&&((-para->dst_rect.x) > para->dst_rect.w)) ||
        ((para->dst_rect.y < 0)&&((-para->dst_rect.y) > para->dst_rect.h)) ||

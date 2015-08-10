@@ -524,6 +524,7 @@ rx_status_loop:
 					 PCI_DMA_FROMDEVICE);
 		if (dma_mapping_error(&cp->pdev->dev, new_mapping)) {
 			dev->stats.rx_dropped++;
+			kfree_skb(new_skb);
 			goto rx_next;
 		}
 
@@ -1231,6 +1232,7 @@ static void cp_tx_timeout(struct net_device *dev)
 	cp_clean_rings(cp);
 	rc = cp_init_rings(cp);
 	cp_start_hw(cp);
+	cp_enable_irq(cp);
 
 	netif_wake_queue(dev);
 

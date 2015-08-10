@@ -740,6 +740,7 @@ static inline int compare_keys(struct rtable *rt1, struct rtable *rt2)
 		(rt1->rt_mark ^ rt2->rt_mark) |
 		(rt1->rt_key_tos ^ rt2->rt_key_tos) |
 		(rt1->rt_route_iif ^ rt2->rt_route_iif) |
+		(rt1->rt_uid ^ rt2->rt_uid) |
 		(rt1->rt_oif ^ rt2->rt_oif)) == 0;
 }
 
@@ -1341,46 +1342,53 @@ void rt_bind_peer(struct rtable *rt, __be32 daddr, int create)
 		rt->rt_peer_genid = rt_peer_genid();
 }
 
-/*
- * Peer allocation may fail only in serious out-of-memory conditions.  However
- * we still can generate some output.
- * Random ID selection looks a bit dangerous because we have no chances to
- * select ID being unique in a reasonable period of time.
- * But broken packet identifier may be better than no packet at all.
+#define IP_IDENTS_SZ 2048u
+struct ip_ident_bucket {
+	atomic_t	id;
+	u32		stamp32;
+};
+
+static struct ip_ident_bucket *ip_idents __read_mostly;
+
+/* In order to protect privacy, we add a perturbation to identifiers
+ * if one generator is seldom used. This makes hard for an attacker
+ * to infer how many packets were sent between two points in time.
  */
-static void ip_select_fb_ident(struct iphdr *iph)
+u32 ip_idents_reserve(u32 hash, int segs)
 {
-	static DEFINE_SPINLOCK(ip_fb_id_lock);
-	static u32 ip_fallback_id;
-	u32 salt;
+	struct ip_ident_bucket *bucket = ip_idents + hash % IP_IDENTS_SZ;
+	u32 old = ACCESS_ONCE(bucket->stamp32);
+	u32 now = (u32)jiffies;
+	u32 delta = 0;
 
-	spin_lock_bh(&ip_fb_id_lock);
-	salt = secure_ip_id((__force __be32)ip_fallback_id ^ iph->daddr);
-	iph->id = htons(salt & 0xFFFF);
-	ip_fallback_id = salt;
-	spin_unlock_bh(&ip_fb_id_lock);
+	if (old != now && cmpxchg(&bucket->stamp32, old, now) == old) {
+		u64 x = random32();
+
+		x *= (now - old);
+		delta = (u32)(x >> 32);
+	}
+
+	return atomic_add_return(segs + delta, &bucket->id) - segs;
 }
+EXPORT_SYMBOL(ip_idents_reserve);
 
-void __ip_select_ident(struct iphdr *iph, struct dst_entry *dst, int more)
+void __ip_select_ident(struct iphdr *iph, int segs)
 {
-	struct rtable *rt = (struct rtable *) dst;
+	static u32 ip_idents_hashrnd __read_mostly;
+	static bool hashrnd_initialized = false;
+	u32 hash, id;
 
-	if (rt && !(rt->dst.flags & DST_NOPEER)) {
-		if (rt->peer == NULL)
-			rt_bind_peer(rt, rt->rt_dst, 1);
+	if (unlikely(!hashrnd_initialized)) {
+		hashrnd_initialized = true;
+		get_random_bytes(&ip_idents_hashrnd, sizeof(ip_idents_hashrnd));
+	}
 
-		/* If peer is attached to destination, it is never detached,
-		   so that we need not to grab a lock to dereference it.
-		 */
-		if (rt->peer) {
-			iph->id = htons(inet_getid(rt->peer, more));
-			return;
-		}
-	} else if (!rt)
-		printk(KERN_DEBUG "rt_bind_peer(0) @%p\n",
-		       __builtin_return_address(0));
-
-	ip_select_fb_ident(iph);
+	hash = jhash_3words((__force u32)iph->daddr,
+			    (__force u32)iph->saddr,
+			    iph->protocol,
+			    ip_idents_hashrnd);
+	id = ip_idents_reserve(hash, segs);
+	iph->id = htons(id);
 }
 EXPORT_SYMBOL(__ip_select_ident);
 
@@ -1880,6 +1888,7 @@ void ip_rt_get_source(u8 *addr, struct sk_buff *skb, struct rtable *rt)
 		fl4.flowi4_oif = rt->dst.dev->ifindex;
 		fl4.flowi4_iif = skb->dev->ifindex;
 		fl4.flowi4_mark = skb->mark;
+		fl4.flowi4_uid = skb->sk ? sock_i_uid(skb->sk) : 0;
 
 		rcu_read_lock();
 		if (fib_lookup(dev_net(rt->dst.dev), &fl4, &res) == 0)
@@ -2063,6 +2072,7 @@ static int ip_route_input_mc(struct sk_buff *skb, __be32 daddr, __be32 saddr,
 	rth->rt_iif	= dev->ifindex;
 	rth->rt_oif	= 0;
 	rth->rt_mark    = skb->mark;
+	rth->rt_uid	= 0;
 	rth->rt_gateway	= daddr;
 	rth->rt_spec_dst= spec_dst;
 	rth->rt_peer_genid = 0;
@@ -2129,7 +2139,7 @@ static int __mkroute_input(struct sk_buff *skb,
 	struct in_device *out_dev;
 	unsigned int flags = 0;
 	__be32 spec_dst;
-	u32 itag;
+	u32 itag = 0;
 
 	/* get a working reference to the output device */
 	out_dev = __in_dev_get_rcu(FIB_RES_DEV(*res));
@@ -2192,6 +2202,7 @@ static int __mkroute_input(struct sk_buff *skb,
 	rth->rt_iif 	= in_dev->dev->ifindex;
 	rth->rt_oif 	= 0;
 	rth->rt_mark    = skb->mark;
+	rth->rt_uid	= 0;
 	rth->rt_gateway	= daddr;
 	rth->rt_spec_dst= spec_dst;
 	rth->rt_peer_genid = 0;
@@ -2375,6 +2386,7 @@ local_input:
 	rth->rt_iif	= dev->ifindex;
 	rth->rt_oif	= 0;
 	rth->rt_mark    = skb->mark;
+	rth->rt_uid	= 0;
 	rth->rt_gateway	= daddr;
 	rth->rt_spec_dst= spec_dst;
 	rth->rt_peer_genid = 0;
@@ -2579,6 +2591,7 @@ static struct rtable *__mkroute_output(const struct fib_result *res,
 	rth->rt_iif	= orig_oif ? : dev_out->ifindex;
 	rth->rt_oif	= orig_oif;
 	rth->rt_mark    = fl4->flowi4_mark;
+	rth->rt_uid	= fl4->flowi4_uid;
 	rth->rt_gateway = fl4->daddr;
 	rth->rt_spec_dst= fl4->saddr;
 	rth->rt_peer_genid = 0;
@@ -2713,7 +2726,7 @@ static struct rtable *ip_route_output_slow(struct net *net, struct flowi4 *fl4)
 							      RT_SCOPE_LINK);
 			goto make_route;
 		}
-		if (fl4->saddr) {
+		if (!fl4->saddr) {
 			if (ipv4_is_multicast(fl4->daddr))
 				fl4->saddr = inet_select_addr(dev_out, 0,
 							      fl4->flowi4_scope);
@@ -2830,6 +2843,7 @@ struct rtable *__ip_route_output_key(struct net *net, struct flowi4 *flp4)
 		    rt_is_output_route(rth) &&
 		    rth->rt_oif == flp4->flowi4_oif &&
 		    rth->rt_mark == flp4->flowi4_mark &&
+		    rth->rt_uid == flp4->flowi4_uid &&
 		    !((rth->rt_key_tos ^ flp4->flowi4_tos) &
 			    (IPTOS_RT_MASK | RTO_ONLINK)) &&
 		    net_eq(dev_net(rth->dst.dev), net) &&
@@ -2911,6 +2925,7 @@ struct dst_entry *ipv4_blackhole_route(struct net *net, struct dst_entry *dst_or
 		rt->rt_iif = ort->rt_iif;
 		rt->rt_oif = ort->rt_oif;
 		rt->rt_mark = ort->rt_mark;
+		rt->rt_uid = ort->rt_uid;
 
 		rt->rt_genid = rt_genid(net);
 		rt->rt_flags = ort->rt_flags;
@@ -3006,10 +3021,12 @@ static int rt_fill_info(struct net *net,
 	if (rt->rt_mark)
 		NLA_PUT_BE32(skb, RTA_MARK, rt->rt_mark);
 
+	if (rt->rt_uid != (uid_t) -1)
+		NLA_PUT_BE32(skb, RTA_UID, rt->rt_uid);
+
 	error = rt->dst.error;
 	if (peer) {
 		inet_peer_refcheck(rt->peer);
-		id = atomic_read(&peer->ip_id_count) & 0xffff;
 		if (peer->tcp_ts_stamp) {
 			ts = peer->tcp_ts;
 			tsage = get_seconds() - peer->tcp_ts_stamp;
@@ -3125,6 +3142,7 @@ static int inet_rtm_getroute(struct sk_buff *in_skb, struct nlmsghdr* nlh, void 
 			.flowi4_tos = rtm->rtm_tos,
 			.flowi4_oif = tb[RTA_OIF] ? nla_get_u32(tb[RTA_OIF]) : 0,
 			.flowi4_mark = mark,
+			.flowi4_uid = tb[RTA_UID] ? nla_get_u32(tb[RTA_UID]) : current_uid(),
 		};
 		rt = ip_route_output_key(net, &fl4);
 
@@ -3440,6 +3458,12 @@ __setup("rhash_entries=", set_rhash_entries);
 int __init ip_rt_init(void)
 {
 	int rc = 0;
+
+	ip_idents = kmalloc(IP_IDENTS_SZ * sizeof(*ip_idents), GFP_KERNEL);
+	if (!ip_idents)
+		panic("IP: failed to allocate ip_idents\n");
+
+	get_random_bytes(ip_idents, IP_IDENTS_SZ * sizeof(*ip_idents));
 
 #ifdef CONFIG_IP_ROUTE_CLASSID
 	ip_rt_acct = __alloc_percpu(256 * sizeof(struct ip_rt_acct), __alignof__(struct ip_rt_acct));

@@ -1,0 +1,8 @@
+modprobe sndi2s
+modprobe sunxi-sndi2s
+modprobe sunxi-i2sdma
+modprobe sunxi-i2s
+modprobe mod-duo
+
+/root/set_rtprio.sh irq/39 90
+/root/set_rtprio.sh irq/40 90

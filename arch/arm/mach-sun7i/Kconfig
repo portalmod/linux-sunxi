@@ -1,0 +1,9 @@
+menu "Allwinner's sun7i options"
+
+config MACH_MODDUO
+	bool "MOD Duo Multi-Effects Pedal"
+	help
+	  Say 'Y' here if you want your kernel to support the
+	  MOD Duo Multi-Effects Pedal.
+
+endmenu

@@ -14,7 +14,7 @@
  */
 #ifndef SUNXI_SNDI2S_H_
 #define SUNXI_SNDI2S_H_
-
+/* cleaning code
 struct sunxi_sndi2s_platform_data {
 	int iis_bclk;
 	int iis_ws;
@@ -22,4 +22,5 @@ struct sunxi_sndi2s_platform_data {
 	void (*power)(int);
 	int model;
 }
+*/
 #endif

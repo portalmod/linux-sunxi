@@ -60,7 +60,7 @@ source "sound/soc/sunxi/Kconfig"
 source "sound/soc/sunxi/hdmiaudio/Kconfig"
 source "sound/soc/sunxi/spdif/Kconfig"
 # i2s needs various adjustments for sun7i
-if ARCH_SUN4I || ARCH_SUN5I
+if ARCH_SUN4I || ARCH_SUN5I || ARCH_SUN7I
 source "sound/soc/sunxi/i2s/Kconfig"
 endif
 endif

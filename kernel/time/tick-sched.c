@@ -56,8 +56,7 @@ static void tick_do_update_jiffies64(ktime_t now)
 		return;
 
 	/* Reevalute with xtime_lock held */
-	raw_spin_lock(&xtime_lock);
-	write_seqcount_begin(&xtime_seq);
+	write_seqlock(&xtime_lock);
 
 	delta = ktime_sub(now, last_jiffies_update);
 	if (delta.tv64 >= tick_period.tv64) {
@@ -80,8 +79,7 @@ static void tick_do_update_jiffies64(ktime_t now)
 		/* Keep the tick_next_period variable up to date */
 		tick_next_period = ktime_add(last_jiffies_update, tick_period);
 	}
-	write_seqcount_end(&xtime_seq);
-	raw_spin_unlock(&xtime_lock);
+	write_sequnlock(&xtime_lock);
 }
 
 /*
@@ -91,14 +89,12 @@ static ktime_t tick_init_jiffy_update(void)
 {
 	ktime_t period;
 
-	raw_spin_lock(&xtime_lock);
-	write_seqcount_begin(&xtime_seq);
+	write_seqlock(&xtime_lock);
 	/* Did we start the jiffies update yet ? */
 	if (last_jiffies_update.tv64 == 0)
 		last_jiffies_update = tick_next_period;
 	period = last_jiffies_update;
-	write_seqcount_end(&xtime_seq);
-	raw_spin_unlock(&xtime_lock);
+	write_sequnlock(&xtime_lock);
 	return period;
 }
 
@@ -307,18 +303,24 @@ static void tick_nohz_stop_sched_tick(struct tick_sched *ts)
 		return;
 
 	if (unlikely(local_softirq_pending() && cpu_online(cpu))) {
-		softirq_check_pending_idle();
+		static int ratelimit;
+
+		if (ratelimit < 10) {
+			printk(KERN_ERR "NOHZ: local_softirq_pending %02x\n",
+			       (unsigned int) local_softirq_pending());
+			ratelimit++;
+		}
 		return;
 	}
 
 	ts->idle_calls++;
 	/* Read jiffies and the time when jiffies were updated last */
 	do {
-		seq = read_seqcount_begin(&xtime_seq);
+		seq = read_seqbegin(&xtime_lock);
 		last_update = last_jiffies_update;
 		last_jiffies = jiffies;
 		time_delta = timekeeping_max_deferment();
-	} while (read_seqcount_retry(&xtime_seq, seq));
+	} while (read_seqretry(&xtime_lock, seq));
 
 	if (rcu_needs_cpu(cpu) || printk_needs_cpu(cpu) ||
 	    arch_needs_cpu(cpu)) {
@@ -819,16 +821,6 @@ static enum hrtimer_restart tick_sched_timer(struct hrtimer *timer)
 	return HRTIMER_RESTART;
 }
 
-static int sched_skew_tick;
-
-static int __init skew_tick(char *str)
-{
-	get_option(&str, &sched_skew_tick);
-
-	return 0;
-}
-early_param("skew_tick", skew_tick);
-
 /**
  * tick_setup_sched_timer - setup the tick emulation timer
  */
@@ -841,19 +833,10 @@ void tick_setup_sched_timer(void)
 	 * Emulate tick processing via per-CPU hrtimers:
 	 */
 	hrtimer_init(&ts->sched_timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
-	ts->sched_timer.irqsafe = 1;
 	ts->sched_timer.function = tick_sched_timer;
 
 	/* Get the next period (per cpu) */
 	hrtimer_set_expires(&ts->sched_timer, tick_init_jiffy_update());
-
-	/* Offset the tick to avert xtime_lock contention. */
-	if (sched_skew_tick) {
-		u64 offset = ktime_to_ns(tick_period) >> 1;
-		do_div(offset, num_possible_cpus());
-		offset *= smp_processor_id();
-		hrtimer_add_expires_ns(&ts->sched_timer, offset);
-	}
 
 	for (;;) {
 		hrtimer_forward(&ts->sched_timer, now, tick_period);

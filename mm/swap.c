@@ -30,7 +30,6 @@
 #include <linux/backing-dev.h>
 #include <linux/memcontrol.h>
 #include <linux/gfp.h>
-#include <linux/locallock.h>
 
 #include "internal.h"
 
@@ -40,9 +39,6 @@ int page_cluster;
 static DEFINE_PER_CPU(struct pagevec[NR_LRU_LISTS], lru_add_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
 static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
-
-static DEFINE_LOCAL_IRQ_LOCK(rotate_lock);
-static DEFINE_LOCAL_IRQ_LOCK(swapvec_lock);
 
 /*
  * This path almost never happens for VM activity - pages are normally
@@ -272,11 +268,11 @@ void rotate_reclaimable_page(struct page *page)
 		unsigned long flags;
 
 		page_cache_get(page);
-		local_lock_irqsave(rotate_lock, flags);
+		local_irq_save(flags);
 		pvec = &__get_cpu_var(lru_rotate_pvecs);
 		if (!pagevec_add(pvec, page))
 			pagevec_move_tail(pvec);
-		local_unlock_irqrestore(rotate_lock, flags);
+		local_irq_restore(flags);
 	}
 }
 
@@ -332,13 +328,12 @@ static void activate_page_drain(int cpu)
 void activate_page(struct page *page)
 {
 	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) {
-		struct pagevec *pvec = &get_locked_var(swapvec_lock,
-						       activate_page_pvecs);
+		struct pagevec *pvec = &get_cpu_var(activate_page_pvecs);
 
 		page_cache_get(page);
 		if (!pagevec_add(pvec, page))
 			pagevec_lru_move_fn(pvec, __activate_page, NULL);
-		put_locked_var(swapvec_lock, activate_page_pvecs);
+		put_cpu_var(activate_page_pvecs);
 	}
 }
 
@@ -378,12 +373,12 @@ EXPORT_SYMBOL(mark_page_accessed);
 
 void __lru_cache_add(struct page *page, enum lru_list lru)
 {
-	struct pagevec *pvec = &get_locked_var(swapvec_lock, lru_add_pvecs)[lru];
+	struct pagevec *pvec = &get_cpu_var(lru_add_pvecs)[lru];
 
 	page_cache_get(page);
 	if (!pagevec_add(pvec, page))
 		__pagevec_lru_add(pvec, lru);
-	put_locked_var(swapvec_lock, lru_add_pvecs);
+	put_cpu_var(lru_add_pvecs);
 }
 EXPORT_SYMBOL(__lru_cache_add);
 
@@ -518,9 +513,9 @@ void lru_add_drain_cpu(int cpu)
 		unsigned long flags;
 
 		/* No harm done if a racing interrupt already did this */
-		local_lock_irqsave(rotate_lock, flags);
+		local_irq_save(flags);
 		pagevec_move_tail(pvec);
-		local_unlock_irqrestore(rotate_lock, flags);
+		local_irq_restore(flags);
 	}
 
 	pvec = &per_cpu(lru_deactivate_pvecs, cpu);
@@ -548,19 +543,18 @@ void deactivate_page(struct page *page)
 		return;
 
 	if (likely(get_page_unless_zero(page))) {
-		struct pagevec *pvec = &get_locked_var(swapvec_lock,
-						       lru_deactivate_pvecs);
+		struct pagevec *pvec = &get_cpu_var(lru_deactivate_pvecs);
 
 		if (!pagevec_add(pvec, page))
 			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
-		put_locked_var(swapvec_lock, lru_deactivate_pvecs);
+		put_cpu_var(lru_deactivate_pvecs);
 	}
 }
 
 void lru_add_drain(void)
 {
-	lru_add_drain_cpu(local_lock_cpu(swapvec_lock));
-	local_unlock_cpu(swapvec_lock);
+	lru_add_drain_cpu(get_cpu());
+	put_cpu();
 }
 
 static void lru_add_drain_per_cpu(struct work_struct *dummy)
@@ -766,15 +760,6 @@ unsigned pagevec_lookup_tag(struct pagevec *pvec, struct address_space *mapping,
 	return pagevec_count(pvec);
 }
 EXPORT_SYMBOL(pagevec_lookup_tag);
-
-/* Early setup for the local locks */
-static int __init swap_init_locks(void)
-{
-	local_irq_lock_init(rotate_lock);
-	local_irq_lock_init(swapvec_lock);
-	return 1;
-}
-early_initcall(swap_init_locks);
 
 /*
  * Perform any setup for the swap system

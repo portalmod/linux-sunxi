@@ -110,9 +110,9 @@ static struct snd_pcm_hardware sunxi_pcm_playback_hardware =
 	.channels_min		= 1,
 	.channels_max		= 2,
 	.buffer_bytes_max	= 128*1024,//最大的缓冲区大小
-	.period_bytes_min	= 16*2,//最小周期大小
+	.period_bytes_min	= 1024*4,//最小周期大小
 	.period_bytes_max	= 1024*32,//最大周期大小
-	.periods_min		= 2,//最小周期数
+	.periods_min		= 4,//最小周期数
 	.periods_max		= 8,//最大周期数
 	.fifo_size	     	= 32,//fifo字节数
 };
@@ -134,9 +134,9 @@ static struct snd_pcm_hardware sunxi_pcm_capture_hardware =
 	.channels_min		= 1,
 	.channels_max		= 2,
 	.buffer_bytes_max	= 128*1024,//最大的缓冲区大小
-	.period_bytes_min	= 16*2,//最小周期大小
+	.period_bytes_min	= 1024*4,//最小周期大小
 	.period_bytes_max	= 1024*32,//最大周期大小
-	.periods_min		= 2,//最小周期数
+	.periods_min		= 4,//最小周期数
 	.periods_max		= 8,//最大周期数
 	.fifo_size	     	= 32,//fifo字节数
 };

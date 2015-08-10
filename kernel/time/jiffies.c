@@ -74,9 +74,9 @@ u64 get_jiffies_64(void)
 	u64 ret;
 
 	do {
-		seq = read_seqcount_begin(&xtime_seq);
+		seq = read_seqbegin(&xtime_lock);
 		ret = jiffies_64;
-	} while (read_seqcount_retry(&xtime_seq, seq));
+	} while (read_seqretry(&xtime_lock, seq));
 	return ret;
 }
 EXPORT_SYMBOL(get_jiffies_64);

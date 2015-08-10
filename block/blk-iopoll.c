@@ -38,7 +38,6 @@ void blk_iopoll_sched(struct blk_iopoll *iop)
 	list_add_tail(&iop->list, &__get_cpu_var(blk_cpu_iopoll));
 	__raise_softirq_irqoff(BLOCK_IOPOLL_SOFTIRQ);
 	local_irq_restore(flags);
-	preempt_check_resched_rt();
 }
 EXPORT_SYMBOL(blk_iopoll_sched);
 
@@ -136,7 +135,6 @@ static void blk_iopoll_softirq(struct softirq_action *h)
 		__raise_softirq_irqoff(BLOCK_IOPOLL_SOFTIRQ);
 
 	local_irq_enable();
-	preempt_check_resched_rt();
 }
 
 /**
@@ -206,7 +204,6 @@ static int __cpuinit blk_iopoll_cpu_notify(struct notifier_block *self,
 				 &__get_cpu_var(blk_cpu_iopoll));
 		__raise_softirq_irqoff(BLOCK_IOPOLL_SOFTIRQ);
 		local_irq_enable();
-		preempt_check_resched_rt();
 	}
 
 	return NOTIFY_OK;

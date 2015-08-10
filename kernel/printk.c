@@ -47,6 +47,13 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/printk.h>
 
+/*
+ * Architectures can override it:
+ */
+void asmlinkage __attribute__((weak)) early_printk(const char *fmt, ...)
+{
+}
+
 #define __LOG_BUF_LEN	(1 << CONFIG_LOG_BUF_SHIFT)
 
 #ifdef        CONFIG_DEBUG_LL
@@ -558,7 +565,6 @@ static void __call_console_drivers(unsigned start, unsigned end)
 {
 	struct console *con;
 
-	migrate_disable();
 	for_each_console(con) {
 		if (exclusive_console && con != exclusive_console)
 			continue;
@@ -567,64 +573,7 @@ static void __call_console_drivers(unsigned start, unsigned end)
 				(con->flags & CON_ANYTIME)))
 			con->write(con, &LOG_BUF(start), end - start);
 	}
-	migrate_enable();
 }
-
-#ifdef CONFIG_EARLY_PRINTK
-struct console *early_console;
-
-static void early_vprintk(const char *fmt, va_list ap)
-{
-	if (early_console) {
-		char buf[512];
-		int n = vscnprintf(buf, sizeof(buf), fmt, ap);
-
-		early_console->write(early_console, buf, n);
-	}
-}
-
-asmlinkage void early_printk(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	early_vprintk(fmt, ap);
-	va_end(ap);
-}
-
-/*
- * This is independent of any log levels - a global
- * kill switch that turns off all of printk.
- *
- * Used by the NMI watchdog if early-printk is enabled.
- */
-static bool __read_mostly printk_killswitch;
-
-static int __init force_early_printk_setup(char *str)
-{
-	printk_killswitch = true;
-	return 0;
-}
-early_param("force_early_printk", force_early_printk_setup);
-
-void printk_kill(void)
-{
-	printk_killswitch = true;
-}
-
-static int forced_early_printk(const char *fmt, va_list ap)
-{
-	if (!printk_killswitch)
-		return 0;
-	early_vprintk(fmt, ap);
-	return 1;
-}
-#else
-static inline int forced_early_printk(const char *fmt, va_list ap)
-{
-	return 0;
-}
-#endif
 
 static bool __read_mostly ignore_loglevel;
 
@@ -903,18 +852,12 @@ static inline int can_use_console(unsigned int cpu)
  * interrupts disabled. It should return with 'lockbuf_lock'
  * released but interrupts still disabled.
  */
-static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+static int console_trylock_for_printk(unsigned int cpu)
 	__releases(&logbuf_lock)
 {
 	int retval = 0, wake = 0;
-#ifdef CONFIG_PREEMPT_RT_FULL
-	int lock = !early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
-		(preempt_count() <= 1);
-#else
-	int lock = 1;
-#endif
 
-	if (lock && console_trylock()) {
+	if (console_trylock()) {
 		retval = 1;
 
 		/*
@@ -930,9 +873,9 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
 		}
 	}
 	printk_cpu = UINT_MAX;
-	raw_spin_unlock(&logbuf_lock);
 	if (wake)
 		up(&console_sem);
+	raw_spin_unlock(&logbuf_lock);
 	return retval;
 }
 static const char recursion_bug_msg [] =
@@ -964,13 +907,6 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 	char *p;
 	size_t plen;
 	char special;
-
-	/*
-	 * Fall back to early_printk if a debugging subsystem has
-	 * killed printk output
-	 */
-	if (unlikely(forced_early_printk(fmt, args)))
-		return 1;
 
 	boot_delay_msec();
 	printk_delay();
@@ -1095,15 +1031,8 @@ asmlinkage int vprintk(const char *fmt, va_list args)
 	 * will release 'logbuf_lock' regardless of whether it
 	 * actually gets the semaphore or not.
 	 */
-	if (console_trylock_for_printk(this_cpu, flags)) {
-#ifndef CONFIG_PREEMPT_RT_FULL
+	if (console_trylock_for_printk(this_cpu))
 		console_unlock();
-#else
-		raw_local_irq_restore(flags);
-		console_unlock();
-		raw_local_irq_save(flags);
-#endif
-	}
 
 	lockdep_on();
 out_restore_irqs:
@@ -1378,8 +1307,8 @@ void printk_tick(void)
 
 int printk_needs_cpu(int cpu)
 {
-	if (unlikely(cpu_is_offline(cpu)))
-		__this_cpu_write(printk_pending, 0);
+	if (cpu_is_offline(cpu))
+		printk_tick();
 	return __this_cpu_read(printk_pending);
 }
 
@@ -1425,16 +1354,11 @@ again:
 		_con_start = con_start;
 		_log_end = log_end;
 		con_start = log_end;		/* Flush */
-#ifndef CONFIG_PREEMPT_RT_FULL
 		raw_spin_unlock(&logbuf_lock);
 		stop_critical_timings();	/* don't trace print latency */
 		call_console_drivers(_con_start, _log_end);
 		start_critical_timings();
 		local_irq_restore(flags);
-#else
-		raw_spin_unlock_irqrestore(&logbuf_lock, flags);
-		call_console_drivers(_con_start, _log_end);
-#endif
 	}
 	console_locked = 0;
 

@@ -25,18 +25,20 @@ early_console_write(struct console *con, const char *s, unsigned n)
 	}
 }
 
-static struct console early_console_prom = {
+static struct console early_console __initdata = {
 	.name	= "early",
 	.write	= early_console_write,
 	.flags	= CON_PRINTBUFFER | CON_BOOT,
 	.index	= -1
 };
 
+static int early_console_initialized __initdata;
+
 void __init setup_early_printk(void)
 {
-	if (early_console)
+	if (early_console_initialized)
 		return;
-	early_console = &early_console_prom;
+	early_console_initialized = 1;
 
-	register_console(&early_console_prom);
+	register_console(&early_console);
 }

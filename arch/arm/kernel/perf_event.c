@@ -444,7 +444,7 @@ armpmu_reserve_hardware(struct arm_pmu *armpmu)
 		}
 
 		err = request_irq(irq, handle_irq,
-				  IRQF_NOBALANCING | IRQF_NO_THREAD,
+				  IRQF_DISABLED | IRQF_NOBALANCING,
 				  "arm-pmu", armpmu);
 		if (err) {
 			pr_err("unable to request IRQ%d for ARM PMU counters\n",

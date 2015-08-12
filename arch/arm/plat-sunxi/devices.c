@@ -130,12 +130,26 @@ struct platform_device sunxi_pmu_device = {
 	.num_resources	= ARRAY_SIZE(sunxi_pmu_resources),
 };
 
+#ifdef CONFIG_MACH_MODDUO
+static struct platform_device mod_duo_audio_device = {
+	.name		= "mod-duo-audio",
+	.id		= -1,
+};
+#endif
+
 #if defined(CONFIG_MALI_DRM) || defined(CONFIG_MALI_DRM_MODULE)
 static struct platform_device sunxi_device_mali_drm = {
 	.name = "mali_drm",
 	.id   = -1,
 };
 #endif
+
+static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
+    {
+	.type = "cs4245",
+	.addr = 0x4C,
+    },
+};
 
 static struct platform_device *sw_pdevs[] __initdata = {
 #if 0
@@ -147,10 +161,13 @@ static struct platform_device *sw_pdevs[] __initdata = {
 #if defined(CONFIG_MALI_DRM) || defined(CONFIG_MALI_DRM_MODULE)
 	&sunxi_device_mali_drm,
 #endif
-
+#ifdef CONFIG_MACH_MODDUO
+	&mod_duo_audio_device,
+#endif
 };
 
 void __init sw_pdev_init(void)
 {
 	platform_add_devices(sw_pdevs, ARRAY_SIZE(sw_pdevs));
+	i2c_register_board_info(1, cs4245_i2c_board_info, ARRAY_SIZE(cs4245_i2c_board_info));
 }

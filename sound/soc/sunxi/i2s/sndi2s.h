@@ -16,6 +16,8 @@
 #ifndef SNDI2S_H_
 #define SNDI2S_H_
 
+#if 0
+cleaning code
 typedef struct hdmi_audio
 {
 	__u8    hw_intf;        /* 0:iis  1:spdif 2:pcm */
@@ -54,5 +56,6 @@ typedef enum tag_HDMI_CMD
 		HDMI_CMD_AUDIO_ENABLE,
 		HDMI_CMD_GET_HPD_STATUS,
 }__hdmi_cmd_t;
+#endif
 
 #endif

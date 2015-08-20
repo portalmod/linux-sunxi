@@ -19,6 +19,7 @@
 #include <linux/module.h>
 #include <linux/clk.h>
 #include <linux/mutex.h>
+#include <linux/delay.h>
 
 #include <sound/pcm.h>
 #include <sound/soc.h>
@@ -72,8 +73,6 @@ static unsigned int gain_stage_right_tlv[] = {
 //Each step corresponds to 3dB.
 static int headphone_volume = 11;
 
-static int input_left_impedance = 0;
-static int input_right_impedance = 0;
 static int input_left_gain_stage = 0;
 static int input_right_gain_stage = 0;
 static int left_true_bypass = 0;
@@ -104,32 +103,22 @@ static int mod_duo_gpio_init(void)
 
     mod_duo_gpio_handler = gpio_request_ex("mod_duo_soundcard_para", NULL);
 
-    // JFET Switch A Pin Configuration
-    MOD_DUO_GPIO_INIT("jfet_sw_a1_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_a2_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_a3_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_a4_pin")
-
-    // JFET Switch B Pin Configuration
-    MOD_DUO_GPIO_INIT("jfet_sw_b1_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_b2_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_b3_pin")
-    MOD_DUO_GPIO_INIT("jfet_sw_b4_pin")
-
-    // Overflow Leds Pin Configuration
-    MOD_DUO_GPIO_INIT("led_ovfl1_pin")
-    MOD_DUO_GPIO_INIT("led_ovfl2_pin")
-    MOD_DUO_GPIO_INIT("led_ovfl3_pin")
-    MOD_DUO_GPIO_INIT("led_ovfl4_pin")
+    // Gain Control Switches Pin Configuration
+    MOD_DUO_GPIO_INIT("left_gain_ctrl1")
+    MOD_DUO_GPIO_INIT("left_gain_ctrl2")
+    MOD_DUO_GPIO_INIT("right_gain_ctrl1")
+    MOD_DUO_GPIO_INIT("right_gain_ctrl2")
 
     // Headphone Volume Control Pin Configuration
     // TODO: Create a separate driver for Headphone Amplifier (LM4811).
-    MOD_DUO_GPIO_INIT("hp_vol_pin")
-    MOD_DUO_GPIO_INIT("hp_clk_pin")
+    MOD_DUO_GPIO_INIT("headphone_ctrl")
+    MOD_DUO_GPIO_INIT("headphone_clk")
 
     // True Bypass Control Pin Configuration
-    MOD_DUO_GPIO_INIT("bypass_a_pin")
-    MOD_DUO_GPIO_INIT("bypass_b_pin")
+    MOD_DUO_GPIO_INIT("true_bypass_left_rst")
+    MOD_DUO_GPIO_INIT("true_bypass_left_set")
+    MOD_DUO_GPIO_INIT("true_bypass_right_rst")
+    MOD_DUO_GPIO_INIT("true_bypass_right_set")
 
     printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
     return 0;
@@ -142,58 +131,17 @@ static void mod_duo_gpio_release(void)
     return;
 }
 
-static void mod_duo_set_impedance(int channel, int type)
-{
-    switch(channel){
-        case CHANNEL_A:
-            switch(type){
-                case INSTRUMENT:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a2_pin");
-                    break;
-                case LINE:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a2_pin");
-                    break;
-                case MICROPHONE:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_a1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_a2_pin");
-                    break;
-            }
-            input_left_impedance = type;
-            break;
-        case CHANNEL_B:
-            switch(type){
-                case INSTRUMENT:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b2_pin");
-                    break;
-                case LINE:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b2_pin");
-                    break;
-                case MICROPHONE:
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "jfet_sw_b1_pin");
-                    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "jfet_sw_b2_pin");
-                    break;
-            }
-            input_right_impedance = type;
-            break;
-    }
-    return;
-}
-
 static void mod_duo_set_gain_stage(int channel, int state)
 {
     switch(channel){
         case CHANNEL_A:
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_a3_pin");
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_a4_pin");
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl1");
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl2");
             input_left_gain_stage = state;
             break;
         case CHANNEL_B:
- 	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_b3_pin");
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "jfet_sw_b4_pin");
+ 	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl1");
+	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl2");
             input_right_gain_stage = state;
             break;
     }
@@ -212,11 +160,33 @@ static void mod_duo_set_true_bypass(int channel, bool state)
     switch(channel)
     {
         case CHANNEL_A:
-            gpio_write_one_pin_value(mod_duo_gpio_handler, !state, "bypass_a_pin");
+            if (state == BYPASS)
+            {
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_left_set");
+                mdelay(15);
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_set");
+            }
+            else if (state == PROCESS)
+            {
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_left_rst");
+                mdelay(15);
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_rst");
+            }
             left_true_bypass = state;
             break;
         case CHANNEL_B:
-            gpio_write_one_pin_value(mod_duo_gpio_handler, !state, "bypass_b_pin");
+            if (state == BYPASS)
+            {
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_right_set");
+                mdelay(15);
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_set");
+            }
+            else if (state == PROCESS)
+            {
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_right_rst");
+                mdelay(15);
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_rst");
+            }
             right_true_bypass = state;
             break;
     }
@@ -300,8 +270,8 @@ static void set_headphone_volume(int new_volume){
 
     for (i=0; i<abs(steps); i++){
         //toggle clock in order to sample the volume pin upon clock's rising edge:
-        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "hp_clk_pin");
-        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "hp_clk_pin");
+        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "headphone_clk");
+        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "headphone_clk");
     }
 
     headphone_volume = new_volume;
@@ -344,78 +314,6 @@ static struct snd_kcontrol_new headphone_control __devinitdata = {
     .get = headphone_get,
     .put = headphone_put
 };
-
-//----------------------------------------------------------------------
-
-static int input_left_impedance_info(struct snd_kcontrol *kcontrol,
-                                     struct snd_ctl_elem_info *uinfo)
-{
-    static char *texts[3] = { "Instrument", "Line", "Mic" };
-
-    uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
-    uinfo->count = 1;
-    uinfo->value.enumerated.items = 3;
-    if (uinfo->value.enumerated.item > 2)
-        uinfo->value.enumerated.item = 2;
-
-    strcpy(uinfo->value.enumerated.name,
-           texts[uinfo->value.enumerated.item]);
-    return 0;
-}
-
-static int input_left_impedance_get(struct snd_kcontrol *kcontrol,
-                                    struct snd_ctl_elem_value *ucontrol)
-{
-    ucontrol->value.integer.value[0] = input_left_impedance;
-    return 0;
-}
-
-static int input_left_impedance_put(struct snd_kcontrol *kcontrol,
-                                    struct snd_ctl_elem_value *ucontrol)
-{
-    int changed = 0;
-    if (input_left_impedance != ucontrol->value.integer.value[0]) {
-        mod_duo_set_impedance(CHANNEL_A, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
-}
-
-//----------------------------------------------------------------------
-
-static int input_right_impedance_info(struct snd_kcontrol *kcontrol,
-                                      struct snd_ctl_elem_info *uinfo)
-{
-    static char *texts[3] = { "Instrument", "Line", "Mic" };
-
-    uinfo->type = SNDRV_CTL_ELEM_TYPE_ENUMERATED;
-    uinfo->count = 1;
-    uinfo->value.enumerated.items = 3;
-    if (uinfo->value.enumerated.item > 2)
-        uinfo->value.enumerated.item = 2;
-
-    strcpy(uinfo->value.enumerated.name,
-           texts[uinfo->value.enumerated.item]);
-    return 0;
-}
-
-static int input_right_impedance_get(struct snd_kcontrol *kcontrol,
-                                     struct snd_ctl_elem_value *ucontrol)
-{
-    ucontrol->value.integer.value[0] = input_right_impedance;
-    return 0;
-}
-
-static int input_right_impedance_put(struct snd_kcontrol *kcontrol,
-                                     struct snd_ctl_elem_value *ucontrol)
-{
-    int changed = 0;
-    if (input_right_impedance != ucontrol->value.integer.value[0]) {
-        mod_duo_set_impedance(CHANNEL_B, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
-}
 
 //----------------------------------------------------------------------
 
@@ -540,26 +438,6 @@ static int right_true_bypass_put(struct snd_kcontrol *kcontrol,
 
 //----------------------------------------------------------------------
 
-static struct snd_kcontrol_new input_left_impedance_control __devinitdata = {
-    .iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-    .name = "Capture Source",
-    .index = 0,
-    .access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-    .info = input_left_impedance_info,
-    .get = input_left_impedance_get,
-    .put = input_left_impedance_put
-};
-
-static struct snd_kcontrol_new input_right_impedance_control __devinitdata = {
-    .iface = SNDRV_CTL_ELEM_IFACE_MIXER,
-    .name = "Capture Source",
-    .index = 1,
-    .access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
-    .info = input_right_impedance_info,
-    .get = input_right_impedance_get,
-    .put = input_right_impedance_put
-};
-
 static struct snd_kcontrol_new input_left_gain_stage_control __devinitdata = {
     .iface = SNDRV_CTL_ELEM_IFACE_MIXER,
     .name = "Left Gain Stage",
@@ -613,14 +491,6 @@ static int snd_soc_mod_duo_probe(struct snd_soc_card *card)
     }
 
     ret = snd_ctl_add(snd_card, snd_ctl_new1(&headphone_control, NULL));
-    if (ret < 0)
-        return ret;
-
-    ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_left_impedance_control, NULL));
-    if (ret < 0)
-        return ret;
-
-    ret = snd_ctl_add(snd_card, snd_ctl_new1(&input_right_impedance_control, NULL));
     if (ret < 0)
         return ret;
 
@@ -753,7 +623,7 @@ static struct snd_soc_dai_link mod_duo_dai =
     .cpu_dai_name = "sunxi-i2s.0",
     .codec_dai_name = "cs4245-dai",
     .platform_name = "sunxi-i2s-pcm-audio.0",
-    .codec_name	= "cs4245-codec.1-004c",
+    .codec_name	= "cs4245-codec.2-004c",
     .ops = &mod_duo_ops,
     .init = &mod_duo_dai_link_init,
 };
@@ -811,8 +681,6 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
         mod_duo_gpio_init();
         mod_duo_set_gain_stage(CHANNEL_A, GAIN_STAGE_OFF);
         mod_duo_set_gain_stage(CHANNEL_B, GAIN_STAGE_OFF);
-        mod_duo_set_impedance(CHANNEL_A, INSTRUMENT);
-        mod_duo_set_impedance(CHANNEL_B, INSTRUMENT);
         mod_duo_set_true_bypass(CHANNEL_A, PROCESS);
         mod_duo_set_true_bypass(CHANNEL_B, PROCESS);
     }

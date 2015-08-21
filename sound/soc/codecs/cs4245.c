@@ -209,7 +209,7 @@ static int cs4245_reg_is_volatile(struct snd_soc_codec *codec, unsigned int inde
  * The CS4245 has two master clocks, MCLK1 and MCLK2, one for each serial interface, for asynchronous operation.
  * This driver implements only synchronous operation, where the MCLK1 is used and the second serial interface uses it for clock reference.
  */
-static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai, 
+static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 								int clk_id, unsigned int freq, int dir)
 {
 	struct snd_soc_codec *codec = codec_dai->codec;
@@ -233,7 +233,7 @@ static int cs4245_set_dai_sysclk(struct snd_soc_dai *codec_dai,
 		case CS4245_MCLK_ASYNC_SET:
 			value = snd_soc_read(codec, CS4245_SIGNAL_SEL);
 			if(dir == CS4245_ASYNCH) {
-			// When this bit is set, the DAC and ADC may be operated at 
+			// When this bit is set, the DAC and ADC may be operated at
 			// independent asynchronous sample rates derived from MCLK1 and MCLK2.
 				printk("Asynchronous mode set.\n");
 				value |= CS4245_ASYNCH;
@@ -320,7 +320,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 
 	printk("[CS4245] %s\n", __func__);
 
-	/* set DAI format */ 
+	/* set DAI format */
 	switch (format & SND_SOC_DAIFMT_FORMAT_MASK) 	// TODO: Implement CS4245_DAC_DIF_RJUST_16 DAC format configuration.
 	{
 		case SND_SOC_DAIFMT_LEFT_J:		// Sets both DAC and ADC formats.
@@ -404,7 +404,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 	 * This driver implements the I2S2 interface always as slave, with the LRCK2 signal connected do LRCK1 and SCLK2 signal connected to SCLK1.
 	 * ALSA defines (SND_SOC_DAIFMT_*) used in a different way, as the Codec DAC and ADC can be independently master or slave. And as the Codec is always master clock slave (Needs an external clock.).
  	*/
-	switch (format & SND_SOC_DAIFMT_MASTER_MASK) 
+	switch (format & SND_SOC_DAIFMT_MASTER_MASK)
 	{
 		case SND_SOC_DAIFMT_CBM_CFM:	// CS4245: DAC master ADC master (ALSA: codec clk & FRM master).
 			// DAC
@@ -417,7 +417,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 				return ret;
 			}
 
-			cs4245->dac_slave_mode = 0;	
+			cs4245->dac_slave_mode = 0;
 
 			// ADC
 			value = snd_soc_read(codec, CS4245_ADC_CTRL);
@@ -443,7 +443,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 				return ret;
 			}
 
-			cs4245->dac_slave_mode = 1;	
+			cs4245->dac_slave_mode = 1;
 
 			// ADC
 			value = snd_soc_read(codec, CS4245_ADC_CTRL);
@@ -469,7 +469,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 				return ret;
 			}
 
-			cs4245->dac_slave_mode = 0;	
+			cs4245->dac_slave_mode = 0;
 
 			// ADC
 			value = snd_soc_read(codec, CS4245_ADC_CTRL);
@@ -495,7 +495,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
 				return ret;
 			}
 
-			cs4245->dac_slave_mode = 1;	
+			cs4245->dac_slave_mode = 1;
 
 			// ADC
 			value = snd_soc_read(codec, CS4245_ADC_CTRL);
@@ -527,7 +527,7 @@ static int cs4245_set_dai_fmt(struct snd_soc_dai *codec_dai, unsigned int format
  * @dai: the SOC DAI
  * @mute: 0 = disable mute, 1 = enable mute
  *
- * This function toggles the mute bits in the DAC Control 1 register. 
+ * This function toggles the mute bits in the DAC Control 1 register.
  */
 static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 {
@@ -539,10 +539,10 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 	value = snd_soc_read(codec, CS4245_DAC_CTRL_1);
 	if (mute){
 		value |= CS4245_MUTE_DAC;
-	} else { 
+	} else {
 		value &= ~(CS4245_MUTE_DAC);
 	}
-		
+
 	return snd_soc_write(codec, CS4245_DAC_CTRL_1, value);
 }
 
@@ -562,7 +562,7 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
  */
 
 // HARD CODED
-static int cs4245_hw_params(struct snd_pcm_substream *substream, 
+static int cs4245_hw_params(struct snd_pcm_substream *substream,
 			    struct snd_pcm_hw_params *params,
 			    struct snd_soc_dai *dai)
 {
@@ -585,7 +585,7 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
-static int cs4245_trigger(struct snd_pcm_substream *substream, 
+static int cs4245_trigger(struct snd_pcm_substream *substream,
                               int cmd, struct snd_soc_dai *dai)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -656,7 +656,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 {
 	struct cs4245_private *cs4245 = snd_soc_codec_get_drvdata(codec);
 	int ret;
-	
+
 	printk("[CS4245] %s\n", __func__);
 
 	/* Tell ASoC what kind of I/O to use to read the registers.  ASoC will
@@ -668,7 +668,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 		return ret;
 	}
 
-	/* 
+	/*
 	 * Disable Power Down.
 	 */
 	ret = snd_soc_write(codec, CS4245_POWER_CTRL, CS4245_PDN_MIC);
@@ -676,7 +676,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 		printk("[CS4245]Power Control register configuration failed.\n");
 		return ret;
 	}
-	
+
 	/* Default configuration of the CODEC registers
 	 * - DAC and ADC formats = I2S, 24-bit data.
 	 * - DAC Master.
@@ -810,7 +810,7 @@ static unsigned char pga_channel_ctrl_encode(unsigned char value){
 static unsigned char pga_channel_ctrl_decode(unsigned char code){
 	unsigned char value;
 	if (code & 0x20){
-		value = (code & 0x1F) - 8; 
+		value = (code & 0x1F) - 8;
 	} else {
 		value = code + 24;
 	}
@@ -851,7 +851,7 @@ int pga_gain_get(struct snd_kcontrol *kcontrol,
 
 	val_a = pga_channel_ctrl_decode(snd_soc_read(codec, CS4245_PGA_A_CTRL));
 	val_b = pga_channel_ctrl_decode(snd_soc_read(codec, CS4245_PGA_B_CTRL));
-	
+
 	ucontrol->value.integer.value[0] = val_a;
 	ucontrol->value.integer.value[1] = val_b;
 
@@ -873,15 +873,16 @@ static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/p
 
 static const struct snd_kcontrol_new cs4245_snd_controls[] = {
 	SOC_DOUBLE_R_TLV("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1, db_scale_dac),
-
 	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = "PGA Gain",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 		.info = pga_gain_info,
-		.get = pga_gain_get, .put = pga_gain_put,
+		.get = pga_gain_get,
+		.put = pga_gain_put,
 		.tlv.p = db_scale_pga
-	}
+	},
+	SOC_SINGLE("AUX OUT MUX", CS4245_SIGNAL_SEL, 5, 3, 0)
 };
-		
+
 
 /*
  * ASoC codec driver structure
@@ -921,7 +922,7 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
 {
 	struct cs4245_private *cs4245;
 	int ret;
-	
+
 	/* Verify that we have a CS4245 */
 	ret = i2c_smbus_read_byte_data(i2c_client, CS4245_CHIP_ID);
 	if (ret < 0) {
@@ -934,7 +935,7 @@ static int cs4245_i2c_probe(struct i2c_client *i2c_client, const struct i2c_devi
 		printk("[CS4245]Device at addr %X is not a CS4245. (Unknown chip ID: 0x%X)\n", i2c_client->addr, (ret & 0xF0) >> 4);
 		return -ENODEV;
 	}
-	
+
 	printk("[CS4245]Found a Cirrus Logic CS4245 codec at i2c address 0x%02X.\n", i2c_client->addr);
 	printk("[CS4245]Hardware revision 0x%X.\n", ret & 0xF);
 
@@ -1003,7 +1004,7 @@ static int __init cs4245_init(void)
 		printk(KERN_ERR "[CS4245]Codec CS4245 is not enabled in script.bin\n");
 		return -ENODEV;
 	}
-	
+
     // Codec Reset Pin Configuration
 	cs4245_gpio_handler = gpio_request_ex("codec_para", NULL);
 	ret = script_parser_fetch("codec_para", "codec_rst_pin", (int *) &info, sizeof (script_gpio_set_t));

@@ -69,6 +69,9 @@ static unsigned int gain_stage_right_tlv[] = {
 #define TURN_SWITCH_ON	0
 #define TURN_SWITCH_OFF 1
 
+#define HP_TURN_SWITCH_ON  1
+#define HP_TURN_SWITCH_OFF 0
+
 //Default headphone volume is 11th step (of a total of 16) which corresponds to a 0dB gain.
 //Each step corresponds to 3dB.
 static int headphone_volume = 11;
@@ -119,6 +122,17 @@ static int mod_duo_gpio_init(void)
     MOD_DUO_GPIO_INIT("true_bypass_left_set")
     MOD_DUO_GPIO_INIT("true_bypass_right_rst")
     MOD_DUO_GPIO_INIT("true_bypass_right_set")
+
+    // Initial GPIO values
+    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "left_gain_ctrl1");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "left_gain_ctrl2");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "right_gain_ctrl1");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "right_gain_ctrl2");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "headphone_clk");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_rst");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_set");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_rst");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_set");
 
     printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
     return 0;
@@ -266,12 +280,12 @@ static void set_headphone_volume(int new_volume){
     int i;
 
     //select volume adjustment direction:
-    gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "hp_vol_pin");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? HP_TURN_SWITCH_ON : HP_TURN_SWITCH_OFF, "hp_vol_pin");
 
     for (i=0; i<abs(steps); i++){
         //toggle clock in order to sample the volume pin upon clock's rising edge:
-        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "headphone_clk");
-        gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_ON, "headphone_clk");
+        gpio_write_one_pin_value(mod_duo_gpio_handler, HP_TURN_SWITCH_OFF, "headphone_clk");
+        gpio_write_one_pin_value(mod_duo_gpio_handler, HP_TURN_SWITCH_ON, "headphone_clk");
     }
 
     headphone_volume = new_volume;

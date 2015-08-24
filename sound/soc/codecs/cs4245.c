@@ -880,7 +880,8 @@ static const struct snd_kcontrol_new cs4245_snd_controls[] = {
 		.put = pga_gain_put,
 		.tlv.p = db_scale_pga
 	},
-	SOC_SINGLE("AUX OUT MUX", CS4245_SIGNAL_SEL, 5, 3, 0)
+	SOC_SINGLE("AUX OUT MUX", CS4245_SIGNAL_SEL, 5, 3, 0),
+	SOC_SINGLE("LOOPBACK", CS4245_SIGNAL_SEL, 1, 1, 1)
 };
 
 

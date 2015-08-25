@@ -280,7 +280,7 @@ static void set_headphone_volume(int new_volume){
     int i;
 
     //select volume adjustment direction:
-    gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? HP_TURN_SWITCH_ON : HP_TURN_SWITCH_OFF, "hp_vol_pin");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? HP_TURN_SWITCH_ON : HP_TURN_SWITCH_OFF, "headphone_ctrl");
 
     for (i=0; i<abs(steps); i++){
         //toggle clock in order to sample the volume pin upon clock's rising edge:

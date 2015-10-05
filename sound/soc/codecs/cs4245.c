@@ -110,13 +110,6 @@ static const u8 cs4245_default_reg_cache[CS4245_LASTREG + 1] = {
                           The INT pin becomes active on the arrival of the interrupt condition */
 };
 
-static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
-    {
-	.type = "cs4245",
-	.addr = 0x4C,
-    },
-};
-
 struct cs4245_private {
 	enum snd_soc_control_type control_type;
 	unsigned int mclk;
@@ -132,7 +125,6 @@ struct cs4245_private {
 
 // CS4245 Driver GPIO Handler
 static u32 cs4245_gpio_handler = 0;
-static u32 twi_id = 0;
 
 #ifdef DEBUG_CS4245
 static void cs4245_printk_register_values(struct snd_soc_codec *codec)
@@ -1012,15 +1004,6 @@ static int __init cs4245_init(void)
 		printk(KERN_ERR "[CS4245]Codec CS4245 is not enabled in script.bin\n");
 		return -ENODEV;
 	}
-
-    // codec i2c bus
-	if(SCRIPT_PARSER_OK != script_parser_fetch("codec_para", "codec_twi_id", &twi_id, sizeof(twi_id)/sizeof(__u32))){
-		printk(KERN_ERR "[CS4245]Codec CS4245: twi bus not defined in script.bin\n");
-		return -ENODEV;
-	}
-	printk("%s: codec_twi_id is %d. \n", __func__, twi_id);
-
-	i2c_register_board_info(twi_id, cs4245_i2c_board_info, ARRAY_SIZE(cs4245_i2c_board_info));
 
     // Codec Reset Pin Configuration
 	cs4245_gpio_handler = gpio_request_ex("codec_para", NULL);

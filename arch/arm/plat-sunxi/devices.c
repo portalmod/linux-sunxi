@@ -40,6 +40,7 @@
 #include <mach/hardware.h>
 #include <plat/i2c.h>
 #include <plat/platform.h>
+ #include <plat/sys_config.h>
 
 #if 0
 /* uart */
@@ -159,7 +160,27 @@ static struct platform_device *sw_pdevs[] __initdata = {
 #endif
 };
 
+static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
+    {
+	.type = "cs4245",
+	.addr = 0x4C,
+    },
+};
+
 void __init sw_pdev_init(void)
 {
+	u32 twi_id = 0;
+	int ret;
+
 	platform_add_devices(sw_pdevs, ARRAY_SIZE(sw_pdevs));
+
+    // codec i2c bus
+	ret = script_parser_fetch("codec_para", "codec_twi_id", &twi_id, sizeof(twi_id)/sizeof(u32));
+	if(ret != 0) {
+		printk(KERN_ERR "[CS4245]Codec CS4245: twi bus not defined in script.bin\n");
+		return;
+	}
+	printk("%s: codec_twi_id is %d. \n", __func__, twi_id);
+
+	i2c_register_board_info(twi_id, cs4245_i2c_board_info, ARRAY_SIZE(cs4245_i2c_board_info));
 }

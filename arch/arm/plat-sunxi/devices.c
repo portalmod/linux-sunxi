@@ -144,13 +144,6 @@ static struct platform_device sunxi_device_mali_drm = {
 };
 #endif
 
-static struct i2c_board_info cs4245_i2c_board_info[] __initdata = {
-    {
-	.type = "cs4245",
-	.addr = 0x4C,
-    },
-};
-
 static struct platform_device *sw_pdevs[] __initdata = {
 #if 0
 	&debug_uart,
@@ -169,5 +162,4 @@ static struct platform_device *sw_pdevs[] __initdata = {
 void __init sw_pdev_init(void)
 {
 	platform_add_devices(sw_pdevs, ARRAY_SIZE(sw_pdevs));
-	i2c_register_board_info(2, cs4245_i2c_board_info, ARRAY_SIZE(cs4245_i2c_board_info));
 }

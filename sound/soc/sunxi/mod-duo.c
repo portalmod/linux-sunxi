@@ -118,10 +118,8 @@ static int mod_duo_gpio_init(void)
     MOD_DUO_GPIO_INIT("headphone_clk")
 
     // True Bypass Control Pin Configuration
-    MOD_DUO_GPIO_INIT("true_bypass_left_rst")
-    MOD_DUO_GPIO_INIT("true_bypass_left_set")
-    MOD_DUO_GPIO_INIT("true_bypass_right_rst")
-    MOD_DUO_GPIO_INIT("true_bypass_right_set")
+    MOD_DUO_GPIO_INIT("true_bypass_left")
+    MOD_DUO_GPIO_INIT("true_bypass_right")
 
     // Initial GPIO values
     gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "left_gain_ctrl1");
@@ -129,10 +127,8 @@ static int mod_duo_gpio_init(void)
     gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "right_gain_ctrl1");
     gpio_write_one_pin_value(mod_duo_gpio_handler, TURN_SWITCH_OFF, "right_gain_ctrl2");
     gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "headphone_clk");
-    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_rst");
-    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_set");
-    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_rst");
-    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_set");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left");
+    gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right");
 
     printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
     return 0;
@@ -176,30 +172,22 @@ static void mod_duo_set_true_bypass(int channel, bool state)
         case CHANNEL_A:
             if (state == BYPASS)
             {
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_left_set");
-                mdelay(15);
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_set");
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_left");
             }
             else if (state == PROCESS)
             {
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_left_rst");
-                mdelay(15);
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left_rst");
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left");
             }
             left_true_bypass = state;
             break;
         case CHANNEL_B:
             if (state == BYPASS)
             {
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_right_set");
-                mdelay(15);
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_set");
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_right");
             }
             else if (state == PROCESS)
             {
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 1, "true_bypass_right_rst");
-                mdelay(15);
-                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right_rst");
+                gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right");
             }
             right_true_bypass = state;
             break;

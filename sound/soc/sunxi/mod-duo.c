@@ -655,7 +655,8 @@ static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
 static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 {
     struct snd_soc_card* card = &snd_soc_mod_duo_soundcard;
-    int ret, i2s_used;
+    int ret, i2s_used, codec_twi_id;
+    static char codec_name[32];
 
     printk("[MOD Duo Machine Driver] %s\n", __func__);
 
@@ -664,6 +665,15 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
         printk("[MOD Duo Machine Driver]I2S not configured on script.bin.\n");
         return -ENODEV;
     }
+
+    ret = script_parser_fetch("codec_para", "codec_twi_id", &codec_twi_id, 1);
+    if ((ret != 0) || (!i2s_used)){
+        printk("[MOD Duo Machine Driver]CODEC twi id not configured on script.bin.\n");
+        return -ENODEV;
+    }
+
+    snprintf(codec_name, sizeof(codec_name), "cs4245-codec.%i-004c", codec_twi_id);
+    card->dai_link->codec_name = codec_name;
 
     ret = script_parser_fetch("mod_duo_soundcard_para","mod_duo_soundcard_used", &mod_duo_used, sizeof(int));
     if ((ret != 0) || (!mod_duo_used)) {

@@ -625,7 +625,6 @@ static struct snd_soc_dai_link mod_duo_dai =
     .cpu_dai_name = "sunxi-i2s.0",
     .codec_dai_name = "cs4245-dai",
     .platform_name = "sunxi-i2s-pcm-audio.0",
-    .codec_name	= "cs4245-codec.3-004c",
     .ops = &mod_duo_ops,
     .init = &mod_duo_dai_link_init,
 };

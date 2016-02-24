@@ -524,10 +524,10 @@ static int mod_duo_hw_params(struct snd_pcm_substream *substream,
     struct snd_soc_dai *codec_dai = rtd->codec_dai;
     struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
 
-    printk("[MOD Duo Machine Driver] %s\n", __func__);
+    printk("[MOD Duo Machine Driver]mod_duo_hw_params\n");
 
     printk("[MOD Duo Machine Driver]mod_duo_hw_params: codec_dai=(%s), cpu_dai=(%s).\n", codec_dai->name, cpu_dai->name);
-    printk("MOD Duo Machine Driver]mod_duo_hw_params: channel num=(%d).\n", params_channels(params));
+    printk("[MOD Duo Machine Driver]mod_duo_hw_params: channel num=(%d).\n", params_channels(params));
     printk("[MOD Duo Machine Driver]mod_duo_hw_params: sample rate=(%u).\n", params_rate(params));
 
     switch (params_format(params)){
@@ -557,7 +557,7 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
     struct snd_soc_dai *codec_dai = rtd->codec_dai;
     struct snd_soc_dai *cpu_dai = rtd->cpu_dai;
     unsigned int fmt = 0;
-    unsigned int mclk = 24576000;
+    const unsigned int mclk = 24576000;
     /* MOD Duo Sound Card does not have an 2457600Hz external clock
        so we have to confirue the system so that it generates this
        clock sinal for feeding the Codec MCLK1 pin*/
@@ -576,6 +576,11 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
 
     //call cs4245_set_dai_sysclk (CS4245 Codec Driver) - CODEC DAI.
     ret = snd_soc_dai_set_sysclk(codec_dai, CS4245_MCLK1_SET , mclk, 0);
+    if (ret < 0)
+        return ret;
+
+    //call cs4245_set_dai_clkclk (CS4245 Codec Driver) - CODEC DAI.
+    ret = snd_soc_dai_set_clkdiv(codec_dai, CS4245_MCLK1_DIV_SET, 4);
     if (ret < 0)
         return ret;
 

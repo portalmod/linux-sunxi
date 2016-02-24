@@ -149,7 +149,6 @@ void irq_ctx_exit(int cpu)
 	hardirq_ctx[cpu] = NULL;
 }
 
-#ifndef CONFIG_PREEMPT_RT_FULL
 asmlinkage void do_softirq(void)
 {
 	unsigned long flags;
@@ -192,7 +191,6 @@ asmlinkage void do_softirq(void)
 
 	local_irq_restore(flags);
 }
-#endif
 #else
 static inline void handle_one_irq(unsigned int irq)
 {

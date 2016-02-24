@@ -1050,8 +1050,8 @@ static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFAT0);
 
 	// FIFO control register. TODO: Understand how to optimize this parameter.
-	reg_val = SUNXI_IISFCTL_RXOM_MOD0;
-	reg_val |= SUNXI_IISFCTL_TXIM_MOD0;
+	reg_val = (1<<0);	// Expanding received sample sign bit at MSB of DA_RXFIFO register. TODO: Check if this configuration works.
+	reg_val |= (1<<2);	// Valid data at the LSB of TXFIFO register
 	reg_val |= SUNXI_IISFCTL_RXTL(0xf);		//RX FIFO trigger level - try to make it multiple of 8 to enable DMA burst of 8.
 	reg_val |= SUNXI_IISFCTL_TXTL(0x40);	//TX FIFO empty trigger level - try to make it multiple of 8 to enable DMA burst of 8
 	writel(reg_val, sunxi_iis.regs + SUNXI_IISFCTL);

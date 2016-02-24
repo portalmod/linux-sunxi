@@ -37,7 +37,7 @@ int handle_page_fault(unsigned long address, unsigned long ip,
 	 * If the fault was during atomic operation, don't take the fault, just
 	 * fail.
 	 */
-	if (!mm || pagefault_disabled())
+	if (in_atomic())
 		goto out_nosemaphore;
 
 	down_read(&mm->mmap_sem);

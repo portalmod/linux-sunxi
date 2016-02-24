@@ -656,22 +656,6 @@ static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
     return 0;
 }
 
-static void
-enable_cpu_counters(void* data)
-{
-    printk("[MOD Duo PerfCounter] enabling user-mode PMU access on CPU #%d\n", smp_processor_id());
-
-    /* Enable user-mode access to counters. */
-    asm volatile("mcr p15, 0, %0, c9, c14, 0\n\t" :: "r"(1));
-    /* disable counter overflow interrupts (just in case)*/
-    asm volatile("mcr p15, 0, %0, c9, c14, 2\n\t" :: "r"(0x8000000f));
-    /* Program PMU and enable all counters */
-    asm volatile("mcr p15, 0, %0, c9, c12, 0\t\n" :: "r"((23))); // 1|2|4|16
-    asm volatile("mcr p15, 0, %0, c9, c12, 1\t\n" :: "r"(0x8000000f));
-    /* Clear overflows */
-    asm volatile("mcr p15, 0, %0, c9, c12, 3\t\n" :: "r"(0x8000000f));
-}
-
 static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
 {
     struct snd_soc_card* card = &snd_soc_mod_duo_soundcard;
@@ -710,7 +694,6 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
     }
 
     if(mod_duo_used) {
-        on_each_cpu(enable_cpu_counters, NULL, 1);
         mod_duo_gpio_init();
         mod_duo_set_gain_stage(CHANNEL_A, GAIN_STAGE_OFF);
         mod_duo_set_gain_stage(CHANNEL_B, GAIN_STAGE_OFF);

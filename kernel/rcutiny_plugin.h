@@ -26,7 +26,6 @@
 #include <linux/module.h>
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
-#include <linux/wait-simple.h>
 
 /* Global control variables for rcupdate callback mechanism. */
 struct rcu_ctrlblk {
@@ -262,7 +261,7 @@ static void show_tiny_preempt_stats(struct seq_file *m)
 
 /* Controls for rcu_kthread() kthread. */
 static struct task_struct *rcu_kthread_task;
-static DEFINE_SWAIT_HEAD(rcu_kthread_wq);
+static DECLARE_WAIT_QUEUE_HEAD(rcu_kthread_wq);
 static unsigned long have_rcu_kthread_work;
 
 /*
@@ -573,7 +572,7 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
 		rcu_preempt_cpu_qs();
 
 	/* Hardware IRQ handlers cannot block. */
-	if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
+	if (in_irq() || in_serving_softirq()) {
 		local_irq_restore(flags);
 		return;
 	}
@@ -755,7 +754,7 @@ void synchronize_rcu(void)
 }
 EXPORT_SYMBOL_GPL(synchronize_rcu);
 
-static DEFINE_SWAIT_HEAD(sync_rcu_preempt_exp_wq);
+static DECLARE_WAIT_QUEUE_HEAD(sync_rcu_preempt_exp_wq);
 static unsigned long sync_rcu_preempt_exp_count;
 static DEFINE_MUTEX(sync_rcu_preempt_exp_mutex);
 
@@ -777,7 +776,7 @@ static int rcu_preempted_readers_exp(void)
  */
 static void rcu_report_exp_done(void)
 {
-	swait_wake(&sync_rcu_preempt_exp_wq);
+	wake_up(&sync_rcu_preempt_exp_wq);
 }
 
 /*
@@ -829,8 +828,8 @@ void synchronize_rcu_expedited(void)
 	else {
 		rcu_initiate_boost();
 		local_irq_restore(flags);
-		swait_event(sync_rcu_preempt_exp_wq,
-			    !rcu_preempted_readers_exp());
+		wait_event(sync_rcu_preempt_exp_wq,
+			   !rcu_preempted_readers_exp());
 	}
 
 	/* Clean up and exit. */
@@ -918,7 +917,7 @@ static void invoke_rcu_callbacks(void)
 {
 	have_rcu_kthread_work = 1;
 	if (rcu_kthread_task != NULL)
-		swait_wake(&rcu_kthread_wq);
+		wake_up(&rcu_kthread_wq);
 }
 
 #ifdef CONFIG_RCU_TRACE
@@ -948,8 +947,8 @@ static int rcu_kthread(void *arg)
 	unsigned long flags;
 
 	for (;;) {
-		swait_event_interruptible(rcu_kthread_wq,
-					  have_rcu_kthread_work != 0);
+		wait_event_interruptible(rcu_kthread_wq,
+					 have_rcu_kthread_work != 0);
 		morework = rcu_boost();
 		local_irq_save(flags);
 		work = have_rcu_kthread_work;

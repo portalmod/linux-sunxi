@@ -575,12 +575,12 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
         return ret;
 
     //call cs4245_set_dai_sysclk (CS4245 Codec Driver) - CODEC DAI.
-    ret = snd_soc_dai_set_sysclk(codec_dai, CS4245_MCLK1_SET , mclk, 0);
+    ret = snd_soc_dai_set_sysclk(codec_dai, CS4245_MCLK1_SET, mclk, 0);
     if (ret < 0)
         return ret;
 
-    //call cs4245_set_dai_clkclk (CS4245 Codec Driver) - CODEC DAI.
-    ret = snd_soc_dai_set_clkdiv(codec_dai, CS4245_MCLK1_DIV_SET, 4);
+    //call cs4245_set_dai_clkdiv (CS4245 Codec Driver) - CODEC DAI.
+    ret = snd_soc_dai_set_clkdiv(codec_dai, CS4245_MCLK1_DIV_SET, 2);
     if (ret < 0)
         return ret;
 

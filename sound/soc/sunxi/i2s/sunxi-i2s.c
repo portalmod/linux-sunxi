@@ -1371,6 +1371,7 @@ module_exit(sunxi_i2s_exit);
 
 /* Module information */
 MODULE_AUTHOR("ALLWINNER");
+MODULE_AUTHOR("William Light <wrl@illest.net>");
 MODULE_DESCRIPTION("sunxi I2S SoC Interface");
 MODULE_LICENSE("GPL");
 MODULE_ALIAS("platform:sunxi-i2s");

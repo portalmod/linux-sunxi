@@ -145,13 +145,13 @@ static void mod_duo_set_gain_stage(int channel, int state)
 {
     switch(channel){
         case CHANNEL_A:
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl1");
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl2");
+            gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl1");
+            gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "left_gain_ctrl2");
             input_left_gain_stage = state;
             break;
         case CHANNEL_B:
- 	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl1");
-	    gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl2");
+            gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 2) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl1");
+            gpio_write_one_pin_value(mod_duo_gpio_handler, (state & 1) ? TURN_SWITCH_ON : TURN_SWITCH_OFF, "right_gain_ctrl2");
             input_right_gain_stage = state;
             break;
     }
@@ -160,12 +160,12 @@ static void mod_duo_set_gain_stage(int channel, int state)
 
 static void mod_duo_set_true_bypass(int channel, bool state)
 {
-// state == BYPASS:
-// 	No audio processing.
-//	Input is connected directly to output, bypassing the codec.
-//
-// state == PROCESS:
-// 	INPUT => CODEC => OUTPUT
+    // state == BYPASS:
+    //   No audio processing.
+    //   Input is connected directly to output, bypassing the codec.
+    //
+    // state == PROCESS:
+    //   INPUT => CODEC => OUTPUT
 
     switch(channel)
     {
@@ -192,7 +192,6 @@ static void mod_duo_set_true_bypass(int channel, bool state)
             right_true_bypass = state;
             break;
     }
-    return;
 }
 
 /* 
@@ -270,7 +269,7 @@ static void set_headphone_volume(int new_volume){
     //select volume adjustment direction:
     gpio_write_one_pin_value(mod_duo_gpio_handler, steps > 0 ? HP_TURN_SWITCH_ON : HP_TURN_SWITCH_OFF, "headphone_ctrl");
 
-    for (i=0; i<abs(steps); i++){
+    for (i=0; i < abs(steps); i++) {
         //toggle clock in order to sample the volume pin upon clock's rising edge:
         gpio_write_one_pin_value(mod_duo_gpio_handler, HP_TURN_SWITCH_OFF, "headphone_clk");
         gpio_write_one_pin_value(mod_duo_gpio_handler, HP_TURN_SWITCH_ON, "headphone_clk");
@@ -299,12 +298,11 @@ static int headphone_get(struct snd_kcontrol *kcontrol,
 static int headphone_put(struct snd_kcontrol *kcontrol,
                          struct snd_ctl_elem_value *ucontrol)
 {
-    int changed = 0;
-    if (headphone_volume != ucontrol->value.integer.value[0]) {
-        set_headphone_volume(ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
+    if (headphone_volume == ucontrol->value.integer.value[0])
+        return 0;
+
+    set_headphone_volume(ucontrol->value.integer.value[0]);
+    return 1;
 }
 
 static struct snd_kcontrol_new headphone_control __devinitdata = {
@@ -332,19 +330,18 @@ static int input_left_gain_stage_info(struct snd_kcontrol *kcontrol,
 static int input_left_gain_stage_get(struct snd_kcontrol *kcontrol,
                                      struct snd_ctl_elem_value *ucontrol)
 {
-        ucontrol->value.integer.value[0] = input_left_gain_stage;
-        return 0;
+    ucontrol->value.integer.value[0] = input_left_gain_stage;
+    return 0;
 }
 
 static int input_left_gain_stage_put(struct snd_kcontrol *kcontrol,
                                      struct snd_ctl_elem_value *ucontrol)
 {
-    int changed = 0;
-    if (input_left_gain_stage != ucontrol->value.integer.value[0]) {
-        mod_duo_set_gain_stage(CHANNEL_A, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
+    if (input_left_gain_stage == ucontrol->value.integer.value[0])
+        return 0;
+
+    mod_duo_set_gain_stage(CHANNEL_A, ucontrol->value.integer.value[0]);
+    return 1;
 }
 
 //----------------------------------------------------------------------
@@ -369,12 +366,11 @@ static int input_right_gain_stage_get(struct snd_kcontrol *kcontrol,
 static int input_right_gain_stage_put(struct snd_kcontrol *kcontrol,
                                       struct snd_ctl_elem_value *ucontrol)
 {
-    int changed = 0;
-    if (input_right_gain_stage != ucontrol->value.integer.value[0]) {
-        mod_duo_set_gain_stage(CHANNEL_B, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
+    if (input_right_gain_stage == ucontrol->value.integer.value[0])
+        return 0;
+
+    mod_duo_set_gain_stage(CHANNEL_B, ucontrol->value.integer.value[0]);
+    return 1;
 }
 
 //----------------------------------------------------------------------
@@ -399,12 +395,11 @@ static int left_true_bypass_get(struct snd_kcontrol *kcontrol,
 static int left_true_bypass_put(struct snd_kcontrol *kcontrol,
                                 struct snd_ctl_elem_value *ucontrol)
 {
-    int changed = 0;
-    if (left_true_bypass != ucontrol->value.integer.value[0]) {
-        mod_duo_set_true_bypass(CHANNEL_A, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
+    if (left_true_bypass == ucontrol->value.integer.value[0])
+        return 0;
+
+    mod_duo_set_true_bypass(CHANNEL_A, ucontrol->value.integer.value[0]);
+    return 1;
 }
 
 //----------------------------------------------------------------------
@@ -420,7 +415,7 @@ static int right_true_bypass_info(struct snd_kcontrol *kcontrol,
 }
 
 static int right_true_bypass_get(struct snd_kcontrol *kcontrol,
-						 struct snd_ctl_elem_value *ucontrol)
+                                 struct snd_ctl_elem_value *ucontrol)
 {
     ucontrol->value.integer.value[0] = right_true_bypass;
     return 0;
@@ -428,14 +423,13 @@ static int right_true_bypass_get(struct snd_kcontrol *kcontrol,
 
 
 static int right_true_bypass_put(struct snd_kcontrol *kcontrol,
-									struct snd_ctl_elem_value *ucontrol)
+                                 struct snd_ctl_elem_value *ucontrol)
 {
-    int changed = 0;
-    if (right_true_bypass != ucontrol->value.integer.value[0]) {
-        mod_duo_set_true_bypass(CHANNEL_B, ucontrol->value.integer.value[0]);
-        changed = 1;
-    }
-    return changed;
+    if (right_true_bypass == ucontrol->value.integer.value[0])
+        return 0;
+
+    mod_duo_set_true_bypass(CHANNEL_B, ucontrol->value.integer.value[0]);
+    return 1;
 }
 
 //----------------------------------------------------------------------
@@ -648,7 +642,7 @@ static int __devexit mod_duo_audio_remove(struct platform_device *pdev)
 {
     struct snd_soc_card *card = platform_get_drvdata(pdev);
 
-    if(mod_duo_used){
+    if (mod_duo_used) {
         mod_duo_gpio_release();
     }
 
@@ -665,13 +659,13 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
     printk("[MOD Duo Machine Driver] %s\n", __func__);
 
     ret = script_parser_fetch("i2s_para", "i2s_used", &i2s_used, 1);
-    if ((ret != 0) || (!i2s_used)){
+    if ((ret != 0) || (!i2s_used)) {
         printk("[MOD Duo Machine Driver]I2S not configured on script.bin.\n");
         return -ENODEV;
     }
 
     ret = script_parser_fetch("codec_para", "codec_twi_id", &codec_twi_id, 1);
-    if ((ret != 0) || (!i2s_used)){
+    if ((ret != 0) || (!i2s_used)) {
         printk("[MOD Duo Machine Driver]CODEC twi id not configured on script.bin.\n");
         return -ENODEV;
     }
@@ -688,12 +682,12 @@ static int __devinit mod_duo_audio_probe(struct platform_device *pdev)
     card->dev = &pdev->dev;
 
     ret = snd_soc_register_card(card);
-    if (ret){
+    if (ret) {
         dev_err(&pdev->dev, "snd_soc_register_card() failed: %d\n",	ret);
         return ret;
     }
 
-    if(mod_duo_used) {
+    if (mod_duo_used) {
         mod_duo_gpio_init();
         mod_duo_set_gain_stage(CHANNEL_A, GAIN_STAGE_OFF);
         mod_duo_set_gain_stage(CHANNEL_B, GAIN_STAGE_OFF);

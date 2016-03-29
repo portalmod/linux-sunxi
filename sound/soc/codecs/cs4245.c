@@ -717,7 +717,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	}
 
 	/* Signal Selection */
-	ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, CS4245_A_OUT_SEL_HIZ);
+	ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, CS4245_A_OUT_SEL_HIZ | CS4245_LOOP);
 	if (ret < 0) {
 		printk("[CS4245]Master Signal Selection register configuration failed.\n");
 		return ret;
@@ -738,15 +738,6 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 		printk("[CS4245]DAC Control 2 register configuration failed.\n");
 		return ret;
 	}
-
-	// /* Signal Selection */
-	// ret = snd_soc_write(codec, CS4245_SIGNAL_SEL, CS4245_LOOP);
-	// if (ret < 0) {
-	// 	printk("[CS4245]Master Signal Selection register configuration failed.\n");
-	// 	return ret;
-	// } else {
-	// 	printk("[CS4245]Internal loop enabled: ADC->DAC.\n");
-	// }
 
 	printk("[CS4245]CODEC default register configuration complete.\n");
 	return ret;
@@ -871,7 +862,7 @@ static const DECLARE_TLV_DB_SCALE(db_scale_dac, -12750, 50, 0); // DAC output at
 static const DECLARE_TLV_DB_SCALE(db_scale_pga, -1200, 50, 0); // ADC pre-gain/pre-attenuation from -12dB to +12dB (in 0.5dB steps)
 
 static const struct snd_kcontrol_new cs4245_snd_controls[] = {
-	SOC_DOUBLE_R_TLV("DAC Volume", CS4245_DAC_A_CTRL, CS4245_DAC_B_CTRL, 0, 0xFF, 1, db_scale_dac),
+	SOC_DOUBLE_R_TLV("DAC Volume", CS4245_DAC_B_CTRL, CS4245_DAC_A_CTRL, 0, 0xFF, 1, db_scale_dac),
 	{	.iface = SNDRV_CTL_ELEM_IFACE_MIXER, .name = "PGA Gain",
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
 		.info = pga_gain_info,
@@ -880,7 +871,7 @@ static const struct snd_kcontrol_new cs4245_snd_controls[] = {
 		.tlv.p = db_scale_pga
 	},
 	SOC_SINGLE("AUX OUT MUX", CS4245_SIGNAL_SEL, 5, 3, 0),
-	SOC_SINGLE("LOOPBACK", CS4245_SIGNAL_SEL, 1, 1, 1)
+	SOC_SINGLE("LOOPBACK", CS4245_SIGNAL_SEL, 1, 1, 0)
 };
 
 

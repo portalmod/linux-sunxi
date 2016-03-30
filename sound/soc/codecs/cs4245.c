@@ -684,7 +684,7 @@ static int cs4245_probe(struct snd_soc_codec *codec)
 	 * - MCLK ratio = 512.
 	 * - Sampling frequency = 48kHz.
 	*/
-	cs4245->mclk1 = 24576;
+	cs4245->mclk1 = 24576000;
 	cs4245->mclk2 = 0;
 	cs4245->dac_dai_fmt = SND_SOC_DAIFMT_I2S;
 	cs4245->adc_dai_fmt = SND_SOC_DAIFMT_I2S;

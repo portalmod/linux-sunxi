@@ -573,11 +573,6 @@ int mod_duo_dai_link_init(struct snd_soc_pcm_runtime *rtd)
     if (ret < 0)
         return ret;
 
-    //call cs4245_set_dai_clkdiv (CS4245 Codec Driver) - CODEC DAI.
-    ret = snd_soc_dai_set_clkdiv(codec_dai, CS4245_MCLK1_DIV_SET, 2);
-    if (ret < 0)
-        return ret;
-
     /* Setup I2S-related clock signals */
     codec_pll2clk = clk_get(NULL,"audio_pll");
     ret = clk_enable(codec_pll2clk);

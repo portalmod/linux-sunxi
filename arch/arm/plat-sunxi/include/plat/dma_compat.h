@@ -137,7 +137,7 @@ static inline int sunxi_dma_flush(struct sunxi_dma_params *dma)
 	sw_dma_ctrl(dma->channel, SW_DMAOP_FLUSH);
 	return 0;
 #else
-	return -EINVAL; /* No flush in the sun7i dma code */
+	return 0; /* No flush in the sun7i dma code, assume all ok. */
 #endif
 }
 

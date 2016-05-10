@@ -32,11 +32,6 @@
 #include "sunxi-i2s.h"
 #include "sunxi-i2sdma.h"
 
-static volatile unsigned int capture_dmasrc = 0;
-static volatile unsigned int capture_dmadst = 0;
-static volatile unsigned int play_dmasrc = 0;
-static volatile unsigned int play_dmadst = 0;
-
 //DMA data width
 static unsigned int playback_dma_width = 32;
 static unsigned int capture_dma_width = 32;
@@ -267,7 +262,7 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		}
 
 		i2s_dma_conf.xfer_type.src_bst_len = DATA_BRST_1;	// TODO: Test 1, 4 and 8 bursts.
-		i2s_dma_conf.xfer_type.src_bst_len = DATA_BRST_1;
+		i2s_dma_conf.xfer_type.dst_bst_len = DATA_BRST_1;
 		i2s_dma_conf.address_type.src_addr_mode = NDMA_ADDR_INCREMENT;
 		i2s_dma_conf.address_type.dst_addr_mode = NDMA_ADDR_NOCHANGE;
 		i2s_dma_conf.src_drq_type = N_SRC_SDRAM;
@@ -309,7 +304,7 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		}
 
 		i2s_dma_conf.xfer_type.src_bst_len = DATA_BRST_1;	// TODO: Test 1, 4 and 8 bursts.
-		i2s_dma_conf.xfer_type.src_bst_len = DATA_BRST_1;
+		i2s_dma_conf.xfer_type.dst_bst_len = DATA_BRST_1;
 		i2s_dma_conf.address_type.src_addr_mode = NDMA_ADDR_NOCHANGE;
 		i2s_dma_conf.address_type.dst_addr_mode = NDMA_ADDR_INCREMENT;
 		i2s_dma_conf.src_drq_type = N_SRC_IIS0_RX;
@@ -378,24 +373,26 @@ static snd_pcm_uframes_t sunxi_pcm_pointer(struct snd_pcm_substream *substream)
 	unsigned long res = 0;
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 
+	snd_pcm_uframes_t offset = 0;
+	dma_addr_t dmasrc = 0;
+	dma_addr_t dmadst = 0;
+
 	spin_lock(&prtd->lock);
+	sunxi_dma_getcurposition(prtd->params,
+				 (dma_addr_t*)&dmasrc, (dma_addr_t*)&dmadst);
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		sunxi_dma_getcurposition(prtd->params, (dma_addr_t *) &play_dmasrc,
-				(dma_addr_t *) &play_dmadst);
-		res = play_dmasrc + prtd->dma_period - prtd->dma_start;
+		res = dmasrc + prtd->dma_period - prtd->dma_start;
 	} else {
-		sunxi_dma_getcurposition(prtd->params, (dma_addr_t *) &capture_dmasrc,
-				(dma_addr_t *) &capture_dmadst);
-		res = capture_dmadst + prtd->dma_period - prtd->dma_start;
+		res = dmadst + prtd->dma_period - prtd->dma_start;
 	}
-
+	offset = bytes_to_frames(substream->runtime, res);
 	spin_unlock(&prtd->lock);
 
 	if (res == snd_pcm_lib_buffer_bytes(substream))
-		res = 0;
+		offset = 0;
 
-	return bytes_to_frames(substream->runtime, res);
+	return offset;
 }
 
 static int sunxi_pcm_open(struct snd_pcm_substream *substream)

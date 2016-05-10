@@ -48,6 +48,10 @@ static int axp_set_voltage(struct regulator_dev *rdev, int min_uV, int max_uV,
 	uint8_t val, mask;
 
 	if (rdev_get_id(rdev) == AXP20_ID_BUCK3) {
+		// if requested voltage matches current one ignore this
+		if (min_uV == max_uV && max_uV == axp_get_voltage(rdev)) {
+			return 0;
+		}
 		pr_err("somebody is trying to set dcdc3 range to (%d, %d) uV\n",
 			min_uV, max_uV);
 		pr_err("but we keep dcdc3 = %d uV from the bootloader\n",

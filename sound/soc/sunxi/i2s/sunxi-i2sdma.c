@@ -230,8 +230,6 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		return 0;
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		printk("[I2S-DMA]PLAYBACK.\n");
-
 #if defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		struct dma_hw_conf i2s_dma_conf;
 
@@ -272,8 +270,6 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 #endif
 		ret = sunxi_dma_config(prtd->params, &i2s_dma_conf, 0);
 	} else { // CAPTURE
-		printk("[I2S-DMA]CAPTURE.\n");
-
 #if defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		struct dma_hw_conf i2s_dma_conf;
 
@@ -312,7 +308,6 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		i2s_dma_conf.bconti_mode  = false;		// TODO: Test bcont_mode = true to see if it works without callbacks!
 		i2s_dma_conf.irq_spt      = CHAN_IRQ_FD;
 #endif
-
 		ret = sunxi_dma_config(prtd->params, &i2s_dma_conf, 0);
 	}
 
@@ -336,27 +331,11 @@ static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 
 	switch (cmd) {
 		case SNDRV_PCM_TRIGGER_START:
-			printk("[I2S-DMA]Trigger start.\n");
-			sunxi_dma_start(prtd->params);
-			break;
 		case SNDRV_PCM_TRIGGER_RESUME:
-			printk("[I2S-DMA]Trigger resume.\n");
-			sunxi_dma_start(prtd->params);
-			break;
 		case SNDRV_PCM_TRIGGER_PAUSE_RELEASE:
-			printk("[I2S-DMA]Trigger pause release.\n");
 			sunxi_dma_start(prtd->params);
 			break;
 		case SNDRV_PCM_TRIGGER_SUSPEND:
-	        printk("[I2S-DMA]Trigger suspend.\n");
-			sunxi_dma_stop(prtd->params);
-			break;
-		case SNDRV_PCM_TRIGGER_STOP:
-	        printk("[I2S-DMA]Trigger stop.\n");
-			sunxi_dma_stop(prtd->params);
-			break;
-		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
-	        printk("[I2S-DMA]Trigger pause push.\n");
 			sunxi_dma_stop(prtd->params);
 			break;
 		default:

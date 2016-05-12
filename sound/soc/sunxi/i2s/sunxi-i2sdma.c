@@ -139,36 +139,28 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_p
 	struct sunxi_dma_params *dma = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
 	int ret = 0;
 
-	printk("[I2S-DMA]Entered %s. \n", __func__);
-
 	if (!dma)
 		return 0;
 
 	/* set DMA width for using in sunxi_pcm_prepare*/
 	snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params)); // TODO: Use this call?! Seems to check if there is already alocated buffer. Debug! Hard one.
 
-	printk("[I2S-DMA]params_buffer_bytes: %d.\n", params_buffer_bytes(params));
-
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 		switch (params_format(params)) {
 			case SNDRV_PCM_FORMAT_S16_LE:
 				playback_dma_width = 16;
-				printk("[I2S-DMA]PLAYBACK SNDRV_PCM_FORMAT_S16_LE.\n");
 				break;
 			case SNDRV_PCM_FORMAT_S24_LE:
 				playback_dma_width = 32;
-				printk("[I2S-DMA]PLAYBACK SNDRV_PCM_FORMAT_S24_LE.\n");
 				break;
 		}
 	} else {
 		switch (params_format(params)) {
 			case SNDRV_PCM_FORMAT_S16_LE:
 				capture_dma_width = 16;
-				printk("[I2S-DMA]CAPTURE SNDRV_PCM_FORMAT_S16_LE.\n");
 				break;
 			case SNDRV_PCM_FORMAT_S24_LE:
 				capture_dma_width = 32;
-				printk("[I2S-DMA]CAPTURE SNDRV_PCM_FORMAT_S24_LE.\n");
 				break;
 		}
 	}

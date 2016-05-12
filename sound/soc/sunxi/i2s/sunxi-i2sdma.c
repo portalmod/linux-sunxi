@@ -336,6 +336,8 @@ static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 			sunxi_dma_start(prtd->params);
 			break;
 		case SNDRV_PCM_TRIGGER_SUSPEND:
+		case SNDRV_PCM_TRIGGER_STOP:
+		case SNDRV_PCM_TRIGGER_PAUSE_PUSH:
 			sunxi_dma_stop(prtd->params);
 			break;
 		default:

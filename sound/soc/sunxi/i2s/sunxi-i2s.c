@@ -45,6 +45,7 @@
 #include "sunxi-i2s.h"
 
 static u32 i2s_handler = 0;
+static int irq_registered = 0;
 static int regsave[8];
 // Variables parsed from *.fex script file.
 static int i2s_used = 1;	
@@ -1013,6 +1014,13 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 	return ret;
 }
 
+static irqreturn_t sunxi_i2s_irq(int irqno, void *dev_id)
+{
+	printk("[I2S_IRQ] IRQ called here\n");
+
+	return IRQ_HANDLED;
+}
+
 /*
 * TODO: Function Description.
 * Saved in snd_soc_dai_driver sunxi_iis_dai.
@@ -1020,8 +1028,18 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 static int sunxi_i2s_dai_probe(struct snd_soc_dai *cpu_dai)
 {
 	u32 reg_val;
+	int ret;
 
 	printk("[I2S]Entered %s\n", __func__);
+
+	ret = request_irq(SW_INT_IRQNO_I2S, sunxi_i2s_irq, 0, "i2s_irq", NULL);
+	if (ret < 0){
+		irq_registered = 0;
+		printk("[I2S_IRQ] fail to claim i2s irq. ret = %d, irq = %d\n", ret, SW_INT_IRQNO_I2S);
+	} else {
+		irq_registered = 1;
+		printk("[I2S_IRQ] claimed i2s irq. ret = %d, irq = %d\n", ret, SW_INT_IRQNO_I2S);
+	}
 
 	// I2S Default Register Configuration
 	sunxi_iis.slave = 1,
@@ -1364,6 +1382,11 @@ module_init(sunxi_i2s_init);
 static void __exit sunxi_i2s_exit(void)
 {
 	printk("[I2S]Entered %s\n", __func__);
+
+	if (irq_registered) {
+		irq_registered = 0;
+		free_irq(SW_INT_IRQNO_I2S, NULL);
+	}
 
 	platform_driver_unregister(&sunxi_i2s_driver);
 }

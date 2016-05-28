@@ -303,6 +303,8 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 		ret = sunxi_dma_config(prtd->params, &i2s_dma_conf, 0);
 	}
 
+	spin_lock(&prtd->lock);
+
 	/* flush the DMA channel */
 	prtd->dma_loaded = 0;
 	if (sunxi_dma_flush(prtd->params) == 0)
@@ -310,6 +312,8 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 
 	/* enqueue dma buffers */
 	sunxi_pcm_enqueue(substream);
+
+	spin_unlock(&prtd->lock);
 
 	return ret;
 }

@@ -70,7 +70,7 @@ static const struct snd_pcm_hardware sunxi_pcm_capture_hardware = {
 	.period_bytes_max	= 1024*32,
 	.periods_min		= 2, //4
 	.periods_max		= 8, //8
-	.fifo_size		= 128, //32
+	.fifo_size		= 64, //32
 };
 
 struct sunxi_runtime_data {
@@ -94,14 +94,16 @@ static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
 	int ret = 0;
 
 	while (prtd->dma_loaded < limit) {
-		if ((pos + len) > prtd->dma_end)
+		if ((pos + len) > prtd->dma_end) {
 			len  = prtd->dma_end - pos;
+		}
 
 		ret = sunxi_dma_enqueue(prtd->params, pos, len,
 				substream->stream != SNDRV_PCM_STREAM_PLAYBACK);
 
-		if (ret)
+		if (ret) {
 			break;
+		}
 
 		prtd->dma_loaded++;
 		pos += prtd->dma_period;
@@ -119,15 +121,34 @@ static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
 	struct snd_pcm_substream *substream = dev_id;
 
 	prtd = substream->runtime->private_data;
-	if (substream)
+	/* There an initial race when starting separate substreams.
+	 * the playback substream can complete the first DMA request
+	 * before capture is even started.
+	 *
+	 * - calling snd_pcm_period_elapsed() wakes up the userspace app,
+	 * which will see  N play-samples  0 capture samples and calls re-init.
+	 *
+	 * OR
+	 *
+	 * - playback can catch up on capture by one period which
+	 *   will trigger an xrun in pcm_lib.
+	 *
+	 * This is a hack to simply ignore packets until alsa_pcm's
+	 * runtime status is RUNNING (all snd_pcm_link()ed streams)
+	 */
+	if (substream && (prtd->state & ST_RUNNING) && substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
 		snd_pcm_period_elapsed(substream);
+	}
 
-	spin_lock(&prtd->lock);
+	spin_lock_irq(&prtd->lock);
 
 	prtd->dma_loaded--;
-	sunxi_pcm_enqueue(substream);
 
-	spin_unlock(&prtd->lock);
+	// see above, don't queue new packets just yet. decrease dma_loaded only
+	if (prtd->state & ST_RUNNING && substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
+		sunxi_pcm_enqueue(substream);
+	}
+	spin_unlock_irq(&prtd->lock);
 }
 
 static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
@@ -173,24 +194,24 @@ static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_p
 			return ret;
 	}
 
-	if (sunxi_dma_set_callback(prtd->params, sunxi_audio_buffdone, substream)
-			!= 0) {
-		sunxi_dma_release(prtd->params);
-		prtd->params = NULL;
-		return -EINVAL;
-	}
-
-	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
-	runtime->dma_bytes = totbytes;
-
-	spin_lock_irq(&prtd->lock);
+	unsigned long flags;
+	spin_lock_irqsave(&prtd->lock, flags);
 	prtd->dma_loaded = 0;
 	prtd->dma_limit = runtime->hw.periods_min;
 	prtd->dma_period = params_period_bytes(params);
 	prtd->dma_start = runtime->dma_addr;
 	prtd->dma_pos = prtd->dma_start;
 	prtd->dma_end = prtd->dma_start + totbytes;
-	spin_unlock_irq(&prtd->lock);
+	spin_unlock_irqrestore(&prtd->lock, flags);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
+	runtime->dma_bytes = totbytes;
+
+	if (sunxi_dma_set_callback(prtd->params, sunxi_audio_buffdone, substream)
+			!= 0) {
+		sunxi_dma_release(prtd->params);
+		prtd->params = NULL;
+		return -EINVAL;
+	}
 
 	return 0;
 }
@@ -200,7 +221,7 @@ static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 
 	if (prtd->params)
-		sunxi_dma_flush(prtd->params);
+		sunxi_dma_flush(prtd->params); // NO-OP
 
 	snd_pcm_set_runtime_buffer(substream, NULL);
 
@@ -209,6 +230,7 @@ static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
 		sunxi_dma_release(prtd->params);
 		prtd->params = NULL;
 	}
+	snd_pcm_lib_free_pages (substream); // test
 
 	return 0;
 }
@@ -221,6 +243,8 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 	if (!prtd->params)
 		return 0;
 
+	unsigned long flags;
+	spin_lock_irqsave(&prtd->lock, flags);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 #if defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		struct dma_hw_conf i2s_dma_conf;
@@ -302,18 +326,14 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 #endif
 		ret = sunxi_dma_config(prtd->params, &i2s_dma_conf, 0);
 	}
-
-	spin_lock(&prtd->lock);
-
-	/* flush the DMA channel */
-	prtd->dma_loaded = 0;
 	if (sunxi_dma_flush(prtd->params) == 0)
 		prtd->dma_pos = prtd->dma_start;
 
+	prtd->dma_loaded = 0;
 	/* enqueue dma buffers */
 	sunxi_pcm_enqueue(substream);
 
-	spin_unlock(&prtd->lock);
+	spin_unlock_irqrestore(&prtd->lock, flags);
 
 	return ret;
 }

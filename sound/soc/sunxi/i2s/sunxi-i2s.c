@@ -186,8 +186,6 @@ static s32 sunxi_i2s_divisor_values(u32 * mclk_div, u32* bclk_div, u32* mclk)
 {
 	u32 i, j, ret = -EINVAL;
 
-	printk("[I2S]Entered %s\n", __func__);
-
 	for(i=0; i< ARRAY_SIZE(MCLK_INF); i++) {
 		 if((MCLK_INF[i].samp_rate == sunxi_iis.samp_fs) && ((MCLK_INF[i].mult_fs == 256) || (MCLK_INF[i].mult_fs == 128))) {
 			  for(j=0; j<ARRAY_SIZE(BCLK_INF); j++) {
@@ -278,8 +276,6 @@ static void iisregrestore(void)
 void sunxi_snd_txctrl_i2s(int on)
 {
 	u32 reg_val;
-	
-	printk("[I2S]Entered %s\n", __func__);
 
 	//flush TX FIFO
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISFCTL);
@@ -317,8 +313,6 @@ void sunxi_snd_txctrl_i2s(int on)
 void sunxi_snd_rxctrl_i2s(int on)
 {
 	u32 reg_val;
-
-	printk("[I2S]Entered %s\n", __func__);
 
 	//flush RX FIFO
 	reg_val = readl(sunxi_iis.regs + SUNXI_IISFCTL);
@@ -361,7 +355,6 @@ void sunxi_snd_rxctrl_i2s(int on)
 static int sunxi_i2s_set_sysclk(struct snd_soc_dai *cpu_dai, int clk_id, unsigned int freq, int dir)
 {
 	u32 reg_val;
-	printk("[I2S]Entered %s\n", __func__);
 	if(!sunxi_iis.slave)
 	{
 		switch(clk_id)
@@ -399,8 +392,6 @@ static int sunxi_i2s_set_clkdiv(struct snd_soc_dai *cpu_dai, int div_id, int val
 	u32 bclk_div = 0;
 
 	// Here i should know the sample rate and the FS multiple.
-
- 	printk("[I2S]Entered %s\n", __func__);
 
  	switch (div_id) {
 		case SUNXI_DIV_MCLK:	// Sets MCLKDIV
@@ -778,15 +769,11 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_dma_params *dma_data;
 
-	printk("[I2S]Entered %s\n", __func__);
-
 	// Channel Select and Enable
 	// TODO: Debug this mono/stereo configurations. Seems like alsa is forcing -c2 even when "aplay -c1" because the wav file is stereo.
 	if(substream->stream == SNDRV_PCM_STREAM_PLAYBACK) // Playback.
 	{
-		printk("[I2S]sunxi_i2s_hw_params: SNDRV_PCM_STREAM_PLAYBACK.\n");
 		dma_data = &sunxi_i2s_pcm_stereo_out;
-		printk("[I2S]sunxi_i2s_hw_params: dma_data = &sunxi_i2s_pcm_stereo_out.\n");
 		reg_val1 = readl(sunxi_iis.regs + SUNXI_IISCTL);
 		reg_val2 = readl(sunxi_iis.regs + SUNXI_TXCHSEL);
 		reg_val3 = readl(sunxi_iis.regs + SUNXI_TXCHMAP);
@@ -800,49 +787,41 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(1); // TX Channel Select 1-ch.
 				reg_val3 |= (0x0 << 0);	// TX Channel0 Mapping 1st sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0 enabled, 1 channel selected.\n");
 				break;
 			case 2:
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(2); // TX Channel Select 2-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4));	// TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0 enabled, 2 channels selected.\n");
 				break;
 			case 3:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(3); // TX Channel Select 3-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0 and SDO1 enabled, 3 channels selected.\n");
 				break;
 			case 4:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(4); // TX Channel Select 4-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8) | (0x3 << 12)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample, TX Channel4 Mapping 4th sample
-				printk("[I2S]sunxi_i2s_hw_params: SDO0 and SDO1 enabled, 4 channels selected.\n");
 				break;
 			case 5:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(5); // TX Channel Select 5-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8) | (0x3 << 12) | (0x4 << 16)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample, TX Channel4 Mapping 4th sample, TX Channel5 Mapping 5th sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0, SDO1 and SDO2 enabled, 5 channels selected.\n");
 				break;
 			case 6:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(6); // TX Channel Select 6-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8) | (0x3 << 12) | (0x4 << 16) | (0x5 << 20)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample, TX Channel4 Mapping 4th sample, TX Channel5 Mapping 5th sample, TX Channel6 Mapping 6th sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0, SDO1 and SDO2 enabled, 6 channels selected.\n");
 				break;
 			case 7:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(7); // TX Channel Select 7-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8) | (0x3 << 12) | (0x4 << 16) | (0x5 << 20) | (0x6 << 24)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample, TX Channel4 Mapping 4th sample, TX Channel5 Mapping 5th sample, TX Channel6 Mapping 6th sample, TX Channel7 Mapping 7th sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0, SDO1, SDO2 and SDO3 enabled, 7 channels selected.\n");
 				break;
 			case 8:
 				reg_val1 |= (SUNXI_IISCTL_SDO0EN | SUNXI_IISCTL_SDO1EN | SUNXI_IISCTL_SDO2EN | SUNXI_IISCTL_SDO3EN);
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(8); // TX Channel Select 8-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4) | (0x2 << 8) | (0x3 << 12) | (0x4 << 16) | (0x5 << 20) | (0x6 << 24) | (0x7 << 28)); // TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample, TX Channel3 Mapping 3rd sample, TX Channel4 Mapping 4th sample, TX Channel5 Mapping 5th sample, TX Channel6 Mapping 6th sample, TX Channel7 Mapping 7th sample, TX Channel8 Mapping 8th sample.
-				printk("[I2S]sunxi_i2s_hw_params: SDO0, SDO1, SDO2 and SDO3 enabled, 8 channels selected.\n");
 				break;
 			default:
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
@@ -860,13 +839,11 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(1); // TX Channel Select 1-ch.
 				reg_val3 |= (0x0 << 0);	// TX Channel0 Mapping 1st sample.
-				printk("[I2S] sunxi_i2s_hw_params: SDO0 enabled, 1 channel selected.\n");
 				break;				
 			case 2:
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
 				reg_val2 |= SUNXI_TXCHSEL_CHNUM(2); // TX Channel Select 2-ch.
 				reg_val3 |= ((0x0 << 0) | (0x1 << 4));	// TX Channel0 Mapping 1st sample, TX Channel1 Mapping 2nd sample.
-				printk("[I2S] sunxi_i2s_hw_params: SDO0 enabled, 2 channels selected.\n");
 				break;	
 			default:
 				reg_val1 |= SUNXI_IISCTL_SDO0EN;
@@ -880,9 +857,7 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		writel(reg_val3, sunxi_iis.regs + SUNXI_TXCHMAP);
 	}
 	else {	// Capture.
-		printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_STREAM_CAPTURE.\n");
 		dma_data = &sunxi_i2s_pcm_stereo_in;
-		printk("[I2S] sunxi_i2s_hw_params: dma_data = &sunxi_i2s_pcm_stereo_in\n");
 
 		reg_val1 = readl(sunxi_iis.regs + SUNXI_RXCHSEL);
 		reg_val2 = readl(sunxi_iis.regs + SUNXI_RXCHMAP);
@@ -893,12 +868,10 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 			case 1:
 				reg_val1 |= SUNXI_RXCHSEL_CHNUM(1); // RX Channel Select 1-ch.
 				reg_val2 |= (0x0 << 0);	// RX Channel0 Mapping 1st sample.
-				printk("[I2S] sunxi_i2s_hw_params: SDO0 enabled, 1 channel selected.\n");
 				break;				
 			case 2:
 				reg_val1 |= SUNXI_RXCHSEL_CHNUM(2); // RX Channel Select 2-ch.
 				reg_val2 |= ((0x0 << 0) | (0x1 << 4));	// RX Channel0 Mapping 1st sample, RX Channel1 Mapping 2nd sample.
-				printk("[I2S] sunxi_i2s_hw_params: SDO0 enabled, 2 channels selected.\n");
 				break;	
 			default:
 				reg_val1 |= SUNXI_RXCHSEL_CHNUM(1); // RX Channel Select 1-ch.
@@ -918,7 +891,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 		case SNDRV_PCM_FORMAT_S16_LE:
 			reg_val1 |= SUNXI_IISFAT0_SR_16BIT;
 			sunxi_iis.samp_res = 16;
-			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S16_LE.\n");
 			break;
 
 		case SNDRV_PCM_FORMAT_S24_3LE:
@@ -930,7 +902,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				sunxi_iis.ws_size = 32;
 				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
-			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_3LE.\n");
 			break;
 		case SNDRV_PCM_FORMAT_S24_LE:
 			reg_val1 |= SUNXI_IISFAT0_SR_24BIT;
@@ -941,7 +912,6 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 				sunxi_iis.ws_size = 32;
 				printk("[I2S] sunxi_i2s_hw_params: Changing word slect size to 32bit.\n");
 			}
-			printk("[I2S] sunxi_i2s_hw_params: SNDRV_PCM_FORMAT_S24_LE.\n");
 			break;
 		default:
 			printk("[I2S] sunxi_i2s_hw_params: Unsupported format (%d).\n", (int)params_format(params));
@@ -981,8 +951,6 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_dma_params *dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
 	#endif
-
-	printk("[I2S]Entered %s\n", __func__);
 
 	switch (cmd) {
 		case SNDRV_PCM_TRIGGER_START:

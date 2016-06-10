@@ -533,8 +533,6 @@ static int cs4245_dai_mute(struct snd_soc_dai *dai, int mute)
 	struct snd_soc_codec *codec = dai->codec;
 	int value;
 
-	printk("[CS4245] %s\n", __func__);
-
 	value = snd_soc_read(codec, CS4245_DAC_CTRL_1);
 	if (mute){
 		value |= CS4245_MUTE_DAC;
@@ -568,11 +566,6 @@ static int cs4245_hw_params(struct snd_pcm_substream *substream,
 #ifdef DEBUG_CS4245
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec *codec = rtd->codec;
-#endif
-
-	printk("[CS4245] %s\n", __func__);
-
-#ifdef DEBUG_CS4245
 	cs4245_printk_register_values(codec);
 #endif
 
@@ -590,8 +583,6 @@ static int cs4245_trigger(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec *codec = rtd->codec;
 	int reg, ret = 0;
-
-	printk("[CS4245]Entered %s\n", __func__);
 
 	switch (cmd) {
 		case SNDRV_PCM_TRIGGER_START:

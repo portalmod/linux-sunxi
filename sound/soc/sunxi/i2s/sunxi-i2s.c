@@ -206,34 +206,31 @@ static s32 sunxi_i2s_divisor_values(u32 * mclk_div, u32* bclk_div, u32* mclk)
 	return ret;
 }
 
-// /*
-// *
-// */
-// static void sunxi_i2s_printk_register_values(void)
-// {
-// 	int reg_val[8];
+#ifdef DEBUG_SUNXI_I2S_REGS
+static void sunxi_i2s_printk_register_values(void)
+{
+	int reg_val[8];
 
-// 	reg_val[0] = readl(sunxi_iis.regs + SUNXI_IISCTL);
-// 	reg_val[1] = readl(sunxi_iis.regs + SUNXI_IISFAT0);
-// 	reg_val[2] = readl(sunxi_iis.regs + SUNXI_IISFAT1);
-// 	reg_val[3] = readl(sunxi_iis.regs + SUNXI_IISFCTL);
-// 	reg_val[4] = readl(sunxi_iis.regs + SUNXI_IISINT);
-// 	reg_val[5] = readl(sunxi_iis.regs + SUNXI_IISCLKD);
-// 	reg_val[6] = readl(sunxi_iis.regs + SUNXI_TXCHSEL);
-// 	reg_val[7] = readl(sunxi_iis.regs + SUNXI_TXCHMAP);
+	reg_val[0] = readl(sunxi_iis.regs + SUNXI_IISCTL);
+	reg_val[1] = readl(sunxi_iis.regs + SUNXI_IISFAT0);
+	reg_val[2] = readl(sunxi_iis.regs + SUNXI_IISFAT1);
+	reg_val[3] = readl(sunxi_iis.regs + SUNXI_IISFCTL);
+	reg_val[4] = readl(sunxi_iis.regs + SUNXI_IISINT);
+	reg_val[5] = readl(sunxi_iis.regs + SUNXI_IISCLKD);
+	reg_val[6] = readl(sunxi_iis.regs + SUNXI_TXCHSEL);
+	reg_val[7] = readl(sunxi_iis.regs + SUNXI_TXCHMAP);
 
-// 	printk("[I2S]Register Values:\n");
-// 	printk("[I2S]SUNXI_IISCTL: 0x%X.\n", reg_val[0]);
-// 	printk("[I2S]SUNXI_IISFAT0: 0x%X.\n", reg_val[1]);
-// 	printk("[I2S]SUNXI_IISFAT1: 0x%X.\n", reg_val[2]);
-// 	printk("[I2S]SUNXI_IISFCTL: 0x%X.\n", reg_val[3]);
-// 	printk("[I2S]SUNXI_IISINT: 0x%X.\n", reg_val[4]);
-// 	printk("[I2S]SUNXI_IISCLKD: 0x%X.\n", reg_val[5]);
-// 	printk("[I2S]SUNXI_TXCHSEL: 0x%X.\n", reg_val[6]);
-// 	printk("[I2S]SUNXI_TXCHMAP: 0x%X.\n", reg_val[7]);
-
-// 	return;
-// }
+	printk("[I2S]Register Values:\n");
+	printk("[I2S]SUNXI_IISCTL: 0x%X.\n", reg_val[0]);
+	printk("[I2S]SUNXI_IISFAT0: 0x%X.\n", reg_val[1]);
+	printk("[I2S]SUNXI_IISFAT1: 0x%X.\n", reg_val[2]);
+	printk("[I2S]SUNXI_IISFCTL: 0x%X.\n", reg_val[3]);
+	printk("[I2S]SUNXI_IISINT: 0x%X.\n", reg_val[4]);
+	printk("[I2S]SUNXI_IISCLKD: 0x%X.\n", reg_val[5]);
+	printk("[I2S]SUNXI_TXCHSEL: 0x%X.\n", reg_val[6]);
+	printk("[I2S]SUNXI_TXCHMAP: 0x%X.\n", reg_val[7]);
+}
+#endif
 
 /* 
 * TODO: Function description.
@@ -748,7 +745,9 @@ static int sunxi_i2s_set_fmt(struct snd_soc_dai *cpu_dai, unsigned int fmt)
 	// 	writel(reg_val1, sunxi_iis.regs + SUNXI_IISFAT1);
 	// }
 
-//	sunxi_i2s_printk_register_values();
+#ifdef DEBUG_SUNXI_I2S_REGS
+	sunxi_i2s_printk_register_values();
+#endif
 
 	return 0;
 }
@@ -933,7 +932,9 @@ static int sunxi_i2s_hw_params(struct snd_pcm_substream *substream,
 
 	snd_soc_dai_set_dma_data(rtd->cpu_dai, substream, dma_data);	// TODO: Place this call in a more apropriate place, like trigger, then test. Printk the cpu->dai name to understand "who" is it?
 
-//	sunxi_i2s_printk_register_values();
+#ifdef DEBUG_SUNXI_I2S_REGS
+	sunxi_i2s_printk_register_values();
+#endif
 
 	return 0;
 }
@@ -951,6 +952,10 @@ static int sunxi_i2s_trigger(struct snd_pcm_substream *substream,
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct sunxi_dma_params *dma_data = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
 	#endif
+
+#ifdef DEBUG_SUNXI_I2S_REGS
+	printk("[I2S]Entered %s s:%d cmd:%d\n", __func__, substream->stream, cmd);
+#endif
 
 	switch (cmd) {
 		case SNDRV_PCM_TRIGGER_START:

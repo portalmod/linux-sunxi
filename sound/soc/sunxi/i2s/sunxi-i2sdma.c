@@ -83,168 +83,22 @@ struct sunxi_runtime_data {
 	dma_addr_t dma_pos;
 	dma_addr_t dma_end;
 	struct sunxi_dma_params *params;
+#ifdef DEBUG_PERIOD_TIMING
+	struct timespec ts;
+	u64 max_elapsed;
+	u64 nom_elapsed;
+#endif
 };
 
-static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
+static int sunxi_dma_prepare (struct snd_pcm_substream *substream)
 {
-	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
-	dma_addr_t pos = prtd->dma_pos;
-	unsigned long len = prtd->dma_period;
-	unsigned int limit = prtd->dma_limit;
-	int ret = 0;
-
-	while (prtd->dma_loaded < limit) {
-		if ((pos + len) > prtd->dma_end) {
-			len  = prtd->dma_end - pos;
-		}
-
-		ret = sunxi_dma_enqueue(prtd->params, pos, len,
-				substream->stream != SNDRV_PCM_STREAM_PLAYBACK);
-
-		if (ret) {
-			break;
-		}
-
-		prtd->dma_loaded++;
-		pos += prtd->dma_period;
-
-		if(pos >= prtd->dma_end)
-			pos = prtd->dma_start;
-	}
-
-	prtd->dma_pos = pos;
-}
-
-static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
-{
-	struct sunxi_runtime_data *prtd;
-	struct snd_pcm_substream *substream = dev_id;
-
-	prtd = substream->runtime->private_data;
-	/* There an initial race when starting separate substreams.
-	 * the playback substream can complete the first DMA request
-	 * before capture is even started.
-	 *
-	 * - calling snd_pcm_period_elapsed() wakes up the userspace app,
-	 * which will see  N play-samples  0 capture samples and calls re-init.
-	 *
-	 * OR
-	 *
-	 * - playback can catch up on capture by one period which
-	 *   will trigger an xrun in pcm_lib.
-	 *
-	 * This is a hack to simply ignore packets until alsa_pcm's
-	 * runtime status is RUNNING (all snd_pcm_link()ed streams)
-	 */
-	if (substream && (prtd->state & ST_RUNNING) && substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
-		snd_pcm_period_elapsed(substream);
-	}
-
-	spin_lock_irq(&prtd->lock);
-
-	prtd->dma_loaded--;
-
-	// see above, don't queue new packets just yet. decrease dma_loaded only
-	if (prtd->state & ST_RUNNING && substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
-		sunxi_pcm_enqueue(substream);
-	}
-	spin_unlock_irq(&prtd->lock);
-}
-
-static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
-{
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct sunxi_runtime_data *prtd = runtime->private_data;
-	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	unsigned long totbytes = params_buffer_bytes(params);
-	struct sunxi_dma_params *dma = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
-	int ret = 0;
-
-	if (!dma)
-		return 0;
-
-	/* set DMA width for using in sunxi_pcm_prepare*/
-	snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params)); // TODO: Use this call?! Seems to check if there is already alocated buffer. Debug! Hard one.
-
-	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		switch (params_format(params)) {
-			case SNDRV_PCM_FORMAT_S16_LE:
-				playback_dma_width = 16;
-				break;
-			case SNDRV_PCM_FORMAT_S24_LE:
-				playback_dma_width = 32;
-				break;
-		}
-	} else {
-		switch (params_format(params)) {
-			case SNDRV_PCM_FORMAT_S16_LE:
-				capture_dma_width = 16;
-				break;
-			case SNDRV_PCM_FORMAT_S24_LE:
-				capture_dma_width = 32;
-				break;
-		}
-	}
-
-	if (prtd->params == NULL) {
-		prtd->params = dma;
-
-		ret = sunxi_dma_request(prtd->params, 0);	// 0 = Means Normal DMA Channel
-		if (ret < 0)
-			return ret;
-	}
-
-	unsigned long flags;
-	spin_lock_irqsave(&prtd->lock, flags);
-	prtd->dma_loaded = 0;
-	prtd->dma_limit = runtime->hw.periods_min;
-	prtd->dma_period = params_period_bytes(params);
-	prtd->dma_start = runtime->dma_addr;
-	prtd->dma_pos = prtd->dma_start;
-	prtd->dma_end = prtd->dma_start + totbytes;
-	spin_unlock_irqrestore(&prtd->lock, flags);
-	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
-	runtime->dma_bytes = totbytes;
-
-	if (sunxi_dma_set_callback(prtd->params, sunxi_audio_buffdone, substream)
-			!= 0) {
-		sunxi_dma_release(prtd->params);
-		prtd->params = NULL;
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
-static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
-{
-	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
-
-	if (prtd->params)
-		sunxi_dma_flush(prtd->params); // NO-OP
-
-	snd_pcm_set_runtime_buffer(substream, NULL);
-
-	if (prtd->params) {
-		sunxi_dma_stop(prtd->params);
-		sunxi_dma_release(prtd->params);
-		prtd->params = NULL;
-	}
-	snd_pcm_lib_free_pages (substream); // test
-
-	return 0;
-}
-
-static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
-{
+	printk ("[I2S-DMA]Entered %s\n", __func__);
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 	int ret = 0;
 
 	if (!prtd->params)
 		return 0;
 
-	unsigned long flags;
-	spin_lock_irqsave(&prtd->lock, flags);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
 #if defined CONFIG_ARCH_SUN4I || defined CONFIG_ARCH_SUN5I
 		struct dma_hw_conf i2s_dma_conf;
@@ -326,23 +180,233 @@ static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 #endif
 		ret = sunxi_dma_config(prtd->params, &i2s_dma_conf, 0);
 	}
-	if (sunxi_dma_flush(prtd->params) == 0)
-		prtd->dma_pos = prtd->dma_start;
+
+	return ret;
+}
+
+static void sunxi_pcm_enqueue(struct snd_pcm_substream *substream)
+{
+	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
+	dma_addr_t pos = prtd->dma_pos;
+	unsigned long len = prtd->dma_period;
+	unsigned int limit = prtd->dma_limit;
+	int ret = 0;
+
+#ifdef DEBUG_PERIOD_TIMING
+	struct timespec ts;
+	getnstimeofday (&ts);
+	if (prtd->ts.tv_sec > 0) {
+		u64 nsec = ts.tv_nsec - prtd->ts.tv_nsec
+			+ 1000000000 * (ts.tv_sec - prtd->ts.tv_sec);
+		if (nsec > prtd->max_elapsed) {
+			prtd->max_elapsed = nsec;
+			if (nsec > prtd->nom_elapsed) {
+				printk("[DMA-Q]: stream %d, tme: %llu ns\n", substream->stream, nsec);
+			}
+		} else {
+			prtd->max_elapsed = prtd->max_elapsed * 8191;
+			prtd->max_elapsed = prtd->max_elapsed / 8192;
+		}
+	}
+	prtd->ts.tv_nsec = ts.tv_nsec;
+	prtd->ts.tv_sec = ts.tv_sec;
+#endif
+
+	while (prtd->dma_loaded < limit) {
+		if ((pos + len) > prtd->dma_end) {
+			len  = prtd->dma_end - pos;
+		}
+
+		ret = sunxi_dma_enqueue(prtd->params, pos, len,
+				substream->stream != SNDRV_PCM_STREAM_PLAYBACK);
+
+		if (ret) {
+			break;
+		}
+
+		prtd->dma_loaded++;
+		pos += prtd->dma_period;
+
+		if(pos >= prtd->dma_end)
+			pos = prtd->dma_start;
+	}
+
+	prtd->dma_pos = pos;
+}
+
+static void sunxi_audio_buffdone(struct sunxi_dma_params *dma, void *dev_id)
+{
+	struct sunxi_runtime_data *prtd;
+	struct snd_pcm_substream *substream = dev_id;
+
+	prtd = substream->runtime->private_data;
+	if (!(prtd->state & ST_RUNNING)) {
+		return;
+	}
+	/* There an initial race when starting separate substreams.
+	 * the playback substream can complete the first DMA request
+	 * before capture is even started.
+	 *
+	 * - calling snd_pcm_period_elapsed() wakes up the userspace app,
+	 * which will see  N play-samples  0 capture samples and calls re-init.
+	 *
+	 * OR
+	 *
+	 * - playback can catch up on capture by one period which
+	 *   will trigger an xrun in pcm_lib.
+	 *
+	 * This is a hack to simply ignore packets until alsa_pcm's
+	 * runtime status is RUNNING (all snd_pcm_link()ed streams)
+	 */
+	if (substream && substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
+#if 1 // set to 0 for debugging
+	/*  use with `mod-alsa-test --no-op` and DEBUG_PERIOD_TIMING
+	 *
+	 *  This takes all of alsa out of the loop, just open
+	 *  the device and let it queue DMA requets.
+	 *  when a DMA request completes -> IRQ -> queue a new one
+	 *  wait for next IRQ (repeat)
+	 *
+	 *  This results in exact regular callbacks,..
+	 *  ...except when it does not, use ftrace :)
+	 */
+		snd_pcm_period_elapsed(substream);
+#endif
+	}
+
+	spin_lock(&prtd->lock);
+
+	prtd->dma_loaded--;
+
+	// see above, don't queue new packets just yet. decrease dma_loaded only
+	if (substream->runtime->status->state == SNDRV_PCM_STATE_RUNNING) {
+		sunxi_pcm_enqueue(substream);
+	}
+	spin_unlock(&prtd->lock);
+}
+
+static int sunxi_pcm_hw_params(struct snd_pcm_substream *substream, struct snd_pcm_hw_params *params)
+{
+	struct snd_pcm_runtime *runtime = substream->runtime;
+	struct sunxi_runtime_data *prtd = runtime->private_data;
+	struct snd_soc_pcm_runtime *rtd = substream->private_data;
+	unsigned long totbytes = params_buffer_bytes(params);
+	struct sunxi_dma_params *dma = snd_soc_dai_get_dma_data(rtd->cpu_dai, substream);
+	int ret = 0;
+
+	if (!dma)
+		return 0;
+
+	/* set DMA width for using in sunxi_dma_prepare*/
+	snd_pcm_lib_malloc_pages(substream, params_buffer_bytes(params)); // TODO: Use this call?! Seems to check if there is already alocated buffer. Debug! Hard one.
+
+	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
+		switch (params_format(params)) {
+			case SNDRV_PCM_FORMAT_S16_LE:
+				playback_dma_width = 16;
+				break;
+			case SNDRV_PCM_FORMAT_S24_LE:
+				playback_dma_width = 32;
+				break;
+		}
+	} else {
+		switch (params_format(params)) {
+			case SNDRV_PCM_FORMAT_S16_LE:
+				capture_dma_width = 16;
+				break;
+			case SNDRV_PCM_FORMAT_S24_LE:
+				capture_dma_width = 32;
+				break;
+		}
+	}
+
+	if (prtd->params == NULL) {
+		prtd->params = dma;
+
+		ret = sunxi_dma_request(prtd->params, 0);	// 0 = Means Normal DMA Channel
+		if (ret < 0)
+			return ret;
+	}
+
+	unsigned long flags;
+	spin_lock_irqsave(&prtd->lock, flags);
+	prtd->dma_loaded = 0;
+	prtd->dma_limit = runtime->hw.periods_min;
+	prtd->dma_period = params_period_bytes(params);
+	prtd->dma_start = runtime->dma_addr;
+	prtd->dma_pos = prtd->dma_start;
+	prtd->dma_end = prtd->dma_start + totbytes;
+	spin_unlock_irqrestore(&prtd->lock, flags);
+	snd_pcm_set_runtime_buffer(substream, &substream->dma_buffer);
+	runtime->dma_bytes = totbytes;
+
+	if (sunxi_dma_set_callback(prtd->params, sunxi_audio_buffdone, substream)
+			!= 0) {
+		sunxi_dma_release(prtd->params);
+		prtd->params = NULL;
+		return -EINVAL;
+	}
+
+	sunxi_dma_prepare(substream);
+
+
+#ifdef DEBUG_PERIOD_TIMING
+	prtd->ts.tv_sec = 0;
+	prtd->max_elapsed = 0;
+	prtd->nom_elapsed = 1000000 * (2 + params_period_size (params)) / params_rate (params);
+	prtd->nom_elapsed *= 1000;
+	printk ("[I2S-DMA] %d /%d = %lld\n", params_period_size (params), params_rate (params), prtd->nom_elapsed);
+#endif
+	return 0;
+}
+
+static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
+{
+	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
+
+	if (prtd->params)
+		sunxi_dma_flush(prtd->params); // NO-OP
+
+	snd_pcm_set_runtime_buffer(substream, NULL);
+
+	if (prtd->params) {
+		sunxi_dma_stop(prtd->params);
+		sunxi_dma_release(prtd->params);
+		prtd->params = NULL;
+	}
+	snd_pcm_lib_free_pages (substream); // test
+
+	return 0;
+}
+
+static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
+{
+	printk ("[I2S-DMA]Entered %s\n", __func__);
+
+	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
+	int ret = 0;
+
+	if (!prtd->params)
+		return 0;
+
+	sunxi_dma_flush(prtd->params); // NO-OP !!
+	prtd->dma_pos = prtd->dma_start;
 
 	prtd->dma_loaded = 0;
 	/* enqueue dma buffers */
 	sunxi_pcm_enqueue(substream);
-
-	spin_unlock_irqrestore(&prtd->lock, flags);
-
 	return ret;
 }
+
 
 static int sunxi_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 {
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 	int ret = 0;
 
+#if 0
+	printk ("[I2S-DMA]Entered %s s:%d cmd:%d\n", __func__, substream->stream, cmd);
+#endif
 	spin_lock(&prtd->lock);
 
 	switch (cmd) {

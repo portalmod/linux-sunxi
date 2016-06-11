@@ -92,7 +92,9 @@ struct sunxi_runtime_data {
 
 static int sunxi_dma_prepare (struct snd_pcm_substream *substream)
 {
+#if 0
 	printk ("[I2S-DMA]Entered %s\n", __func__);
+#endif
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 	int ret = 0;
 
@@ -381,7 +383,9 @@ static int sunxi_pcm_hw_free(struct snd_pcm_substream *substream)
 
 static int sunxi_pcm_prepare(struct snd_pcm_substream *substream)
 {
+#if 0
 	printk ("[I2S-DMA]Entered %s\n", __func__);
+#endif
 
 	struct sunxi_runtime_data *prtd = substream->runtime->private_data;
 	int ret = 0;

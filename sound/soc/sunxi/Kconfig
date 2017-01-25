@@ -4,6 +4,7 @@ config SND_SUNXI_SOC_CODEC
 	
 config SND_MOD_DUO_SUNXI
 	tristate "Sound Card for MOD Duo"
+	select SND_SOC_CS4245
 	default m
 	help
 	  Say Y or M if you want to add support for the MOD Duo Sound Card.

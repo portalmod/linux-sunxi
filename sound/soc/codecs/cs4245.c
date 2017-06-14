@@ -591,7 +591,6 @@ static int cs4245_trigger(struct snd_pcm_substream *substream,
 			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {	// CAPTURE - ADC
 				reg = snd_soc_read(codec, CS4245_ADC_CTRL);
 				reg &= ~(CS4245_MUTE_ADC);	// UNMUTE
-				reg |= (CS4245_HPF_FREEZE); // START HPF
 				ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
 				if (ret < 0) {
 					printk("[CS4245]ADC Control register configuration failed.\n");
@@ -613,7 +612,6 @@ static int cs4245_trigger(struct snd_pcm_substream *substream,
 			if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {	// CAPTURE - ADC
 				reg = snd_soc_read(codec, CS4245_ADC_CTRL);
 				reg |= (CS4245_MUTE_ADC);	// MUTE
-				reg &= ~(CS4245_HPF_FREEZE); // STOP HPF
 				ret = snd_soc_write(codec, CS4245_ADC_CTRL, reg);
 				if (ret < 0) {
 					printk("[CS4245]ADC Control register configuration failed.\n");

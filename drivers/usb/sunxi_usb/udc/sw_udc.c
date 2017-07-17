@@ -2141,7 +2141,7 @@ static int sw_udc_ep_enable(struct usb_ep *_ep,
 
 	max = le16_to_cpu(desc->wMaxPacketSize) & 0x1fff;
 
-	spin_lock_irqsave(&ep->dev->lock, flags);
+	spin_lock_irqsave(&dev->lock, flags);
 
 	_ep->maxpacket          = max & 0x7ff;
 	ep->desc                = desc;
@@ -2179,7 +2179,7 @@ static int sw_udc_ep_enable(struct usb_ep *_ep,
     USBC_SelectActiveEp(g_sw_udc_io.usb_bsp_hdle, old_ep_index);
 
 end:
-	spin_unlock_irqrestore(&ep->dev->lock, flags);
+	spin_unlock_irqrestore(&dev->lock, flags);
 
 	sw_udc_set_halt(_ep, 0);
 

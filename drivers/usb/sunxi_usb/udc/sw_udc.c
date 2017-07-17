@@ -1352,7 +1352,7 @@ DMSG_DBG_UDC("sw_udc_handle_ep0--2--\n");
 
 	/* clear setup end */
 	if (USBC_Dev_Ctrl_IsSetupEnd(g_sw_udc_io.usb_bsp_hdle)) {
-		DMSG_PANIC("handle_ep0: ep0 setup end\n");
+		DMSG_WRN("handle_ep0: ep0 setup end\n");
 
 		sw_udc_nuke(dev, ep, 0);
 		USBC_Dev_Ctrl_ClearSetupEnd(g_sw_udc_io.usb_bsp_hdle);

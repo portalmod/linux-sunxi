@@ -2008,7 +2008,7 @@ void sw_udc_dma_completion(struct sw_udc *dev, struct sw_udc_ep *ep, struct sw_u
 				req = NULL;
 				is_complete = 1;
 			}
-		}else if(((ep->bEndpointAddress & USB_DIR_IN) != 0)
+		}else if(((ep->bEndpointAddress & USB_DIR_IN) == 0)
 			&& USBC_Dev_IsReadDataReady(dev->sw_udc_io->usb_bsp_hdle, USBC_EP_TYPE_RX)){
 			if(sw_udc_read_fifo(ep, req)){
 				req = NULL;

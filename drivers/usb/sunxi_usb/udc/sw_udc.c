@@ -2179,9 +2179,9 @@ static int sw_udc_ep_enable(struct usb_ep *_ep,
     USBC_SelectActiveEp(g_sw_udc_io.usb_bsp_hdle, old_ep_index);
 
 end:
-	spin_unlock_irqrestore(&dev->lock, flags);
-
 	sw_udc_set_halt(_ep, 0);
+
+	spin_unlock_irqrestore(&dev->lock, flags);
 
 	return 0;
 }
@@ -2575,7 +2575,6 @@ static int sw_udc_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 static int sw_udc_set_halt(struct usb_ep *_ep, int value)
 {
 	struct sw_udc_ep		*ep     = NULL;
-	unsigned long		flags   = 0;
 	u32			        idx     = 0;
 	__u8    old_ep_index        = 0;
 
@@ -2599,8 +2598,6 @@ static int sw_udc_set_halt(struct usb_ep *_ep, int value)
 		DMSG_PANIC("ERR: usb device is not active\n");
 		return 0;
 	}
-
-	spin_lock_irqsave(&ep->dev->lock, flags);
 
 	idx = ep->bEndpointAddress & 0x7F;
 
@@ -2628,8 +2625,6 @@ static int sw_udc_set_halt(struct usb_ep *_ep, int value)
 	ep->halted = value ? 1 : 0;
 
 	USBC_SelectActiveEp(g_sw_udc_io.usb_bsp_hdle, old_ep_index);
-
-	spin_unlock_irqrestore(&ep->dev->lock, flags);
 
 	return 0;
 }

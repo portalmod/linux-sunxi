@@ -823,7 +823,7 @@ static int sw_udc_get_status(struct sw_udc *dev, struct usb_ctrlrequest *crq)
 	return 0;
 }
 
-static int sw_udc_set_halt(struct usb_ep *_ep, int value);
+static int __sw_udc_set_halt(struct sw_udc_ep *ep, int value);
 
 #if 1
 
@@ -941,7 +941,7 @@ static void sw_udc_handle_ep0_idle(struct sw_udc *dev,
     				}else{
     					int k = 0;
     					for(k = 0;k < SW_UDC_ENDPOINTS;k++){
-    						sw_udc_set_halt(&dev->ep[k].ep, 0);
+    						__sw_udc_set_halt(&dev->ep[k], 0);
     					}
     				}
 
@@ -958,7 +958,7 @@ static void sw_udc_handle_ep0_idle(struct sw_udc *dev,
     				if(crq->wValue){
     					dev->devstatus &= ~(1 << USB_DEVICE_REMOTE_WAKEUP);
     				}else{
-    					sw_udc_set_halt(&dev->ep[crq->wIndex & 0x7f].ep, 0);
+    					__sw_udc_set_halt(&dev->ep[crq->wIndex & 0x7f], 0);
     				}
 
     			}else{
@@ -1000,7 +1000,7 @@ static void sw_udc_handle_ep0_idle(struct sw_udc *dev,
                 }else if(crq->bRequestType == USB_RECIP_ENDPOINT){
                     //--<3>--禁用ep
                     USBC_Dev_ReadDataStatus(g_sw_udc_io.usb_bsp_hdle, USBC_EP_TYPE_EP0, 1);
-    				sw_udc_set_halt(&dev->ep[crq->wIndex & 0x7f].ep, 1);
+    				__sw_udc_set_halt(&dev->ep[crq->wIndex & 0x7f], 1);
                 }else{
                     DMSG_PANIC("PANIC : nonsupport set feature request. (%d)\n", crq->bRequestType);
 
@@ -2179,7 +2179,7 @@ static int sw_udc_ep_enable(struct usb_ep *_ep,
     USBC_SelectActiveEp(g_sw_udc_io.usb_bsp_hdle, old_ep_index);
 
 end:
-	sw_udc_set_halt(_ep, 0);
+	__sw_udc_set_halt(ep, 0);
 
 	spin_unlock_irqrestore(&dev->lock, flags);
 
@@ -2572,18 +2572,11 @@ static int sw_udc_dequeue(struct usb_ep *_ep, struct usb_request *_req)
 *
 *******************************************************************************
 */
-static int sw_udc_set_halt(struct usb_ep *_ep, int value)
+static int __sw_udc_set_halt(struct sw_udc_ep *ep, int value)
 {
-	struct sw_udc_ep		*ep     = NULL;
 	u32			        idx     = 0;
 	__u8    old_ep_index        = 0;
 
-	if(_ep == NULL){
-		DMSG_PANIC("ERR: invalid argment\n");
-		return -EINVAL;
-	}
-
-	ep = to_sw_udc_ep(_ep);
 	if(ep == NULL){
 		DMSG_PANIC("ERR: invalid argment\n");
 		return -EINVAL;
@@ -2627,6 +2620,25 @@ static int sw_udc_set_halt(struct usb_ep *_ep, int value)
 	USBC_SelectActiveEp(g_sw_udc_io.usb_bsp_hdle, old_ep_index);
 
 	return 0;
+}
+
+static int sw_udc_set_halt(struct usb_ep *_ep, int value)
+{
+	int ret;
+	unsigned long flags = 0;
+	struct sw_udc_ep *ep = NULL;
+
+	ep = to_sw_udc_ep(_ep);
+	if(ep == NULL){
+		DMSG_PANIC("ERR: invalid argment\n");
+		return -EINVAL;
+	}
+
+	spin_lock_irqsave(&ep->dev->lock, flags);
+	ret = __sw_udc_set_halt(ep, value);
+	spin_unlock_irqrestore(&ep->dev->lock, flags);
+
+	return ret;
 }
 
 static const struct usb_ep_ops sw_udc_ep_ops = {

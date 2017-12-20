@@ -333,9 +333,10 @@ static unsigned uart_used;
 static int __init sw_serial_init(void)
 {
 	int ret;
-	int i, max = sw_serial_get_max_ports();
+	int i, idx, max = sw_serial_get_max_ports();
 	int used = 0;
 	char uart_para[16];
+	int uart_tty[8] = {-1, -1, -1, -1, -1, -1, -1, -1};
 
 	uart_used = 0;
 	for (i = 0; i < max; i++, used = 0) {
@@ -348,8 +349,17 @@ static int __init sw_serial_init(void)
 		pr_debug("uart:%d used:%d\n", i, used);
 		if (used) {
 			uart_used |= 1 << i;
-			platform_device_register(&sw_uart_dev[i]);
+
+			script_parser_fetch(uart_para, "uart_tty", &idx, sizeof(int));
+			if (idx >= 0)
+				uart_tty[idx] = i;
 		}
+	}
+
+	for (i = 0; i < max; i++) {
+		idx = uart_tty[i];
+		if (idx >= 0)
+			platform_device_register(&sw_uart_dev[idx]);
 	}
 
 	if (uart_used) {

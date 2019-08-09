@@ -111,11 +111,16 @@ static void sunxi_nand_parse_mbr(struct parsed_partitions *state, int no)
 	put_dev_sector(sect);
 }
 
+extern int mod_duo_mmc_in_use;
+
 int sunxi_nand_partition(struct parsed_partitions *state)
 {
 	int valid_mbr = 0;
 	int mbr;
 	int i;
+
+	if (mod_duo_mmc_in_use)
+		return 0;
 
 	for (i = 1; i <= MBR_COPY_NUM; i++, mbr++) {
 		mbr = sunxi_nand_validate_mbr(state, i);

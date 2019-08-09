@@ -2164,6 +2164,8 @@ fail:
 	return -1;
 }
 
+int mod_duo_mmc_in_use = 0;
+
 static int __init sw_mci_init(void)
 {
 	int i;
@@ -2193,6 +2195,9 @@ static int __init sw_mci_init(void)
 				io_used |= 1 << i;
 		}
 	}
+
+	if (sdc_used && boot_card)
+		mod_duo_mmc_in_use = 1;
 
 	SMC_MSG(NULL, "MMC host used card: 0x%x, boot card: 0x%x, io_card %d\n",
 					sdc_used, boot_card, io_used);

@@ -55,7 +55,7 @@
 #include <linux/wait.h>
 #include <linux/sched.h>
 
-#define BLK_ERR_MSG_ON
+//#define BLK_ERR_MSG_ON
 #ifdef  BLK_ERR_MSG_ON
 #define dbg_err(fmt, args...) printk("[NAND]"fmt, ## args)
 #else

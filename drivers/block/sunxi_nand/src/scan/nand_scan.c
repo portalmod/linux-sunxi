@@ -223,7 +223,7 @@ __s32  SCN_AnalyzeNandSystem(void)
     result = _SearchNandArchi(tmpChipID, &tmpNandPhyInfo);
     if(result)
     {
-        SCAN_ERR("[SCAN_ERR] search nand physical architecture parameter failed!\n");
+        //SCAN_ERR("[SCAN_ERR] search nand physical architecture parameter failed!\n");
         return -1;
     }
 

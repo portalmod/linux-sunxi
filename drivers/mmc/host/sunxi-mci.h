@@ -421,4 +421,9 @@ struct sunxi_mmc_host {
 #define SMC_DBG(d, ...)     do {} while (0)
 #endif
 
+#undef SMC_MSG
+#undef SMC_ERR
+#define SMC_MSG(d, ...)     do {} while (0)
+#define SMC_ERR(d, ...)     do {} while (0)
+
 #endif

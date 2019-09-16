@@ -130,6 +130,16 @@ static int mod_duo_gpio_init(void)
     gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_left");
     gpio_write_one_pin_value(mod_duo_gpio_handler, 0, "true_bypass_right");
 
+    //Make sure we enable internall pullup's
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "true_bypass_left");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "true_bypass_right");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "headphone_clk");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "headphone_ctrl");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "left_gain_ctrl1");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "left_gain_ctrl2");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "right_gain_ctrl1");
+    gpio_set_one_pin_pull(mod_duo_gpio_handler, 1, "right_gain_ctrl2");
+
     printk("[MOD Duo Machine Driver] GPIOs initialized.\n");
     return 0;
 }
